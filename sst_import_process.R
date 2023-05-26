@@ -5,7 +5,7 @@
 
 ## Load necessary data 
 
-sst.raw <- read.csv("./data-downloaded/sst_raw.csv")
+sst.raw <- read.csv("./data-downloaded/climate-data/sst_raw.csv")
 head(sst.raw)
 tail(sst.raw)
 sapply(sst.raw, class)

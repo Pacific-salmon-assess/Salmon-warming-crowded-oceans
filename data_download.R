@@ -4,7 +4,7 @@
 
 ## Locations of data:
 ## Master brood table: "./data-downloaded/raw_brood_table_2023_05_19"
-## Pink abundance: "./data/competitor_indices_2023_05_16.csv"
+## Pink abundance: "./data-downloaded/competitor_indices_2023_05_16.csv"
 
 
 ## Climate indices download
@@ -28,7 +28,7 @@ sst.raw.np <- ersst::sst_subset_space(sst.raw.full,
 
 sst.raw.df <- ersst::sst_dataframe(sst.raw.np)
 
-write.csv(sst.raw.df, "./data/sst_raw.csv", row.names = FALSE)
+write.csv(sst.raw.df, "./data-downloaded/climate-data/sst_raw.csv", row.names = FALSE)
 
 
 
@@ -37,6 +37,6 @@ years <- 1950:2019
 pdo <- rsoi::download_pdo(years) 
 npgo <- rsoi::download_npgo(years)
 
-write.csv(pdo, "./data/pdo.csv", row.names = FALSE)
-write.csv(npgo, "./data/npgo.csv", row.names = FALSE)
+write.csv(pdo, "./data-downloaded/climate-data/pdo.csv", row.names = FALSE)
+write.csv(npgo, "./data-downloaded/climate-data/npgo.csv", row.names = FALSE)
 

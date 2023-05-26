@@ -18,7 +18,7 @@ raw.clim <- read.csv(file="data/sst_yr_1_stock_anomalies.csv",header=TRUE)
 head(raw.clim)
 
 ## Pink competition
-raw.comp <- read.csv(file="data/competitor_indices_2023_05_16.csv", header = TRUE)
+raw.comp <- read.csv(file="data-downloaded/competitor_indices_2023_05_16.csv", header = TRUE)
 head(raw.comp)
 
 
