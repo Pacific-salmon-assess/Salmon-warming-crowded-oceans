@@ -2,8 +2,9 @@
 .Rhistory
 .RData
 .Ruserdata
-data
+#data
 data-downloaded/climate-data
+data-downloaded/sst_raw
 figures
 output
 pub
