@@ -26,9 +26,9 @@ source("sst_explore.R") #(4)
 # source("detrend_covars.R") # ignore
 source("sock_covariates.R") #(5)
 source("sock_explore.R") #(6)
-# source("single_stock.R") # ignore 
-source("hbm_fit.R") #(7)
-source("pub.R") #(8)
+source("single_stock.R") # (7)
+source("hbm_fit.R") #(8)
+source("pub.R") #(9)
 # source("hatch_effects.R") #ignore
 
 time.run <- proc.time() - time.start

@@ -124,7 +124,7 @@ dev.off()
 
 ## Check pathology -----------------------------------------
 rstan::check_hmc_diagnostics(hb07a)
-rstan::check_hmc_diagnostics(hb07ar2)
+rstan::check_hmc_diagnostics(hb07r2)
 
 rstan::get_elapsed_time(hb07a)
 rstan::get_elapsed_time(hb07r2)
