@@ -112,8 +112,7 @@ Stock.ID,Species,Stock,Date.data.obtained,Date.data.incorporated,Date.data.updat
 211,Sockeye,Roderick,9/1/2017,NA,NA,WC,NA,NA,BC,NA,NA,8,Brendan suggests do not use data: assumed fixed age; wit for new data,
 212,Sockeye,Shawatlan,9/1/2017,NA,NA,WC,NA,NA,BC,NA,NA,8,Brendan suggests do not use data: assumed fixed age; wit for new data,
 213,Sockeye,Skidegate,9/1/2017,NA,NA,WC,NA,NA,BC,NA,NA,8,Brendan suggests do not use data: assumed fixed age; wit for new data,
-214,Sockeye,Stephens,9/1/2017,NA,5/18/2023,WC,BC North,Skeena-Nass,BC,54.12,-130.1,8,Brendan suggests do not use data: assumed fixed age; wit for new data,swan/stephens combined in brood tbl
-215,Sockeye,Swan,9/1/2017,NA,5/18/2023,WC,BC North,Skeena-Nass,BC,54.12,-130.1,8,Brendan suggests do not use data: assumed fixed age; wit for new data,swan/stephens combined in brood tbl
+214,Sockeye,Swan/Stephens,9/1/2017,NA,5/18/2023,WC,BC North,Skeena-Nass,BC,54.12,-130.1,8,Brendan suggests do not use data: assumed fixed age; wit for new data,
 216,Sockeye,Tahlo/Morrison,9/1/2017,NA,NA,WC,NA,NA,BC,NA,NA,8,Brendan suggests do not use data: assumed fixed age; wit for new data,
 217,Sockeye,Tankeeah River,9/1/2017,NA,NA,WC,NA,NA,BC,NA,NA,8,Brendan suggests do not use data: assumed fixed age; wit for new data,
 218,Sockeye,Tsimtack/Moore/Roger,9/1/2017,NA,NA,WC,NA,NA,BC,NA,NA,8,Brendan suggests do not use data: assumed fixed age; wit for new data,
