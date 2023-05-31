@@ -13,7 +13,7 @@ s.brood <- read.table("./data-downloaded/raw_brood_table_2023_05_19.csv",
                       stringsAsFactors = FALSE, header = TRUE)
 
 s.info <- read.table("./data-downloaded/raw_stock_info_2023_05_19.csv", sep = ",",
-                     skip = 0, stringsAsFactors = FALSE, header = TRUE)
+                     skip = 0, stringsAsFactors = FALSE, header = TRUE, quote="", fill=TRUE)
 
 
 
@@ -52,22 +52,24 @@ if(!"R2.5" %in% names(s.brood)) {
 
 ## Create data frame with estimates of recruits, spawners and proportion of
 ## recruits that entered ocean at age 0, 1 and 2 and from each age class
- # Use detailed recruit info if it exists, and average proportions (from skeena life-history) if not
+ # Use detailed recruit info if it exists, and average proportions if not
+source("rec_bypass.R")
 
-skeena_lh <- read.csv("./data-downloaded/skeena_lifehistory_prop.csv", header=T)  # read in skeena life history data - adapted from 'Modern' data from Table S3 of Price et al (2021)   
-
-  bt <- ddply(s.brood.use, c("Stock.ID", "BY"),function(x) {
+bt <- plyr::ddply(s.brood.use, c("Stock.ID", "BY"),function(x) {
   cond <- x$DetailFlag==1
 	R <- if_else(cond, sum(x[ , grep("^R[[:digit:]]\\.[[:digit:]]", names(x))], na.rm = TRUE), 
 	             x$TotalRecruits) # keep total recruits as is if no detail, otherwise sum recruits
 	S <- x$TotalEscapement # spawners
-	ocean_0 <- ifelse(cond, sum(x[,grep("^R0\\.", names(x))],na.rm=T)/R, 0)
+	ocean_0 <- ifelse(cond, sum(x[,grep("^R0\\.", names(x))],na.rm=T)/R, 
+	                  lifehist$prop_age0[match(x$Stock, lifehist$Stock)])
 	ocean_1 <- ifelse(cond, sum(x[,grep("^R1\\.", names(x))],na.rm=T)/R, 
-	                  skeena_lh$prop_age1[match(x$Stock, skeena_lh$Stock)])
+	                  lifehist$prop_age1[match(x$Stock, lifehist$Stock)])
 	ocean_2 <- ifelse(cond, sum(x[,grep("^R2\\.", names(x))],na.rm=T)/R, 
-	                  skeena_lh$prop_age2[match(x$Stock, skeena_lh$Stock)])
-	ocean_3 <- ifelse(cond, sum(x[,grep("^R3\\.", names(x))],na.rm=T)/R, 0)
-	ocean_4 <- ifelse(cond, sum(x[,grep("^R4\\.", names(x))],na.rm=T)/R, 0)
+	                  lifehist$prop_age2[match(x$Stock, lifehist$Stock)])
+	ocean_3 <- ifelse(cond, sum(x[,grep("^R3\\.", names(x))],na.rm=T)/R, 
+	                  lifehist$prop_age3[match(x$Stock, lifehist$Stock)])
+	ocean_4 <- ifelse(cond, sum(x[,grep("^R4\\.", names(x))],na.rm=T)/R, 
+	                  lifehist$prop_age4[match(x$Stock, lifehist$Stock)])
 	DetailFlag <- x$DetailFlag # keep this flag in for now
 	R0.1 <- x[,"R0.1"]/R
 	R0.2 <- x[,"R0.2"]/R
@@ -111,11 +113,11 @@ all.equal(sort(r1), sort(r2))
 bt.out.1 <- bt[complete.cases(bt),]                # drop years with missing data
 bt.out.2 <- subset(bt.out.1, Stock.ID != 166) # drop Osoyooos for now, do not have ocean entry coordinates
 bt.out.2 <- subset(bt.out.2, Stock.ID != 144) # drop Frazer, hatchery influence
-bt.out.3 <- subset(bt.out.2,BY < 2016) # currently 2015 is the last brood year we have complete competitor index for - soon 2019
+bt.out.3 <- subset(bt.out.2,BY < 2021) # currently have pink-NP data up to 2021, but not other indices
 bt.out.4 <- subset(bt.out.3,BY > 1949)        # do this becasue pre 1950 data is very sparse
 
 ## Fill in missing years that fall w/in min and max BY for each stock
-bt.out.5 <- fill.time.series(bt.out.4)
+bt.out.5 <- fill.time.series(bt.out.4) # this adds NAs and is supposed to! 
 
 
 ## Trim time series of NA values by selecting the longest
