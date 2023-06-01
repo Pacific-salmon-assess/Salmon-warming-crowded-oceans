@@ -132,7 +132,14 @@ bt.out.6 <- plyr::ddply(bt.out.5, .(Stock.ID), function(i) {
 
 
 
-bt.out <- bt.out.6
+## Add alternate Stock ID based on latitude - geo.id
+geo.id <- arrange( unique(bt.out[, c("Stock", "Lat")]) , Lat)
+geo.id$geo_id <- 1:nrow(geo.id)
+bt.out.7 <- left_join(bt.out.6, geo.id, by=c("Stock", "Lat"))
+
+
+
+bt.out <- bt.out.7
 head(bt.out)
 tail(bt.out)
 sapply(bt.out, class)

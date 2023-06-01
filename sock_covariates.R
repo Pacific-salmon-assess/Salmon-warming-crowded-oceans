@@ -73,4 +73,5 @@ write.csv(master.bt_w_cov, "data/master_brood_table_covar.csv", row.names=FALSE)
 
 sock <- master.bt_w_cov
 sock$Stock <- factor(sock$Stock, levels = unique(sock$Stock))
+sock$Stock <- reorder(sock$Stock, sock$geo_id) # order according to latitude - for plotting
 

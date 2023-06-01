@@ -1146,8 +1146,8 @@ single.stock.fit <- function(formulas, years, plot.path) {
         ## Create coefficient data.frame
         m.coef <- coef(m.fit)
         m.coef$Stock <- names(m.fit)
-        m.coef <- melt(m.coef, id.vars = "Stock")
-        m.coef$Stock <- factor(m.coef$Stock, levels = names(m.fit))
+        m.coef <- reshape2::melt(m.coef, id.vars = "Stock")
+        m.coef$Stock <- factor(m.coef$Stock, levels = names(m.fit), ordered=is.ordered(sock$geo_id))
         m.coef <- merge(m.coef, regions, by = "Stock", all.x = TRUE, sort = FALSE)
         mod.coef[[i]] <- m.coef
 
@@ -1345,7 +1345,7 @@ single.stock.fit <- function(formulas, years, plot.path) {
             vf <- do.call("rbind", c(lst, make.row.names = FALSE))
             vf$Stock <- names(m.fit)
             vf$Stock <- factor(vf$Stock, levels = names(m.fit))
-            vf <- melt(vf, id.vars = "Stock")
+            vf <- reshape2::melt(vf, id.vars = "Stock")
             vf$value[is.nan(vf$value)] <- NA
 
             # if(any(is.na(vf$value))) browser()

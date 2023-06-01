@@ -5,7 +5,6 @@
 if(!dir.exists("./figures/sock-explore/"))
     dir.create("./figures/sock-explore/")
 
-
 ## Data summaries ------------------------------------------
 head(sock)
 tail(sock)
@@ -106,11 +105,12 @@ plot(sock.info$lon, sock.info$lat,
      xlab = "Longitude",
      ylab = "Latitude")
 plot(countriesLow, add = TRUE, border = "grey50")
-points(sock.info$lon, sock.info$lat, pch = 16, col = "red2")
+points(sock.info$lon, sock.info$lat, pch = 16, col = as.factor(sock.info$Ocean.Region))
 dev.off()
 
 
 ## Productivity time series --------------------------------
+# Make sure Stock is ordered by latitude
 pdf("./figures/sock-explore/productivity_by_stock.pdf", width = 19, height = 9)
 g <- xyplot(R/S ~ BY | Stock, data = sock,
             type = "l",
