@@ -5,8 +5,8 @@
 if(!dir.exists("./pub/")) dir.create("./pub/")
 
 ## Which model fit ?
-fit <- hb07a
-fitnam <- "hb07a"
+fit <- hb05a
+fitnam <- "hb05a"
 
 
 ## Define colors
@@ -19,7 +19,7 @@ col.dk <- rev(chroma::qpal(7, luminance = 30)[c(1, 4, 6)])
 
 gamma <- summary(fit, pars = "mu_gamma")$summary
 kappa <- summary(fit, pars = "mu_kappa")$summary
-chi   <- summary(fit, pars = "mu_chi")$summary
+#chi   <- summary(fit, pars = "mu_chi")$summary   # No chi in hb05
 reg   <- c("West Coast", "Gulf of Alaska", "Bering Sea")
 
 tab.g <- data.frame(reg = reg,
@@ -32,12 +32,12 @@ tab.k <- data.frame(reg = reg,
                     lower = kappa[ , "2.5%"],
                     mean = kappa[ , "mean"],
                     upper = kappa[ , "97.5%"])
-tab.c <- data.frame(reg = reg,
-                    coef = "SST x Comp",
-                    lower = chi[ , "2.5%"],
-                    mean = chi[ , "mean"],
-                    upper = chi[ , "97.5%"])
-tab.coef <- rbind(tab.g, tab.k, tab.c)
+#tab.c <- data.frame(reg = reg,
+#                    coef = "SST x Comp",
+#                    lower = chi[ , "2.5%"],
+#                    mean = chi[ , "mean"],
+#                    upper = chi[ , "97.5%"])
+tab.coef <- rbind(tab.g, tab.k) # add tab.c if exists
 tab.coef$perc <- (exp(tab.coef$mean) - 1) * 100
 row.names(tab.coef) <- NULL
 names(tab.coef) <- c("Ecosystem", "Coefficient", "Lower 95% CI", "Mean",
@@ -54,7 +54,7 @@ beta     <- as.data.frame(summary(fit, pars = "beta", probs = probs)[[1]])
 sigma    <- as.data.frame(summary(fit, pars = "sigma", probs = probs)[[1]])
 sst      <- as.data.frame(summary(fit, pars = "gamma", probs = probs)[[1]])
 comp     <- as.data.frame(summary(fit, pars = "kappa", probs = probs)[[1]])
-interact <- as.data.frame(summary(fit, pars = "chi", probs = probs)[[1]])
+#interact <- as.data.frame(summary(fit, pars = "chi", probs = probs)[[1]])
 
 stock.tbl <- data.frame(stock = sock.info$Stock,
                         alpha_mean = alpha[["mean"]],
@@ -69,9 +69,9 @@ stock.tbl <- data.frame(stock = sock.info$Stock,
                         comp_mean = comp[["mean"]],
                         comp_lowerCI = comp[["2.5%"]],
                         comp_upperCI = comp[["97.5%"]],
-                        interact_mean = interact[["mean"]],
-                        interact_lowerCI = interact[["2.5%"]],
-                        interact_upperCI = interact[["97.5%"]],
+                        #interact_mean = interact[["mean"]],
+                        #interact_lowerCI = interact[["2.5%"]],
+                        #interact_upperCI = interact[["97.5%"]],
                         sigma_mean = sigma[["mean"]],
                         sigma_lowerCI = sigma[["2.5%"]],
                         sigma_upperCI = sigma[["97.5%"]])
@@ -357,7 +357,7 @@ dev.off()
 
 
 ## Fig: Posterior percent change density ------------------- 
-lst <- hb07_density_df(fit)
+lst <- hb05_density_df(fit)
 s.df <- lst$stock
 m.df <- lst$region
 
@@ -410,10 +410,11 @@ dev.off()
 ## Fig: dot + density main --------------------------------- 
 gamma.stock <- hb_param_df(fit, "gamma", "Ocean.Region", "SST")
 kappa.stock <- hb_param_df(fit, "kappa", "Ocean.Region", "Comp")
-chi.stock   <- hb_param_df(fit, "chi", "Ocean.Region", "SST x Comp")
-df.dot <- rbind(gamma.stock, kappa.stock, chi.stock)
+#chi.stock   <- hb_param_df(fit, "chi", "Ocean.Region", "SST x Comp")
+df.dot <- rbind(gamma.stock, kappa.stock ) # , chi.stock)
 df.dot <- ocean_region_lab(df.dot, "region", FALSE)
-df.dot$var <- factor(df.dot$var, levels = c("SST", "Comp", "SST x Comp"))
+df.dot$var <- factor(df.dot$var, levels = c("SST", "Comp" )) # ,"SST x Comp"))
+df.dot$Stock <- reorder(levels(df.dot$Stock), unique(sock$geo_id)) # prefer not to use sock dataset here
 df.mu <- plyr::ddply(df.dot, .(region, var), summarize,
                      mu_mean = unique(mu_mean),
                      mu_2.5 = unique(`mu_2.5%`),
@@ -426,9 +427,9 @@ g <- ggplot(df.dot) +
     geom_vline(xintercept = 0, color = "grey50", linetype = 2, size = 0.25) +
     geom_point(aes(x = mean, y = Stock, color = ocean_region_lab, shape = ocean_region_lab)) +
     geom_segment(aes(y = Stock, yend = Stock, x = `2.5%`, xend = `97.5%`,
-                     color = ocean_region_lab), size = 0.25) +
+                     color = ocean_region_lab), linewidth = 0.25) +
     geom_segment(data = df.mu, aes(y = ystart, yend = yend, x = mu_mean, xend = mu_mean,
-                                   color = ocean_region_lab), size = 0.25) +
+                                   color = ocean_region_lab), linewidth = 0.25) +
     geom_rect(data = df.mu, aes(xmin = mu_2.5, xmax = mu_97.5, ymin = ystart,
                                 ymax = yend, fill = ocean_region_lab),
               alpha = 0.2) +
