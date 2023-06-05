@@ -236,7 +236,7 @@ for(i in rev(seq_along(oc.reg))) {
 
     plot(0, type = "n",
          ylim = c(0, 1),
-         xlim = c(1950, 2010),
+         xlim = c(1950, 2015),
          ylab = "",
          xlab = "",
          axes = FALSE)
@@ -281,7 +281,7 @@ for(k in 1:2 ) {  ## loop over covars
         if(k == 2)
             ylim <- range(sock[ , covars[k]] / scale[k], na.rm = TRUE)
         plot(0, type = "n",
-             xlim = c(1950, 2010),
+             xlim = c(1950, 2015),
              ylim = ylim,
              axes = FALSE)
         abline(v=1975,lty=2,col="dark grey",lwd=1)
@@ -364,6 +364,7 @@ m.df <- lst$region
 ## Covariate labels
 vars <- data.frame(var = levels(m.df$var))
 vars$lab <- paste0("(", letters[1:nrow(vars)], ") ", vars$var)
+
 g <- ggplot(m.df) +
     geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
     geom_path(data = s.df[s.df$region == "West Coast", ],
