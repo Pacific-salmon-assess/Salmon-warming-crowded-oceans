@@ -24,11 +24,11 @@ bbay_lh3 <- bbay_lh2 %>%
   arrange("Stock.ID", "BY") %>% 
   group_by(Stock) %>% 
   slice_tail(n=10) %>%    # Keep last 10 years of data for each stk
-  summarize(across(starts_with("prop_"), ~mean(. )))  # average
+  summarize(across(starts_with("prop_"), ~mean(., na.rm=T)))  # average
 
 
 ## Read in skeena lifehistory
 skeena_lh <- read.csv("./data-downloaded/skeena_lifehistory_prop.csv")
 
 ## Bind skeena and bristol bay stocks
-lifehist <- bind_rows(x4, skeena_lh) %>% replace(is.na(.), 0)
+lifehist <- bind_rows(bbay_lh3, skeena_lh) %>% replace(is.na(.), 0)
