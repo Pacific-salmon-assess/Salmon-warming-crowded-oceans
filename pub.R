@@ -363,6 +363,7 @@ m.df <- lst$region
 ## Covariate labels
 vars <- data.frame(var = levels(m.df$var))
 vars$lab <- paste0("(", letters[1:nrow(vars)], ") ", vars$var)
+
 g <- ggplot(m.df) +
     geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
     geom_path(data = s.df[s.df$region == "West Coast", ],
