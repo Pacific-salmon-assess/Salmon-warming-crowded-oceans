@@ -1,6 +1,36 @@
 ## Functions for analysis ##
 ## ---------------------- ##
 
+## geographic.order --------------------------------------
+
+geographic.order <- function(x) {
+  # Accepts a dataframe with the columns Stock, Ocean.Region, Lat, Lon
+  # Returns Stock as an ordered factor appropriate for plotting
+      # i.e. 1 is southmost stk on WC, max is northmost in BS, and 
+                                # GOA are ordered E->W 
+  # Currently only accepts 3 Ocean Regions but could be generalized later
+  
+  # Get stock names in each region
+  WC_stk <- unique( x[ which (x$Ocean.Region=="WC"), c("Stock", "Lat") ] )
+  GOA_stk <- unique( x[ which (x$Ocean.Region=="GOA"), c("Stock", "Lon") ] )
+  BS_stk <- unique( x[ which (x$Ocean.Region=="BS"), c("Stock", "Lat") ] )
+  
+  # Rank by Lat (WC, BS) or Lon (GOA)
+  WC_stk$geo_id <- frank(WC_stk, Lat, ties.method = "first")
+  GOA_stk$geo_id <- nrow(WC_stk) + frank(GOA_stk, -Lon, ties.method = "first")
+  BS_stk$geo_id <- nrow(WC_stk) + nrow(GOA_stk) + frank(BS_stk, Lat, ties.method="first")
+  
+  #combine them
+  geo.id <-  rbind(WC_stk[, c("Stock", "geo_id")], GOA_stk[, c("Stock", "geo_id")], BS_stk[, c("Stock", "geo_id")])
+  geo.id <- geo.id[order(geo.id$geo_id), ] # sort in ascending order
+  
+  x$Stock <- factor(x$Stock, levels = geo.id$Stock)
+  
+  return(x$Stock)
+}
+
+
+
 ## hb05_density_df -----------------------------------------
 hb05_density_df <- function(stanfit) {
   
@@ -11,9 +41,9 @@ hb05_density_df <- function(stanfit) {
   adjust <- 1.5
   
   ## Define region column indices
-  ind.wc  <- which(sock.info$Ocean.Region == "WC")
-  ind.goa <- which(sock.info$Ocean.Region == "GOA")
-  ind.bs  <- which(sock.info$Ocean.Region == "BS")
+  ind.wc  <- match(sock.info$Stock[which(sock.info$Ocean.Region == "WC")], levels(sock$Stock) ) 
+  ind.goa <- match(sock.info$Stock[which(sock.info$Ocean.Region == "GOA")], levels(sock$Stock) )#last(ind.wc) + 1: sum(sock.info$Ocean.Region == "GOA") 
+  ind.bs  <- match(sock.info$Stock[which(sock.info$Ocean.Region == "BS")], levels(sock$Stock) )# which(sock.info$Ocean.Region == "BS") #last(ind.goa) +1: sum(sock.info$Ocean.Region == "BS") 
   ind.reg <- list(ind.bs, ind.goa, ind.wc)
   
   ## Extract stock-specific param matrices
@@ -146,7 +176,6 @@ hb05_density_df <- function(stanfit) {
   })
   s.bs.df <- do.call(rbind, s.bs.lst.df)
   
-  
   ## Combine region stock-specific data frames
   s.df <- rbind(s.wc.df, s.goa.df, s.bs.df)
   
@@ -171,10 +200,11 @@ hb07_density_df <- function(stanfit) {
     adjust <- 1.5
 
     ## Define region column indices
-    ind.wc  <- which(sock.info$Ocean.Region == "WC")
-    ind.goa <- which(sock.info$Ocean.Region == "GOA")
-    ind.bs  <- which(sock.info$Ocean.Region == "BS")
+    ind.wc  <- 1:sum(sock.info$Ocean.Region == "WC") #which(sock.info$Ocean.Region == "WC")
+    ind.goa <- last(ind.wc) + 1: sum(sock.info$Ocean.Region == "GOA") #which(sock.info$Ocean.Region == "GOA")
+    ind.bs  <- last(ind.goa) +1: sum(sock.info$Ocean.Region == "BS") #which(sock.info$Ocean.Region == "BS")
     ind.reg <- list(ind.bs, ind.goa, ind.wc)
+    
 
     ## Extract stock-specific param matrices
     s.alpha <- lst.f[["alpha"]]
@@ -819,7 +849,7 @@ stan_data <- function(data,
     sock.stan[[var.region]] <- factor(sock.stan[[var.region]],
                                      levels = unique(sock.stan[[var.region]]))
 
-
+#browser()
     ## Get start/end for each stock
     start.end  <- levels_start_end(sock.stan$Stock)
 
@@ -1135,7 +1165,7 @@ pink.wgt.avg <- function(brood.table,
             if(type == "second_year") {
                 reg_i <- as.vector(unique(brood.table$Ocean.Region[brood.table$Stock.ID == i]))
 
-                  if(brood$DetailFlag[brood$BY == j]==1){ # HH added detail condition to accomodate new Skeena stocks that don't have detailed recruit information 
+                  if(brood$DetailFlag[brood$BY == j] ==1){ # HH added detail condition to accommodate new stocks that don't have detailed recruit information 
                     np.pink[as.character(j),as.character(i)] <-
                       (brood$R0.1[brood$BY == j] * 0) +
                       (brood$R0.2[brood$BY == j] * pink.data[pink.data$Year == j+3, pink.covar[reg_i]]) +
@@ -1158,7 +1188,7 @@ pink.wgt.avg <- function(brood.table,
                       (brood$R3.4[brood$BY == j] * pink.data[pink.data$Year == j+6, pink.covar[reg_i]])
                     } else {
                     np.pink[as.character(j),as.character(i)] <-
-                      (brood$ocean_0[brood$BY == j] * 0) + # no ocean entry @0 in skeena
+                      (brood$ocean_0[brood$BY == j] * pink.data[pink.data$Year == j+3, pink.covar[reg_i]]) +
                       (brood$ocean_1[brood$BY == j] * pink.data[pink.data$Year == j+4, pink.covar[reg_i]]) +
                       (brood$ocean_2[brood$BY == j] * pink.data[pink.data$Year == j+5, pink.covar[reg_i]]) +  
                       (brood$ocean_3[brood$BY == j] * pink.data[pink.data$Year == j+6, pink.covar[reg_i]])  
@@ -1248,7 +1278,6 @@ add.label <- function(label, xfrac = 0.01, yfrac = 0.07, pos = 4, ...) {
     y <- u[4] - yfrac * (u[4] - u[3])
     text(x, y, label, pos = pos, ...)
 }
-
 
 
 ## single.stock.fit ----------------------------------------

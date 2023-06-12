@@ -53,7 +53,7 @@ if(!"R2.5" %in% names(s.brood)) {
 ## Create data frame with estimates of recruits, spawners and proportion of
 ## recruits that entered ocean at age 0, 1 and 2 and from each age class
  # Use detailed recruit info if it exists, and average proportions if not
-source("rec_bypass.R")
+source("recruitment_means.R")
 
 bt <- plyr::ddply(s.brood.use, c("Stock.ID", "BY"),function(x) {
   cond <- x$DetailFlag==1
@@ -113,8 +113,8 @@ all.equal(sort(r1), sort(r2))
 bt.out.1 <- bt[complete.cases(bt),]                # drop years with missing data
 bt.out.2 <- subset(bt.out.1, Stock.ID != 166) # drop Osoyooos for now, do not have ocean entry coordinates
 bt.out.2 <- subset(bt.out.2, Stock.ID != 144) # drop Frazer, hatchery influence
-bt.out.3 <- subset(bt.out.2,BY < 2021) # currently have pink-NP data up to 2021, but not other indices
-bt.out.4 <- subset(bt.out.3,BY > 1949)        # do this becasue pre 1950 data is very sparse
+bt.out.3 <- subset(bt.out.2,BY <= 2015) # currently have pink-NP data up to 2021 (+6 yr)
+bt.out.4 <- subset(bt.out.3,BY > 1949)        # do this because pre 1950 data is very sparse
 
 ## Fill in missing years that fall w/in min and max BY for each stock
 bt.out.5 <- fill.time.series(bt.out.4) # this adds NAs and is supposed to! 
@@ -131,15 +131,7 @@ bt.out.6 <- plyr::ddply(bt.out.5, .(Stock.ID), function(i) {
                        })
 
 
-
-## Add alternate Stock ID based on latitude - geo.id
-geo.id <- arrange( unique(bt.out[, c("Stock", "Lat")]) , Lat)
-geo.id$geo_id <- 1:nrow(geo.id)
-bt.out.7 <- left_join(bt.out.6, geo.id, by=c("Stock", "Lat"))
-
-
-
-bt.out <- bt.out.7
+bt.out <- bt.out.6
 head(bt.out)
 tail(bt.out)
 sapply(bt.out, class)

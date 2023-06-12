@@ -229,14 +229,13 @@ f.ind <- f.ind + 1
 ## Smolt Age-1
 ## ~~~~~~~~~~~~~~~~~~~~~~
 for(i in rev(seq_along(oc.reg))) {
-
+  
     dat.i <- sock[sock$Ocean.Region == oc.reg[i], ]
     age.mean <- plyr::ddply(dat.i, .(BY), summarize,
                             mean = mean(ocean_1, na.rm = TRUE))
-
     plot(0, type = "n",
          ylim = c(0, 1),
-         xlim = c(1950, 2010),
+         xlim = c(1950, 2015),
          ylab = "",
          xlab = "",
          axes = FALSE)
@@ -281,7 +280,7 @@ for(k in 1:2 ) {  ## loop over covars
         if(k == 2)
             ylim <- range(sock[ , covars[k]] / scale[k], na.rm = TRUE)
         plot(0, type = "n",
-             xlim = c(1950, 2010),
+             xlim = c(1950, 2015),
              ylim = ylim,
              axes = FALSE)
         abline(v=1975,lty=2,col="dark grey",lwd=1)
@@ -413,8 +412,8 @@ kappa.stock <- hb_param_df(fit, "kappa", "Ocean.Region", "Comp")
 #chi.stock   <- hb_param_df(fit, "chi", "Ocean.Region", "SST x Comp")
 df.dot <- rbind(gamma.stock, kappa.stock ) # , chi.stock)
 df.dot <- ocean_region_lab(df.dot, "region", FALSE)
+df.dot$Stock <- factor(df.dot$Stock, levels = levels(sock$Stock))
 df.dot$var <- factor(df.dot$var, levels = c("SST", "Comp" )) # ,"SST x Comp"))
-df.dot$Stock <- reorder(levels(df.dot$Stock), unique(sock$geo_id)) # prefer not to use sock dataset here
 df.mu <- plyr::ddply(df.dot, .(region, var), summarize,
                      mu_mean = unique(mu_mean),
                      mu_2.5 = unique(`mu_2.5%`),
