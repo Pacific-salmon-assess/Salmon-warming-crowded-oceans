@@ -73,4 +73,5 @@ write.csv(master.bt_w_cov, "data/master_brood_table_covar.csv", row.names=FALSE)
 
 sock <- master.bt_w_cov
 sock$Stock <- geographic.order(sock) # make Stock an ordered factor for plotting
+sock.info$Stock <- geographic.order(sock.info)
 

@@ -10,21 +10,28 @@ geographic.order <- function(x) {
                                 # GOA are ordered E->W 
   # Currently only accepts 3 Ocean Regions but could be generalized later
   
+  wc.ind <- bs.ind <- which(names(x) %in% c("Stock", "Lat", "lat")) # WC and BS stocks organized by latitude
+  goa.ind <- which(names(x) %in% c("Stock", "Lon", "lon")) # GOA stocks organized by longitude
+  
   # Get stock names in each region
-  WC_stk <- unique( x[ which (x$Ocean.Region=="WC"), c("Stock", "Lat") ] )
-  GOA_stk <- unique( x[ which (x$Ocean.Region=="GOA"), c("Stock", "Lon") ] )
-  BS_stk <- unique( x[ which (x$Ocean.Region=="BS"), c("Stock", "Lat") ] )
+  WC_stk <- unique( x[ which (x$Ocean.Region=="WC"), wc.ind  ] )
+  GOA_stk <- unique( x[ which (x$Ocean.Region=="GOA"), goa.ind ] )
+  BS_stk <- unique( x[ which (x$Ocean.Region=="BS"), bs.ind ] )
   
   # Rank by Lat (WC, BS) or Lon (GOA)
-  WC_stk$geo_id <- frank(WC_stk, Lat, ties.method = "first")
-  GOA_stk$geo_id <- nrow(WC_stk) + frank(GOA_stk, -Lon, ties.method = "first")
-  BS_stk$geo_id <- nrow(WC_stk) + nrow(GOA_stk) + frank(BS_stk, Lat, ties.method="first")
+  wc.ind <- which(names(WC_stk) %in% c("Lat", "lat"))
+  goa.ind <- which(names(GOA_stk) %in% c("Lon", "lon"))
+  bs.ind <- which(names(BS_stk) %in% c("Lat", "lat"))
+  
+  WC_stk$geo_id <- data.table::frankv(WC_stk, cols=wc.ind, ties.method = "first")
+  GOA_stk$geo_id <- nrow(WC_stk) + data.table::frankv(GOA_stk, cols=goa.ind, order=-1L, ties.method = "first")
+  BS_stk$geo_id <- nrow(WC_stk) + nrow(GOA_stk) + data.table::frankv(BS_stk, cols=bs.ind, ties.method="first")
   
   #combine them
   geo.id <-  rbind(WC_stk[, c("Stock", "geo_id")], GOA_stk[, c("Stock", "geo_id")], BS_stk[, c("Stock", "geo_id")])
   geo.id <- geo.id[order(geo.id$geo_id), ] # sort in ascending order
   
-  x$Stock <- factor(x$Stock, levels = geo.id$Stock)
+  x$Stock <- factor(x$Stock, levels = geo.id$Stock, ordered = T)
   
   return(x$Stock)
 }
@@ -200,9 +207,9 @@ hb07_density_df <- function(stanfit) {
     adjust <- 1.5
 
     ## Define region column indices
-    ind.wc  <- 1:sum(sock.info$Ocean.Region == "WC") #which(sock.info$Ocean.Region == "WC")
-    ind.goa <- last(ind.wc) + 1: sum(sock.info$Ocean.Region == "GOA") #which(sock.info$Ocean.Region == "GOA")
-    ind.bs  <- last(ind.goa) +1: sum(sock.info$Ocean.Region == "BS") #which(sock.info$Ocean.Region == "BS")
+      ind.wc  <- match(sock.info$Stock[which(sock.info$Ocean.Region == "WC")], levels(sock$Stock) ) 
+      ind.goa <- match(sock.info$Stock[which(sock.info$Ocean.Region == "GOA")], levels(sock$Stock) )#last(ind.wc) + 1: sum(sock.info$Ocean.Region == "GOA") 
+      ind.bs  <- match(sock.info$Stock[which(sock.info$Ocean.Region == "BS")], levels(sock$Stock) )# which(sock.info$Ocean.Region == "BS") #last(ind.goa) +1: sum(sock.info$Ocean.Region == "BS") 
     ind.reg <- list(ind.bs, ind.goa, ind.wc)
     
 
