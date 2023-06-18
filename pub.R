@@ -8,6 +8,8 @@ if(!dir.exists("./pub/")) dir.create("./pub/")
 fit <- hb05a
 fitnam <- "hb05a"
 
+#fit <- hb05r2
+#fitnam <- "hb05r2"
 
 ## Define colors
 col.stock  <- rev(chroma::qpal(7, alpha = 0.4)[c(1, 4, 6)])
@@ -353,6 +355,7 @@ rect(xleft = -165, ybottom = 47, xright = -120, ytop = 61,
 
 
 dev.off()
+
 
 
 ## Fig: Posterior percent change density ------------------- 

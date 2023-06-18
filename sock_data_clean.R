@@ -7,14 +7,23 @@
 
 
 ## Read in downloaded data
-s.brood <- read.table("./data-downloaded/raw_brood_table_2023_05_19.csv",
+# s.brood <- read.table("./data-downloaded/raw_brood_table_2023_05_19.csv",
+#                       sep = ",",skip = 0,
+#                       na.string = c("NA", "ND", "Canadians:  Please check the G-R ages.  "),
+#                       stringsAsFactors = FALSE, header = TRUE)
+# 
+# s.info <- read.table("./data-downloaded/raw_stock_info_2023_05_19.csv", sep = ",",
+#                      skip = 0, stringsAsFactors = FALSE, header = TRUE, quote="", fill=TRUE)
+
+
+## Read in downloaded data
+s.brood <- read.table("./data-downloaded/raw_brood_table_2023_06_18.csv",
                       sep = ",",skip = 0,
                       na.string = c("NA", "ND", "Canadians:  Please check the G-R ages.  "),
                       stringsAsFactors = FALSE, header = TRUE)
 
-s.info <- read.table("./data-downloaded/raw_stock_info_2023_05_19.csv", sep = ",",
+s.info <- read.table("./data-downloaded/raw_stock_info_2023_06_18.csv", sep = ",",
                      skip = 0, stringsAsFactors = FALSE, header = TRUE, quote="", fill=TRUE)
-
 
 
 ## Clean-up master brood table -----------------------------
