@@ -10,14 +10,14 @@
 ## Climate indices download
 
 ## SST raw -------------------------------------------------
-ersst::sst_download(years = 1950:2019,
+ersst::sst_download(years = 1950:2022,
                     months = 1:12,
-                    save.dir = "./data-downloaded/sst_raw/",
+                    save.dir = "./data-downloaded/climate-data/sst_raw/",
                     version = 5)
 
-sst.raw.full <- ersst::sst_load(years = 1950:2019,
+sst.raw.full <- ersst::sst_load(years = 1950:2022,
                                 months = 1:12,
-                                read.dir = "./data-downloaded/sst_raw/",
+                                read.dir = "./data-downloaded/climate-data/sst_raw/",
                                 version = 5)
 
 sst.raw.np <- ersst::sst_subset_space(sst.raw.full,
@@ -33,7 +33,7 @@ write.csv(sst.raw.df, "./data-downloaded/climate-data/sst_raw.csv", row.names = 
 
 
 ## PDO + NPGO ----------------------------------------------
-years <- 1950:2019
+years <- 1950:2022
 pdo <- rsoi::download_pdo(years) 
 npgo <- rsoi::download_npgo(years)
 
