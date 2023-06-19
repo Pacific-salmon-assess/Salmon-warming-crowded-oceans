@@ -9,10 +9,10 @@ p_load(ggplot2, ggspatial, sf, dplyr, chroma)
 
 ## Read in stock.info
 stock.info <- read.csv("data/all_stocks_info_may2023.csv")
-sockeye.info <- read.csv("./data-downloaded/raw_stock_info_2023_05_19.csv")
+sockeye.info <- read.csv("./data-downloaded/raw_stock_info_2023_06_18.csv")
 
 # Clean data 
-stock.info$lat[ which(stock.info$stock.id==144) ] <- 47.16 # fix a typo
+stock.info$lat[ which(stock.info$lat==447.1600) ] <- 47.16 # fix a typo
 stock.info$lon <- -abs(stock.info$lon) # add neg to Lon 
 
 # Combine pink-odd and pink-even
@@ -21,7 +21,7 @@ stock.info$stock.name <- gsub("-Pink-.*", "-Pink", stock.info$stock.name)
 
 # Make summary table that has # stocks at each ocean entry 
 stock.map <- distinct(stock.info[,c("species", "stock.name", "lat", "lon")])
-stock.map <- stock.map %>% group_by(species, lat, lon) %>% summarize(n.stk = n())
+stock.map <- stock.map %>% group_by(species, lat, lon) %>% dplyr::summarize(n.stk = n())
 
 ## Define colors
 col.lt <- rev(chroma::qpal(7)[c(1, 4, 6)])
@@ -93,19 +93,20 @@ for(i in 1:length(sp.ind)) {
 
 # load data - SST
 sst.dat <- read.csv("./data/sst_yr_1_stock_anomalies.csv")
-ind.stks <- as.character(c( 102, 160, 142))
-sst.regs <- c("102"="Southern BC", "160"="Bering Sea", "142"="Gulf of Alaska")
+ind.stks <- as.character(c( 102, 180, 163))
+sst.regs <- c("102"="Southern BC", "180"="Bering Sea", "163"="Gulf of Alaska")
 sst.plot.dat <- filter(sst.dat, Stock.ID %in% as.integer(ind.stks))
 
 # multipanel plot:
 g <- ggplot(sst.plot.dat, aes(x=Year, y=sst_anomaly, col=as.factor(Stock.ID))) + 
   labs(x="Year", y="SST Anomaly") +
   scale_colour_manual(values=col.dk, labels=sst.regs) +
-  geom_line(linewidth=1) + facet_wrap(vars(as.factor(Stock.ID)), nrow=1, labeller=as_labeller(sst.regs)) + 
+  geom_line(linewidth=1, lineend="round") + facet_wrap(vars(as.factor(Stock.ID)), nrow=1, labeller=as_labeller(sst.regs)) + 
   theme_bw() + theme(panel.grid = element_blank(),
                      legend.position = "none", 
                      strip.background = element_rect(fill="white", colour="white"),
                      strip.text = element_text(size=12, face="bold", colour="gray20"))
+
 ggsave(plot=g, "./figures/background-presentation/SST_timeseries.png", width=6, height=2.5, dpi=500)
 
 

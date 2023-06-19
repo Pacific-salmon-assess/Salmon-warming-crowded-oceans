@@ -15,7 +15,7 @@ summary(sst.raw)
 ##   Calculate SST anomalies and average across specified period and region 
 
 ## Calculate SST anomalies
-sst.anom <- sst.anomaly(sst.raw, ref.years = 1950:2019)
+sst.anom <- sst.anomaly(sst.raw, ref.years = 1950:2022)
 head(sst.anom)
 tail(sst.anom)
 summary(sst.anom)
