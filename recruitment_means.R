@@ -4,7 +4,6 @@
 ## Skeena proportions are Table S3 of Price et al (2021) -- "Modern"
 ## Bristol Bay proportions are average prop. from last 10 years of complete data
 
-library(dplyr) 
 
 ##Take Bristol Bay averages
 
