@@ -113,7 +113,7 @@ hb05_density_df <- function(stanfit) {
     y.df$region <- x.df$region
     var  <- ifelse(i == 1, "SST", NA)
     var  <- ifelse(i == 2, "Comp", var)
-    #var  <- ifelse(i == 3, "SST x Comp", var)
+    var  <- ifelse(i == 3, "SST + Comp", var)
     #var  <- ifelse(i == 4, "SST + Comp + SST x Comp", var)
     x.df$var <- var
     y.df$var <- var
@@ -135,7 +135,7 @@ hb05_density_df <- function(stanfit) {
     y.df$region <- "West Coast"
     var  <- ifelse(i == 1, "SST", NA)
     var  <- ifelse(i == 2, "Comp", var)
-    #var  <- ifelse(i == 3, "SST x Comp", var)
+    var  <- ifelse(i == 3, "SST + Comp", var)
     #var  <- ifelse(i == 4, "SST + Comp + SST x Comp", var)
     x.df$var <- var
     y.df$var <- var
@@ -155,7 +155,7 @@ hb05_density_df <- function(stanfit) {
     y.df$region <- "Gulf of Alaska"
     var  <- ifelse(i == 1, "SST", NA)
     var  <- ifelse(i == 2, "Comp", var)
-    #var  <- ifelse(i == 3, "SST x Comp", var)
+    var  <- ifelse(i == 3, "SST + Comp", var)
     #var  <- ifelse(i == 4, "SST + Comp + SST x Comp", var)
     x.df$var <- var
     y.df$var <- var
@@ -175,7 +175,7 @@ hb05_density_df <- function(stanfit) {
     y.df$region <- "Bering Sea"
     var  <- ifelse(i == 1, "SST", NA)
     var  <- ifelse(i == 2, "Comp", var)
-    #var  <- ifelse(i == 3, "SST x Comp", var)
+    var  <- ifelse(i == 3, "SST + Comp", var)
     #var  <- ifelse(i == 4, "SST + Comp + SST x Comp", var)
     x.df$var <- var
     y.df$var <- var
@@ -187,8 +187,8 @@ hb05_density_df <- function(stanfit) {
   s.df <- rbind(s.wc.df, s.goa.df, s.bs.df)
   
   ## Set factor levels
-  s.df$var <- factor(s.df$var, levels = c("SST", "Comp" )) #, "SST x Comp", "SST + Comp + SST x Comp"))
-  m.df$var <- factor(m.df$var, levels = c("SST", "Comp" )) #, "SST x Comp", "SST + Comp + SST x Comp"))
+  s.df$var <- factor(s.df$var, levels = c("SST", "Comp" , "SST + Comp")) #, "SST + Comp + SST x Comp"))
+  m.df$var <- factor(m.df$var, levels = c("SST", "Comp" , "SST + Comp")) #, "SST + Comp + SST x Comp"))
   
   out <- list(stock = s.df,
               region = m.df)

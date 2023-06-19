@@ -17,7 +17,7 @@ col.region <- rev(chroma::qpal(7, luminance = 40)[c(1, 4, 6)])
 col.lt <- rev(chroma::qpal(7)[c(1, 4, 6)])
 col.dk <- rev(chroma::qpal(7, luminance = 30)[c(1, 4, 6)])
 
-## Table: coefficients 
+## Table: coefficients ----
 
 gamma <- summary(fit, pars = "mu_gamma")$summary
 kappa <- summary(fit, pars = "mu_kappa")$summary
@@ -366,6 +366,7 @@ m.df <- lst$region
 ## Covariate labels
 vars <- data.frame(var = levels(m.df$var))
 vars$lab <- paste0("(", letters[1:nrow(vars)], ") ", vars$var)
+vars$var <- factor(vars$var, levels = c("SST", "Comp", "SST + Comp"))
 
 g <- ggplot(m.df) +
     geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
