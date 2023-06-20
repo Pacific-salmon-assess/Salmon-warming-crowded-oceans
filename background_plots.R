@@ -93,8 +93,13 @@ for(i in 1:length(sp.ind)) {
 
 # load data - SST
 sst.dat <- read.csv("./data/sst_yr_1_stock_anomalies.csv")
+<<<<<<< HEAD
 ind.stks <- as.character(c( 102, 180, 163))
 sst.regs <- c("102"="Southern BC", "180"="Bering Sea", "163"="Gulf of Alaska")
+=======
+ind.stks <- as.character(c( 102, 160, 142))
+sst.regs <- c("102"="Southern BC", "160"="Bering Sea", "142"="Gulf of Alaska")
+>>>>>>> b09bc704ac37a58226575e69704eafaac71532c8
 sst.plot.dat <- filter(sst.dat, Stock.ID %in% as.integer(ind.stks))
 
 # multipanel plot:
