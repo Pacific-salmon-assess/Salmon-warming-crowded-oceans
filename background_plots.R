@@ -74,11 +74,11 @@ for(i in 1:length(sp.ind)) {
     coord_sf(xlim=axes$xlims, ylim=axes$ylims) +
     scale_x_continuous(breaks=axes$xbreaks, labels=axes$xlabels) +
     scale_y_continuous(breaks=axes$ybreaks, labels=axes$ylabels) +
-    scale_size_continuous(range=pt.sz[[i]], name="No. of Stocks", breaks=breaks[[i]]) +
-    geom_text(data=NULL, aes(x=-153, y=45, label=paste("Total N = ", n.tot))) +
+    scale_size_continuous(range=pt.sz[[i]], name="No. of stocks", breaks=breaks[[i]]) +
+    geom_text(data=NULL, aes(x=-153, y=45, label=paste("n = ", n.tot))) +
     labs(x="Longitude (°E)", y="Latitude (°N)") +
     theme_bw() + 
-    theme( panel.grid = element_blank(),
+    theme(panel.grid = element_blank(),
            plot.title = element_text(hjust=0.5),
            legend.position = c(0.3, 0.25)
            )
