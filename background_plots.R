@@ -112,6 +112,27 @@ g <- ggplot(sst.plot.dat, aes(x=Year, y=sst_anomaly, col=as.factor(Stock.ID))) +
 ggsave(plot=g, "./figures/background-presentation/SST_timeseries.png", width=6, height=2.5, dpi=500)
 
 
+## ---- SST Timeseries extended --- ##
+
+# load data - SST
+sst.dat <- read.csv("./data/sst_yr_1_stock_anomalies_extend.csv")
+
+ind.stks <- as.character(c( 102, 180, 163))
+sst.regs <- c("102"="Southern BC", "180"="Bering Sea", "163"="Gulf of Alaska")
+
+sst.plot.dat <- filter(sst.dat, Stock.ID %in% as.integer(ind.stks))
+
+# multipanel plot:
+g <- ggplot(sst.plot.dat, aes(x=Year, y=sst_anomaly, col=as.factor(Stock.ID))) + 
+  labs(x="Year", y="SST Anomaly") +
+  scale_colour_manual(values=col.dk, labels=sst.regs) +
+  geom_line(linewidth=1, lineend="round") + facet_wrap(vars(as.factor(Stock.ID)), nrow=1, labeller=as_labeller(sst.regs)) + 
+  theme_bw() + theme(panel.grid = element_blank(),
+                     legend.position = "none", 
+                     strip.background = element_rect(fill="white", colour="white"),
+                     strip.text = element_text(size=12, face="bold", colour="gray20"))
+
+ggsave(plot=g, "./figures/background-presentation/SST_timeseries_extend.png", width=6, height=2.5, dpi=500)
 
 
 ## -- NOT USED -- map with ocean groupings

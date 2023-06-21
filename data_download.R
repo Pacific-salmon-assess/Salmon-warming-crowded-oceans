@@ -40,3 +40,26 @@ npgo <- rsoi::download_npgo(years)
 write.csv(pdo, "./data-downloaded/climate-data/pdo.csv", row.names = FALSE)
 write.csv(npgo, "./data-downloaded/climate-data/npgo.csv", row.names = FALSE)
 
+
+## SST raw extended (1855-present) -------------------------------------------------
+ersst::sst_download(years = 1855:2022,
+                    months = 1:12,
+                    save.dir = "./data-downloaded/climate-data/sst_raw_extend/",
+                    version = 5)
+
+sst.raw.full <- ersst::sst_load(years = 1855:2022,
+                                months = 1:12,
+                                read.dir = "./data-downloaded/climate-data/sst_raw_extend/",
+                                version = 5)
+
+sst.raw.np <- ersst::sst_subset_space(sst.raw.full,
+                                      lat.min = 36,
+                                      lat.max = 80,
+                                      lon.min = 170,
+                                      lon.max = 250)
+
+sst.raw.df <- ersst::sst_dataframe(sst.raw.np)
+
+write.csv(sst.raw.df, "./data-downloaded/climate-data/sst_raw_extend.csv", row.names = FALSE)
+
+
