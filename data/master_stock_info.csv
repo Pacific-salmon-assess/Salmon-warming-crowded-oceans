@@ -20,18 +20,18 @@
 120,"Weaver","Fraser River","WC","WC","Fraser Late",49.12,-123.06,0,50,1966,2015,"FR","West Coast","West Coast"
 124,"Owikeno","BC Central","WC","WC","BC Central",51.68,-127.25,0,24,1987,2010,"AK","West Coast","West Coast"
 125,"Atnarko","BC Central","WC","WC","BC Central",52.38,-126.78,0,25,1987,2011,"AK","West Coast","West Coast"
-126,"Alastair","BC North","WC","GOA","Skeena-Nass",54.12,-130.1,0,54,1960,2013,"AK","West Coast","Gulf of Alaska"
-127,"Babine Early Wild","BC North","WC","GOA","Skeena-Nass",54.12,-130.1,0,55,1960,2014,"AK","West Coast","Gulf of Alaska"
-129,"Babine Late Wild","BC North","WC","GOA","Skeena-Nass",54.12,-130.1,0,55,1960,2014,"AK","West Coast","Gulf of Alaska"
-130,"Babine Mid Wild","BC North","WC","GOA","Skeena-Nass",54.12,-130.1,0,55,1960,2014,"AK","West Coast","Gulf of Alaska"
-131,"Damdochax","BC North","WC","GOA","Skeena-Nass",54.12,-130.1,0,29,1982,2010,"AK","West Coast","Gulf of Alaska"
-134,"Kitsumkalum","BC North","WC","GOA","Skeena-Nass",54.12,-130.1,0,34,1960,1993,"AK","West Coast","Gulf of Alaska"
-135,"Lakelse","BC North","WC","GOA","Skeena-Nass",54.12,-130.1,0,35,1960,1994,"AK","West Coast","Gulf of Alaska"
-136,"Lower Nass Sea & River Type","BC North","WC","GOA","Skeena-Nass",54.12,-130.1,0,34,1982,2015,"AK","West Coast","Gulf of Alaska"
-138,"Meziadin","BC North","WC","GOA","Skeena-Nass",54.12,-130.1,0,32,1982,2013,"AK","West Coast","Gulf of Alaska"
-139,"Morice","BC North","WC","GOA","Skeena-Nass",54.12,-130.1,0,28,1960,1987,"AK","West Coast","Gulf of Alaska"
-150,"Redoubt","SEAK","WC","GOA","SEAK",56.9,-135.33,0,30,1982,2011,"AK","West Coast","Gulf of Alaska"
-152,"Chilkoot","SEAK","WC","GOA","SEAK",58.92,-135.23,0,36,1976,2011,"AK","West Coast","Gulf of Alaska"
+126,"Alastair","BC North","WC","SEAK","Skeena-Nass",54.12,-130.1,0,54,1960,2013,"AK","West Coast",NA
+127,"Babine Early Wild","BC North","WC","SEAK","Skeena-Nass",54.12,-130.1,0,55,1960,2014,"AK","West Coast",NA
+129,"Babine Late Wild","BC North","WC","SEAK","Skeena-Nass",54.12,-130.1,0,55,1960,2014,"AK","West Coast",NA
+130,"Babine Mid Wild","BC North","WC","SEAK","Skeena-Nass",54.12,-130.1,0,55,1960,2014,"AK","West Coast",NA
+131,"Damdochax","BC North","WC","SEAK","Skeena-Nass",54.12,-130.1,0,29,1982,2010,"AK","West Coast",NA
+134,"Kitsumkalum","BC North","WC","SEAK","Skeena-Nass",54.12,-130.1,0,34,1960,1993,"AK","West Coast",NA
+135,"Lakelse","BC North","WC","SEAK","Skeena-Nass",54.12,-130.1,0,35,1960,1994,"AK","West Coast",NA
+136,"Lower Nass Sea & River Type","BC North","WC","SEAK","Skeena-Nass",54.12,-130.1,0,34,1982,2015,"AK","West Coast",NA
+138,"Meziadin","BC North","WC","SEAK","Skeena-Nass",54.12,-130.1,0,32,1982,2013,"AK","West Coast",NA
+139,"Morice","BC North","WC","SEAK","Skeena-Nass",54.12,-130.1,0,28,1960,1987,"AK","West Coast",NA
+150,"Redoubt","SEAK","WC","SEAK","SEAK",56.9,-135.33,0,30,1982,2011,"AK","West Coast",NA
+152,"Chilkoot","SEAK","WC","SEAK","SEAK",58.92,-135.23,0,36,1976,2011,"AK","West Coast",NA
 159,"Copper","PWS","GOA","GOA","PWS",60.46,-144.96,0,50,1961,2010,"AK","Gulf of Alaska","Gulf of Alaska"
 160,"Coghill","PWS","GOA","GOA","PWS",61.06,-147.94,0,48,1962,2009,"AK","Gulf of Alaska","Gulf of Alaska"
 161,"Eshamy","PWS","GOA","GOA","PWS",60.47,-147.94,0,14,1968,1981,"AK","Gulf of Alaska","Gulf of Alaska"

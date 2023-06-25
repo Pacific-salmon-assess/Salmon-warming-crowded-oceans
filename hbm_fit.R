@@ -13,7 +13,7 @@ pars.gen.quant <- c("log_lik", "yhat", "yrep", "yresid") ## Generated quantities
 
 
 ## hb05a.pr1 
-## Total pink North Pacific
+## Total pink North Pacific, all years, three ocean regions
 
 ## Monitor params
 pars.hb05 <- c("alpha", "beta", "sigma", "phi", "mu_alpha", "sigma_alpha",
@@ -66,7 +66,7 @@ dev.off()
 
 
 ## hb05r2.pr1 ----------------------------------------------
-## regime: only brood years post 76/77
+## regime: only brood years post 76/77, total pink North Pacific, three ocean regions
 
 ## Monitor params
 pars.hb05 <- c("alpha", "beta", "sigma", "phi", "mu_alpha", "sigma_alpha",
@@ -119,24 +119,92 @@ plot_hbm_resids(hb05r2, sock[sock$BY >= 1975,])
 dev.off()
 
 
+## hb05oc.pr1 ----------------------------------------------
+## Total pink North Pacific, all years, four ocean regions
 
+## Monitor params
+pars.hb05 <- c("alpha", "beta", "sigma", "phi", "mu_alpha", "sigma_alpha",
+               "gamma", "mu_gamma", "sigma_gamma",
+               "kappa", "mu_kappa", "sigma_kappa")
+save(pars.hb05, file = "./output/pars_hb05.RData")
+
+
+## Run MCMC
+stan.dat.hb05oc <- stan_data(sock,
+                             scale.x1 = TRUE,
+                             var.region = "Ocean.Region2",
+                             var.x2 = "early_sst_stnd",
+                             var.x3 = "np_pinks_sec_stnd")
+hb05oc <- rstan::stan(file = "./stan/hb05_pr1.stan",
+                      data = stan.dat.hb05oc,
+                      pars = c(pars.hb05, pars.gen.quant),
+                      warmup = 1000,
+                      iter = 4000,
+                      cores = 4,
+                      chains = 4,
+                      thin = 2,
+                      seed = 123,
+                      control = list(adapt_delta = 0.90,
+                                     max_treedepth = 10))
+save(hb05oc, file = "./output/models/hb05oc.RData")
+
+## hb05ocr2.pr1 ----------------------------------------------
+## Total pink North Pacific, only brood years post 76/77, four ocean regions
+
+## Monitor params
+pars.hb05 <- c("alpha", "beta", "sigma", "phi", "mu_alpha", "sigma_alpha",
+               "gamma", "mu_gamma", "sigma_gamma",
+               "kappa", "mu_kappa", "sigma_kappa")
+save(pars.hb05, file = "./output/pars_hb05.RData")
+
+
+## Run MCMC
+stan.dat.hb05ocr2 <- stan_data(sock[sock$BY >= 1975, ],
+                             scale.x1 = TRUE,
+                             var.region = "Ocean.Region2",
+                             var.x2 = "early_sst_stnd",
+                             var.x3 = "np_pinks_sec_stnd")
+hb05ocr2 <- rstan::stan(file = "./stan/hb05_pr1.stan",
+                      data = stan.dat.hb05ocr2,
+                      pars = c(pars.hb05, pars.gen.quant),
+                      warmup = 1000,
+                      iter = 4000,
+                      cores = 4,
+                      chains = 4,
+                      thin = 2,
+                      seed = 123,
+                      control = list(adapt_delta = 0.90,
+                                     max_treedepth = 10))
+save(hb05ocr2, file = "./output/models/hb05ocr2.RData")
 
 ## Check pathology -----------------------------------------
 rstan::check_hmc_diagnostics(hb05a)
 rstan::check_hmc_diagnostics(hb05r2)
+rstan::check_hmc_diagnostics(hb05oc)
+rstan::check_hmc_diagnostics(hb05ocr2)
 
 rstan::get_elapsed_time(hb05a)
 rstan::get_elapsed_time(hb05r2)
+rstan::get_elapsed_time(hb05oc)
+rstan::get_elapsed_time(hb05ocr2)
 
 summary(hb05a, pars = pars.hb05)
 summary(hb05r2, pars = pars.hb05)
+summary(hb05oc, pars = pars.hb05)
+summary(hb05ocr2, pars = pars.hb05)
 
 neff_lowest(hb05a, pars = pars.hb05)
 neff_lowest(hb05r2, pars = pars.hb05)
+neff_lowest(hb05oc, pars = pars.hb05)
+neff_lowest(hb05ocr2, pars = pars.hb05)
 
 rhat_highest(hb05a, pars = pars.hb05)
 rhat_highest(hb05r2, pars = pars.hb05)
+rhat_highest(hb05oc, pars = pars.hb05)
+rhat_highest(hb05ocr2, pars = pars.hb05)
 
 pairs_lowest(hb05a, pars = pars.hb05)
 pairs_lowest(hb05r2, pars = pars.hb05)
+pairs_lowest(hb05oc, pars = pars.hb05)
+pairs_lowest(hb05ocr2, pars = pars.hb05)
 

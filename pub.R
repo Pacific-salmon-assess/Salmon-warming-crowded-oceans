@@ -458,3 +458,80 @@ print(g)
 pdf(paste0("./pub/Sfig_coef_dot_main_", fitnam, ".pdf"), width = 6.5, height = 6.0)
     print(g)
 dev.off()
+
+## four ocean region models ----
+## Model with 4 ocean regions ----
+## Which model fit ?
+fit <- hb05oc
+fitnam <- "hb05oc"
+
+#fit <- hb05ocr2
+#fitnam <- "hb05ocr2"
+
+## Define colors
+col.stock  <- rev(chroma::qpal(7, alpha = 0.4)[c(1, 4, 6)])
+col.region <- rev(chroma::qpal(7, luminance = 40)[c(1, 4, 6)])
+col.lt <- rev(chroma::qpal(7)[c(1, 4, 6)])
+col.dk <- rev(chroma::qpal(7, luminance = 30)[c(1, 4, 6)])
+
+## Table: coefficients ----
+
+gamma <- summary(fit, pars = "mu_gamma")$summary
+kappa <- summary(fit, pars = "mu_kappa")$summary
+reg   <- c("West Coast", "SEAK", "Gulf of Alaska", "Bering Sea")
+
+tab.g <- data.frame(reg = reg,
+                    coef = "SST",
+                    lower = gamma[ , "2.5%"],
+                    mean = gamma[ , "mean"],
+                    upper = gamma[ , "97.5%"])
+tab.k <- data.frame(reg = reg,
+                    coef = "Comp",
+                    lower = kappa[ , "2.5%"],
+                    mean = kappa[ , "mean"],
+                    upper = kappa[ , "97.5%"])
+
+tab.coef <- rbind(tab.g, tab.k) # add tab.c if exists
+tab.coef$perc <- (exp(tab.coef$mean) - 1) * 100
+row.names(tab.coef) <- NULL
+names(tab.coef) <- c("Ecosystem", "Coefficient", "Lower 95% CI", "Mean",
+                     "Upper 95% CI", "Mean % change in R/S")
+
+write.csv(tab.coef, file = paste0("./pub/model_coefficients_", fitnam,  ".csv"))
+
+
+## Which model fit ?
+fit <- hb05ocr2
+fitnam <- "hb05ocr2"
+
+## Define colors
+col.stock  <- rev(chroma::qpal(7, alpha = 0.4)[c(1, 4, 6)])
+col.region <- rev(chroma::qpal(7, luminance = 40)[c(1, 4, 6)])
+col.lt <- rev(chroma::qpal(7)[c(1, 4, 6)])
+col.dk <- rev(chroma::qpal(7, luminance = 30)[c(1, 4, 6)])
+
+## Table: coefficients ----
+
+gamma <- summary(fit, pars = "mu_gamma")$summary
+kappa <- summary(fit, pars = "mu_kappa")$summary
+reg   <- c("West Coast", "SEAK", "Gulf of Alaska", "Bering Sea")
+
+tab.g <- data.frame(reg = reg,
+                    coef = "SST",
+                    lower = gamma[ , "2.5%"],
+                    mean = gamma[ , "mean"],
+                    upper = gamma[ , "97.5%"])
+tab.k <- data.frame(reg = reg,
+                    coef = "Comp",
+                    lower = kappa[ , "2.5%"],
+                    mean = kappa[ , "mean"],
+                    upper = kappa[ , "97.5%"])
+
+tab.coef <- rbind(tab.g, tab.k) # add tab.c if exists
+tab.coef$perc <- (exp(tab.coef$mean) - 1) * 100
+row.names(tab.coef) <- NULL
+names(tab.coef) <- c("Ecosystem", "Coefficient", "Lower 95% CI", "Mean",
+                     "Upper 95% CI", "Mean % change in R/S")
+
+write.csv(tab.coef, file = paste0("./pub/model_coefficients_", fitnam,  ".csv"))
+
