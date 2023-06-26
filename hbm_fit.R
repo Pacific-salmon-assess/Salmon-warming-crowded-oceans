@@ -120,8 +120,67 @@ dev.off()
 
 
 
+## hb05c.pr1 ----------------------------------------------
+## 'control': only years & stocks in 2020 analysis
 
-## Check pathology -----------------------------------------
+## TODO run this and check that it works
+
+dat_2020 <- read.csv("./data/master_brood_table_2020.csv", header=T)
+c.by <- unique(dat_2020$BY)
+c.stk <- unique(dat_2020$Stock)
+
+## Monitor params
+pars.hb05 <- c("alpha", "beta", "sigma", "phi", "mu_alpha", "sigma_alpha",
+               "gamma", "mu_gamma", "sigma_gamma",
+               "kappa", "mu_kappa", "sigma_kappa"
+)
+save(pars.hb05, file = "./output/pars_hb05.RData")
+
+
+## Run MCMC
+stan.dat.hb05c <- stan_data(sock[sock$BY %in% c.by & sock$Stock %in% c.stk, ],
+                             scale.x1 = TRUE,
+                             var.x2 = "early_sst_stnd",
+                             var.x3 = "np_pinks_sec_stnd")
+hb05c <- rstan::stan(file = "./stan/hb05_pr1.stan",
+                      data = stan.dat.hb05c,
+                      pars = c(pars.hb05, pars.gen.quant),
+                      warmup = 1000,
+                      iter = 4000,
+                      cores = 4,
+                      chains = 4,
+                      thin = 2,
+                      seed = 123,
+                      control = list(adapt_delta = 0.90,
+                                     max_treedepth = 10))
+save(hb05c, file = "./output/models/hb05c.RData")
+
+pdf("./figures/hbm_fit/hb05c_diag.pdf", width = 7, height = 5)
+coda_neff(get_neff(hb05c, pars = pars.hb05), total_draws(hb05c))
+coda_rhat(get_rhat(hb05c, pars = pars.hb05))
+coda_diag(As.mcmc.list(hb05c, pars = pars.hb05))
+dev.off()
+
+plot_post_pc(hb05c, stan.dat.hb05c$y, data = sock[sock$BY %in% c.by & sock$Stock %in% c.stk, ],
+             pdf.path = "./figures/hbm_fit/hb05c_yrep.pdf")
+
+loo.hb05c <- rstan::loo(hb05c, cores = 4)
+save(loo.hb05c, file = "./output/loo_hb05c.RData")
+waic.hb05c <- loo::waic(loo::extract_log_lik(hb05c, "log_lik"))
+save(waic.hb05c, file = "./output/waic_hb05c.RData")
+pdf("./figures/hbm_fit/hb05c_loo.pdf", width = 7, height = 5)
+plot(loo.hb05c, label_points = TRUE)
+dev.off()
+
+r2.hb05c <- bayes_R2(sock$lnRS[sock$BY %in% c.by & sock$Stock %in% c.stk, ], as.matrix(hb05r2, pars = "yhat"))
+save(r2.hb05c, file = "./output/r2_hb05c.RData")
+
+pdf("./figures/hbm_fit/hb05r2_resid.pdf", width = 8, height = 8)
+plot_hbm_resids(hb05c, sock[sock$BY %in% c.by & sock$Stock %in% c.stk, ])
+dev.off()
+
+
+## Check pathology ----------------------------------------- 
 rstan::check_hmc_diagnostics(hb05a)
 rstan::check_hmc_diagnostics(hb05r2)
 
