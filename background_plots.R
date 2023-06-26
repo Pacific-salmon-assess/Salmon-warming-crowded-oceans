@@ -112,7 +112,25 @@ g <- ggplot(sst.plot.dat, aes(x=Year, y=sst_anomaly, col=as.factor(Stock.ID))) +
 ggsave(plot=g, "./figures/background-presentation/SST_timeseries.png", width=6, height=2.5, dpi=500)
 
 
+## -- inset map for SST fig -- ## 
+sock_coords <- sockeye.info[which(sockeye.info$Stock.ID %in% ind.stks), c("Stock.ID", "Lat", "Lon")]
+g <- ggplot() + 
+  geom_sf(data=na_map, color="grey50", fill="white", linewidth=0.3) + 
+  geom_spatial_point(data = sock_coords,
+                     aes(x=Lon, y=Lat), 
+                     crs=4326, size=5, colour=col.dk, shape="square") +
+  coord_sf(xlim=c(-162, -121), ylim=c(46, 62)) +
+  labs(x="Longitude (°E)", y="Latitude (°N)") +
+  theme_bw() + 
+  theme( panel.grid = element_blank(),
+         axis.text = element_blank(),
+         axis.ticks = element_blank(),
+         axis.title = element_blank(),
+         panel.border = element_rect(colour = "grey60", fill=NA, size=3),
+         panel.background = element_rect(fill='transparent'), 
+         plot.background = element_rect(fill='transparent'))
 
+ggsave(plot=g, "./figures/background-presentation/SST_inset.png", width=3, height=2, dpi=300, bg='transparent')
 
 ## -- NOT USED -- map with ocean groupings
 
