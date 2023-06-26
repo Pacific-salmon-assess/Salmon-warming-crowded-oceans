@@ -368,12 +368,12 @@ ocean_region_lab <- function(data, var = "Ocean.Region", factor = TRUE) {
     lab <- ifelse(data[[var]] == "WC", "West Coast", lab)
     lab <- ifelse(data[[var]] == "GOA", "Gulf of Alaska", lab)
     lab <- ifelse(data[[var]] == "BS", "Bering Sea", lab)
+    lab <- ifelse(data[[var]] == "SEAK", "SEAK", lab)
     if(factor)
         lab <- factor(lab, levels = unique(lab))
     data[["ocean_region_lab"]] <- lab
     return(data)
 }
-
 
 
 ## plot_hbm_resids -----------------------------------------
