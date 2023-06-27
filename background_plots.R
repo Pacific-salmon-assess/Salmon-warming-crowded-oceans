@@ -74,11 +74,11 @@ for(i in 1:length(sp.ind)) {
     coord_sf(xlim=axes$xlims, ylim=axes$ylims) +
     scale_x_continuous(breaks=axes$xbreaks, labels=axes$xlabels) +
     scale_y_continuous(breaks=axes$ybreaks, labels=axes$ylabels) +
-    scale_size_continuous(range=pt.sz[[i]], name="No. of Stocks", breaks=breaks[[i]]) +
-    geom_text(data=NULL, aes(x=-153, y=45, label=paste("Total N = ", n.tot))) +
+    scale_size_continuous(range=pt.sz[[i]], name="No. of stocks", breaks=breaks[[i]]) +
+    geom_text(data=NULL, aes(x=-153, y=45, label=paste("n = ", n.tot))) +
     labs(x="Longitude (°E)", y="Latitude (°N)") +
     theme_bw() + 
-    theme( panel.grid = element_blank(),
+    theme(panel.grid = element_blank(),
            plot.title = element_text(hjust=0.5),
            legend.position = c(0.3, 0.25)
            )
@@ -101,6 +101,29 @@ sst.plot.dat <- filter(sst.dat, Stock.ID %in% as.integer(ind.stks))
 
 # multipanel plot:
 g <- ggplot(sst.plot.dat, aes(x=Year, y=sst_anomaly, col=as.factor(Stock.ID))) + 
+  labs(x="Year", y="SST anomaly @ ocean entry") +
+  scale_colour_manual(values=col.dk, labels=sst.regs) +
+  geom_line(linewidth=1, lineend="round") + facet_wrap(vars(as.factor(Stock.ID)), nrow=1, labeller=as_labeller(sst.regs)) + 
+  theme_bw() + theme(panel.grid = element_blank(),
+                     legend.position = "none", 
+                     strip.background = element_rect(fill="white", colour="white"),
+                     strip.text = element_text(size=12, face="bold", colour="gray20"))
+
+ggsave(plot=g, "./figures/background-presentation/SST_timeseries.png", width=7, height=3, dpi=500)
+
+
+## ---- SST Timeseries extended --- ##
+
+# load data - SST
+sst.dat <- read.csv("./data/sst_yr_1_stock_anomalies_extend.csv")
+
+ind.stks <- as.character(c( 102, 180, 163))
+sst.regs <- c("102"="Southern BC", "180"="Bering Sea", "163"="Gulf of Alaska")
+
+sst.plot.dat <- filter(sst.dat, Stock.ID %in% as.integer(ind.stks))
+
+# multipanel plot:
+g <- ggplot(sst.plot.dat, aes(x=Year, y=sst_anomaly, col=as.factor(Stock.ID))) + 
   labs(x="Year", y="SST Anomaly") +
   scale_colour_manual(values=col.dk, labels=sst.regs) +
   geom_line(linewidth=1, lineend="round") + facet_wrap(vars(as.factor(Stock.ID)), nrow=1, labeller=as_labeller(sst.regs)) + 
@@ -109,8 +132,7 @@ g <- ggplot(sst.plot.dat, aes(x=Year, y=sst_anomaly, col=as.factor(Stock.ID))) +
                      strip.background = element_rect(fill="white", colour="white"),
                      strip.text = element_text(size=12, face="bold", colour="gray20"))
 
-ggsave(plot=g, "./figures/background-presentation/SST_timeseries.png", width=6, height=2.5, dpi=500)
-
+ggsave(plot=g, "./figures/background-presentation/SST_timeseries_extend.png", width=6, height=2.5, dpi=500)
 
 ## -- inset map for SST fig -- ## 
 sock_coords <- sockeye.info[which(sockeye.info$Stock.ID %in% ind.stks), c("Stock.ID", "Lat", "Lon")]
@@ -129,6 +151,7 @@ g <- ggplot() +
          panel.border = element_rect(colour = "grey60", fill=NA, size=3),
          panel.background = element_rect(fill='transparent'), 
          plot.background = element_rect(fill='transparent'))
+
 
 ggsave(plot=g, "./figures/background-presentation/SST_inset.png", width=3, height=2, dpi=300, bg='transparent')
 

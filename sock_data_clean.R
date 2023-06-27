@@ -148,7 +148,7 @@ summary(bt.out)
 
 ## Add alternate ocean.region grouping
 bt.out$Ocean.Region2 <- bt.out$Ocean.Region
-bt.out$Ocean.Region2 <- ifelse(bt.out$Region %in% c("SEAK", "BC North"), "GOA", bt.out$Ocean.Region2)
+bt.out$Ocean.Region2 <- ifelse(bt.out$Region %in% c("SEAK", "BC North"), "SEAK", bt.out$Ocean.Region2)
 
 
 write.csv(bt.out, "./data/master_brood_table.csv", row.names = FALSE)

@@ -458,3 +458,134 @@ print(g)
 pdf(paste0("./pub/Sfig_coef_dot_main_", fitnam, ".pdf"), width = 6.5, height = 6.0)
     print(g)
 dev.off()
+
+## four ocean region models ----
+## Model with 4 ocean regions ----
+## Which model fit ?
+fit <- hb05oc
+fitnam <- "hb05oc"
+
+#fit <- hb05ocr2
+#fitnam <- "hb05ocr2"
+
+## Define colors
+col.stock  <- rev(chroma::qpal(7, alpha = 0.4)[c(1, 4, 6)])
+col.region <- rev(chroma::qpal(7, luminance = 40)[c(1, 4, 6)])
+col.lt <- rev(chroma::qpal(7)[c(1, 4, 6)])
+col.dk <- rev(chroma::qpal(7, luminance = 30)[c(1, 4, 6)])
+
+## Table: coefficients ----
+
+gamma <- summary(fit, pars = "mu_gamma")$summary
+kappa <- summary(fit, pars = "mu_kappa")$summary
+reg   <- c("West Coast", "SEAK", "Gulf of Alaska", "Bering Sea")
+
+tab.g <- data.frame(reg = reg,
+                    coef = "SST",
+                    lower = gamma[ , "2.5%"],
+                    mean = gamma[ , "mean"],
+                    upper = gamma[ , "97.5%"])
+tab.k <- data.frame(reg = reg,
+                    coef = "Comp",
+                    lower = kappa[ , "2.5%"],
+                    mean = kappa[ , "mean"],
+                    upper = kappa[ , "97.5%"])
+
+tab.coef <- rbind(tab.g, tab.k) # add tab.c if exists
+tab.coef$perc <- (exp(tab.coef$mean) - 1) * 100
+row.names(tab.coef) <- NULL
+names(tab.coef) <- c("Ecosystem", "Coefficient", "Lower 95% CI", "Mean",
+                     "Upper 95% CI", "Mean % change in R/S")
+
+write.csv(tab.coef, file = paste0("./pub/model_coefficients_", fitnam,  ".csv"))
+
+
+## Which model fit ?
+fit <- hb05ocr2
+fitnam <- "hb05ocr2"
+
+## Define colors
+col.stock  <- rev(chroma::qpal(7, alpha = 0.4)[c(1, 4, 6)])
+col.region <- rev(chroma::qpal(7, luminance = 40)[c(1, 4, 6)])
+col.lt <- rev(chroma::qpal(7)[c(1, 4, 6)])
+col.dk <- rev(chroma::qpal(7, luminance = 30)[c(1, 4, 6)])
+
+## Table: coefficients ----
+
+gamma <- summary(fit, pars = "mu_gamma")$summary
+kappa <- summary(fit, pars = "mu_kappa")$summary
+reg   <- c("West Coast", "SEAK", "Gulf of Alaska", "Bering Sea")
+
+tab.g <- data.frame(reg = reg,
+                    coef = "SST",
+                    lower = gamma[ , "2.5%"],
+                    mean = gamma[ , "mean"],
+                    upper = gamma[ , "97.5%"])
+tab.k <- data.frame(reg = reg,
+                    coef = "Comp",
+                    lower = kappa[ , "2.5%"],
+                    mean = kappa[ , "mean"],
+                    upper = kappa[ , "97.5%"])
+
+tab.coef <- rbind(tab.g, tab.k) # add tab.c if exists
+tab.coef$perc <- (exp(tab.coef$mean) - 1) * 100
+row.names(tab.coef) <- NULL
+names(tab.coef) <- c("Ecosystem", "Coefficient", "Lower 95% CI", "Mean",
+                     "Upper 95% CI", "Mean % change in R/S")
+
+write.csv(tab.coef, file = paste0("./pub/model_coefficients_", fitnam,  ".csv"))
+
+## Fig: dot + density main --------------------------------- 
+## Define colors
+col.stock  <- rev(chroma::qpal(7, alpha = 0.4)[c(1, 3, 5, 7)])
+col.region <- rev(chroma::qpal(7, luminance = 40)[c(1, 3, 5, 7)])
+col.lt <- rev(chroma::qpal(7)[c(1, 3, 5, 7)])
+col.dk <- rev(chroma::qpal(7, luminance = 30)[c(1, 3, 5, 7)])
+
+## Fig: dot + density main --------------------------------- 
+gamma.stock <- hb_param_df(fit, "gamma", "Ocean.Region2", "SST")
+kappa.stock <- hb_param_df(fit, "kappa", "Ocean.Region2", "Comp")
+df.dot <- rbind(gamma.stock, kappa.stock ) # , chi.stock)
+df.dot <- ocean_region_lab(df.dot, "region", FALSE)
+df.dot$Stock <- factor(df.dot$Stock, levels = levels(sock$Stock))
+df.dot$var <- factor(df.dot$var, levels = c("SST", "Comp" )) # ,"SST x Comp"))
+df.mu <- plyr::ddply(df.dot, .(region, var), summarize,
+                     mu_mean = unique(mu_mean),
+                     mu_2.5 = unique(`mu_2.5%`),
+                     mu_97.5 = unique(`mu_97.5%`),
+                     ocean_region_lab = unique(ocean_region_lab),
+                     ystart = Stock[1],
+                     yend = Stock[length(Stock)])
+
+g <- ggplot(df.dot) +
+  geom_vline(xintercept = 0, color = "grey50", linetype = 2, size = 0.25) +
+  geom_point(aes(x = mean, y = Stock, color = ocean_region_lab, shape = ocean_region_lab)) +
+  geom_segment(aes(y = Stock, yend = Stock, x = `2.5%`, xend = `97.5%`,
+                   color = ocean_region_lab), linewidth = 0.25) +
+  geom_segment(data = df.mu, aes(y = ystart, yend = yend, x = mu_mean, xend = mu_mean,
+                                 color = ocean_region_lab), linewidth = 0.25) +
+  geom_rect(data = df.mu, aes(xmin = mu_2.5, xmax = mu_97.5, ymin = ystart,
+                              ymax = yend, fill = ocean_region_lab),
+            alpha = 0.2) +
+  scale_color_manual(values = rev(col.region)) +
+  scale_shape_manual(values = c(15, 16, 17, 18)) +
+  scale_fill_manual(values = rev(col.region), guide="none") +
+  labs(x = "Coefficient",
+       y = "",
+       color = "",
+       shape = "") +
+  facet_wrap( ~ var) +
+  scale_x_continuous(breaks=c(-0.25,0,0.25))+
+  theme_sleek(base_size = 10) +
+  theme(legend.justification = c(0, 0),
+        legend.position = c(0.01, 0.87),
+        legend.key.size = unit(10, "pt"),
+        legend.background = element_blank(),
+        legend.text = element_text(size = 8),
+        panel.spacing.x = unit(-0.5, "pt"))
+print(g)
+
+
+pdf(paste0("./pub/Sfig_coef_dot_main_", fitnam, ".pdf"), width = 6.5, height = 6.0)
+print(g)
+dev.off()
