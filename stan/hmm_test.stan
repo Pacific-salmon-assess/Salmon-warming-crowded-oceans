@@ -35,7 +35,8 @@ transformed parameters {
 { // Forward algorithm log p(z_t = j | y_{1:t})
   real accumulator1[K];
 
-  logalpha[1] = log(pi1) + normal_lpdf(R_S[1] |log_a - b*S[1] + beta1*X1, sigma);
+  logalpha[1] = log(pi1) + normal_lpdf(R_S[1] |log_a - b*S[1] + beta1*X1[1], sigma);
+  
 
   for (t in 2:N) {
   for (j in 1:K) { // j = current (t)
@@ -74,9 +75,7 @@ generated quantities {
   vector[K] gamma[N];
   
   real S_max;
-  vector[K] U_msy;
-  vector[K] S_msy;
-  
+ 
   
   { // Forward algortihm
   for (t in 1:N)
@@ -94,7 +93,7 @@ generated quantities {
   for (i in 1:K) { // i = next (t)
   // Murphy (2012) Eq. 17.58
   // backwards t + transition prob + local evidence at t
-  accumulator2[i] = logbeta[t, i] + log(A[j, i]) + normal_lpdf(R_S[t] | log_a - b*S[t]+beta1[j]*X1[t], sigma);
+  accumulator2[i] = logbeta[t, i] + log(A[j, i]) + normal_lpdf(R_S[t] | log_a - b*S[t]+beta1[i]*X1[t], sigma);
   }
   logbeta[t-1, j] = log_sum_exp(accumulator2);
   }
@@ -122,7 +121,7 @@ generated quantities {
       delta[t, j] = negative_infinity();
       for (i in 1:K) { // i = previous (t-1)
         real logp;
-        logp = delta[t-1, i] + log(A[i, j]) + normal_lpdf(R_S[t] | log_a - b*S[t]+beta1[j]*X1[1], sigma);
+        logp = delta[t-1, i] + log(A[i, j]) + normal_lpdf(R_S[t] | log_a - b*S[t]+beta1[j]*X1[t], sigma);
         if (logp > delta[t, j]) {
           bpointer[t, j] = i;
           delta[t, j] = logp;
