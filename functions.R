@@ -831,14 +831,14 @@ total_draws <- function(stanfit) {
 
 
 
-## stan_data -----------------------------------------------
-stan_data <- function(data,
+## stan_data_stat -----------------------------------------------
+stan_data_stat <- function(data,
                       var.x2 = "early_sst_stnd",
                       var.x3 = "np_pinks_stnd",
                       var.region = "Ocean.Region",
                       scale.x1 = FALSE,
                       priors.only = FALSE) {
-    ## Get list of data for input to Stan
+    ## Get list of data for input to Stan for stationary models 
     ##
     ## data = data.frame of salmon data
     ## var.x2 = column name in `data` of x2 variable
@@ -923,6 +923,119 @@ if(FALSE) {
     stan_data(sock)
 
 }
+
+## -- stan_data_dyn --------------------------------------------
+stan_data_dyn <- function(data,
+                      var.x2 = "early_sst_stnd",
+                      breakpoint1 = 1989,
+                      breakpoint2 = NULL,
+                      scale.x1 = FALSE,
+                      var.region = "Ocean.Region",
+                      prior.sigma.gamma = c(df = 3, mu = 0, sd = 0.5),
+                      priors.only = FALSE) {
+  ## Get list of data for input to Stan 'dynamic' models (i.e. random walk and breakpoint, HMM?)
+  ##
+  ## data = data.frame of salmon data
+  ## var.x2 = column name in `data` of x2 variable
+  ## breakpoint1 = year for start of second era
+  ## breakpoint2 = year for start of third era, if NULL, only two eras are
+  ##               returned defined by breapoint1
+  ## scale.x1 = logical, should the x1 (scaled) be scaled to N(0, 1)
+  ## prior.sigma.gamma = Student-t prior parameters for sigma_gamma
+  ## priors.only = logical indicating if a likelihood should be calculated
+  ##               TRUE indicates prior predictive distributions will be
+  ##               sampled only
+  
+  sock.stan <- data
+  
+  ## Set factor levels for var.region
+  sock.stan[[var.region]] <- factor(sock.stan[[var.region]],
+                                   levels = unique(sock.stan[[var.region]]))
+  
+  
+  ## Get start/end for each Stock
+  start.end  <- levels_start_end(sock.stan$Stock)
+  
+  ## Get grouping factor for series
+  sock.stan[["OC_REGION_DUMMY"]] <- sock.stan[[var.region]]
+  
+  grp.df <- plyr::ddply(sock.stan, .(Stock), summarize,
+                        group = unique(var.region))
+  g.grp <- as.numeric(factor(grp.df$group, levels = unique(grp.df$group)))
+  
+  a.grp.df <- plyr::ddply(sock.stan, .(Stock), summarize,
+                          group = unique(region))
+  a.grp <- ifelse(a.grp.df$group == "Fraser River", 1, 2)
+  
+  
+  ## Get start/end for group-specific gamma series
+  start.end.grp.lst <- lapply(split(sock.stan, sock.stan[[var.region]]),
+                              function(x) min(x$BY):max(x$BY))
+  start.end.grp.vec <- unlist(lapply(seq_along(start.end.grp.lst),
+                                     function(x) rep(x, length(start.end.grp.lst[[x]]))))
+  start.end.grp <- levels_start_end(as.factor(start.end.grp.vec))
+  
+  
+  ## Get year indices (map gamma -> y) ## Caution: Regions hard coded here?
+   year.lst  <- lapply(split(sock.stan, sock.stan[[var.region]]),
+                      function(x) as.numeric(as.factor(x$BY)))
+  if(length(unique(sock.stan[[var.region]])) == 1) {
+    year <- year.lst[[1]]
+  } else {
+    year <- c(year.lst$WC, year.lst$GOA + max(year.lst$WC))
+    year <- c(year, year.lst$BS + max(year))
+  }
+  
+  if(scale.x1) {
+    x1 <- plyr::ddply(data, .(Stock), transform,
+                      x1 = scale(spawners)[ , 1])$x1
+  } else {
+    x1 = data$spawners
+  }
+  
+  if(is.null(breakpoint2)) {
+    era1 <- ifelse(sock.stan$BY < breakpoint1, 1, 0)
+    era2 <- ifelse(sock.stan$BY >= breakpoint1, 1, 0)
+    era3 <- NULL
+  } else {
+    era1 <- ifelse(sock.stan$BY < breakpoint1, 1, 0)
+    era2 <- ifelse(sock.stan$BY >= breakpoint1 &
+                     sock.stan$BY < breakpoint2, 1, 0)
+    era3 <- ifelse(sock.stan$BY >= breakpoint2, 1, 0)
+  }
+  
+  
+  lst <- list(y = sock.stan$ln_rps,
+              x1 = x1,
+              x2 = sock.stan[[var.x2]],
+              g_group = g.grp,
+              a_group = a.grp,
+              year = year,
+              era1 = era1,
+              era2 = era2,
+              era3 = era3,
+              n_series = length(unique(sock.stan$Stock)),
+              Ng_groups = length(unique(sock.stan[[var.region]])),
+              Na_groups = length(unique(a.grp)),
+              y_start = start.end$start,
+              y_end = start.end$end,
+              g_start = start.end.grp$start,
+              g_end = start.end.grp$end,
+              Ng = length(start.end.grp.vec),
+              priors_only = ifelse(priors.only, 1, 0),
+              sigma_gamma_df = prior.sigma.gamma[1],
+              sigma_gamma_mu = prior.sigma.gamma[2],
+              sigma_gamma_sd = prior.sigma.gamma[3],
+              N = nrow(sock.stan))
+  out <- Filter(Negate(is.null), lst)
+  return(out)
+}
+
+if(FALSE) {
+  stan_data(sock.covar, "sst_anom_stnd")
+}
+
+
 
 
 ## level_start_end -----------------------------------------

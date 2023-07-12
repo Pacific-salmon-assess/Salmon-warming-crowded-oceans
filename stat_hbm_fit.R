@@ -23,7 +23,7 @@ save(pars.hb05, file = "./output/pars_hb05.RData")
 
 
 ## Run MCMC
-stan.dat.hb05a <- stan_data(sock,
+stan.dat.hb05a <- stan_data_stat(sock,
                             scale.x1 = TRUE,
                             var.x2 = "early_sst_stnd",
                             var.x3 = "np_pinks_sec_stnd")
@@ -78,7 +78,7 @@ save(pars.hb05, file = "./output/pars_hb05.RData")
 
 
 ## Run MCMC
-stan.dat.hb05r2 <- stan_data(sock[sock$BY >= 1975, ],
+stan.dat.hb05r2 <- stan_data_stat(sock[sock$BY >= 1975, ],
                              scale.x1 = TRUE,
                              var.x2 = "early_sst_stnd",
                              var.x3 = "np_pinks_sec_stnd")
@@ -135,7 +135,7 @@ c.by <- unique(dat_2020$BY)
 c.stk <- unique(dat_2020$Stock)
 
 ## Run MCMC
-stan.dat.hb05c <- stan_data(sock[sock$BY %in% c.by & sock$Stock %in% c.stk, ],
+stan.dat.hb05c <- stan_data_stat(sock[sock$BY %in% c.by & sock$Stock %in% c.stk, ],
                             scale.x1 = TRUE,
                             var.x2 = "early_sst_stnd",
                             var.x3 = "np_pinks_sec_stnd")
@@ -187,7 +187,7 @@ pars.hb05 <- c("alpha", "beta", "sigma", "phi", "mu_alpha", "sigma_alpha",
 save(pars.hb05, file = "./output/pars_hb05.RData")
 
 ## Run MCMC
-stan.dat.hb05oc <- stan_data(sock,
+stan.dat.hb05oc <- stan_data_stat(sock,
                              scale.x1 = TRUE,
                              var.region = "Ocean.Region2",
                              var.x2 = "early_sst_stnd",
@@ -241,7 +241,7 @@ save(pars.hb05, file = "./output/pars_hb05.RData")
 
 
 ## Run MCMC
-stan.dat.hb05ocr2 <- stan_data(sock[sock$BY >= 1975, ],
+stan.dat.hb05ocr2 <- stan_data_stat(sock[sock$BY >= 1975, ],
                              scale.x1 = TRUE,
                              var.region = "Ocean.Region2",
                              var.x2 = "early_sst_stnd",

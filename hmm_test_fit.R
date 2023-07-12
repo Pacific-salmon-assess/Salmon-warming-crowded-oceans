@@ -46,15 +46,15 @@ save(hmm_test, file = paste0("./output/models/hmm_test_", levels(sock$Stock)[i],
 post=rstan::extract(hmm_test)
 
 
-# dim 6000, 2 (K?) # beta1 is first covar
+# beta1 : dim (6000, 2=K)
 hmm_outputs[1,,] <- rep(apply(post$beta1, 2, median), times=hmm.stan.dat$N) 
-# gamma : dim (6000, 48=N years, 2=K)
+# gamma : dim (6000, N years, 2=K)
 hmm_outputs[2,,] <- t( apply(post$gamma, c(2,3), median) )
-# alpha : dim (6000, 48=N years, 2=K)
+# alpha : dim (6000, N years, 2=K)
 hmm_outputs[3,,] <- t( apply(post$alpha, c(2,3), median) )
-# beta : dim (6000, 48=N years, 2=K) # beta is ricker b 
+# beta : dim (6000, N years, 2=K) # beta is ricker b 
 hmm_outputs[4,,] <- t( apply(post$beta, c(2,3), median) )
-# log_lik : dim(6000, 48) 
+# log_lik : dim(6000, N years) 
 hmm_outputs[5,,] <- rep( apply(post$log_lik, c(2), median), each=nlvl )
 
 
@@ -74,9 +74,7 @@ hmm_out_2$BY <- as.numeric(as.character(hmm_out_2$BY)) # this is so dumb
 
 hmm_tidy <- hmm_out_2
 ## Plot results
-# Plot gamma over time (prob of being in each state?)
-  # horiz line at 0.5
-# Plot (??) the linearized ricker with alpha, beta, and beta1 (stock-specific)
+
 # density plot of covariate terms (beta1) across stocks?
 
 ## Gamma (State 1) over time 
@@ -92,9 +90,19 @@ print(g)
 }
 dev.off()
 
-## Density plots of beta1 estimates
+# Covariate effects for each state by stock
+## Density plots of beta1 estimates # not that useful
 hmm_tidy %>% ggplot(aes(x=beta1, fill=state_K)) + 
   geom_histogram() + theme_minimal()
+# Dot plot of the covar effects by stock
+asc.beta <- hmm_tidy$stock[match(sort(unique(hmm_tidy$beta1[which(hmm_tidy$state_K == "State 1")])), hmm_tidy$beta1)]
+hmm_tidy %>% ggplot(aes(x=beta1, y=factor(stock, levels=asc.beta), colour=state_K)) +
+  geom_point() # this actually hurts my eyes
 
 
-# Plot the linearized ricker with alpha, beta, and beta1 (stock-specific) - look at single_stock function code
+# LOO
+# elpd1=loo::loo(posterior::as_draws_matrix(ll1_df)) # insert the log-likelihood
+# loo::loo_compare(elpd1,elpd2)
+
+
+

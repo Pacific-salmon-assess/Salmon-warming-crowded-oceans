@@ -26,6 +26,10 @@ source("sock_explore.R") #(6)
 source("single_stock.R") # (7)
 source("hbm_fit.R") #(8)
 source("pub.R") #(9)
+source("dynamic_hbm_fit.R") #(10)
+source("dynamic_hbm_inf.R") #(11)
+source("hmm_test_fit.R") # (12)
+
 
 time.run <- proc.time() - time.start
 round(time.run[3] / 60, 4)
