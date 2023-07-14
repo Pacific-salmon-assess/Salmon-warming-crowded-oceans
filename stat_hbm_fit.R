@@ -212,7 +212,7 @@ coda_rhat(get_rhat(hb05oc, pars = pars.hb05))
 coda_diag(As.mcmc.list(hb05oc, pars = pars.hb05))
 dev.off()
 
-plot_post_pc(hb05oc, stan.dat.hb05oc$y, data = sock[sock$BY >= 1975,],
+plot_post_pc(hb05oc, stan.dat.hb05oc$y, data = sock,
              pdf.path = "./figures/hbm_fit/hb05oc_yrep.pdf")
 
 loo.hb05oc <- rstan::loo(hb05oc, cores = 4)
@@ -223,11 +223,11 @@ pdf("./figures/hbm_fit/hb05oc_loo.pdf", width = 7, height = 5)
 plot(loo.hb05oc, label_points = TRUE)
 dev.off()
 
-r2.hb05oc <- bayes_R2(sock$lnRS[sock$BY >= 1975], as.matrix(hb05oc, pars = "yhat"))
+r2.hb05oc <- bayes_R2(sock$lnRS, as.matrix(hb05oc, pars = "yhat"))
 save(r2.hb05oc, file = "./output/r2_hb05oc.RData")
 
 pdf("./figures/hbm_fit/hb05oc_resid.pdf", width = 8, height = 8)
-plot_hbm_resids(hb05oc, sock[sock$BY >= 1975,])
+plot_hbm_resids(hb05oc, sock)
 dev.off()
 
 ## hb05ocr2.pr1 ----------------------------------------------
@@ -316,7 +316,7 @@ rhat_highest(hb05c, pars = pars.hb05)
 rhat_highest(hb05oc, pars = pars.hb05)
 rhat_highest(hb05ocr2, pars = pars.hb05)
 
-pairs_lowest(hb05a, pars = pars.hb05)
+pairs_lowest(hb05a, pars = pars.hb05) # can ignore 'warning: not a graphical parameter'
 pairs_lowest(hb05r2, pars = pars.hb05)
 pairs_lowest(hb05c, pars = pars.hb05)
 pairs_lowest(hb05oc, pars = pars.hb05)

@@ -7,16 +7,6 @@
 
 
 ## Read in downloaded data
-# s.brood <- read.table("./data-downloaded/raw_brood_table_2023_05_19.csv",
-#                       sep = ",",skip = 0,
-#                       na.string = c("NA", "ND", "Canadians:  Please check the G-R ages.  "),
-#                       stringsAsFactors = FALSE, header = TRUE)
-# 
-# s.info <- read.table("./data-downloaded/raw_stock_info_2023_05_19.csv", sep = ",",
-#                      skip = 0, stringsAsFactors = FALSE, header = TRUE, quote="", fill=TRUE)
-
-
-## Read in downloaded data
 s.brood <- read.table("./data-downloaded/raw_brood_table_2023_06_18.csv",
                       sep = ",",skip = 0,
                       na.string = c("NA", "ND", "Canadians:  Please check the G-R ages.  "),
@@ -64,7 +54,7 @@ if(!"R2.5" %in% names(s.brood)) {
  # Use detailed recruit info if it exists, and average proportions if not
 source("recruitment_means.R")
 
-bt <- plyr::ddply(s.brood.use, c("Stock.ID", "BY"),function(x) {
+bt <- ddply(s.brood.use, c("Stock.ID", "BY"),function(x) {
   cond <- x$DetailFlag==1
 	R <- if_else(cond, sum(x[ , grep("^R[[:digit:]]\\.[[:digit:]]", names(x))], na.rm = TRUE), 
 	             x$TotalRecruits) # keep total recruits as is if no detail, otherwise sum recruits
@@ -131,7 +121,7 @@ bt.out.5 <- fill.time.series(bt.out.4) # this adds NAs and is supposed to!
 
 ## Trim time series of NA values by selecting the longest
 ## string of consecutive brood years for stocks with NA values.
-bt.out.6 <- plyr::ddply(bt.out.5, .(Stock.ID), function(i) {
+bt.out.6 <- ddply(bt.out.5, .(Stock.ID), function(i) {
                         BY <- i$BY
                         R  <- i$R
                         BY.na <- ifelse(is.na(R), NA, BY)
@@ -156,7 +146,7 @@ write.csv(bt.out, "./data/master_brood_table.csv", row.names = FALSE)
 
 
 ## Create stock info table ---------------------------------
-s.info.brood <- plyr::ddply(bt.out, .(Stock.ID), summarize,
+s.info.brood <- ddply(bt.out, .(Stock.ID), summarize,
                             Stock = unique(Stock),
                             Region = unique(Region),
                             Ocean.Region = unique(Ocean.Region),
@@ -168,16 +158,15 @@ s.info.brood <- plyr::ddply(bt.out, .(Stock.ID), summarize,
                             n_years = sum(!is.na(R)),
                             yr_start = min(BY),
                             yr_end = max(BY))
-s.info.brood$alpha_region <- ifelse(s.info.brood$Region == "Fraser River", "FR", "AK")
-s.info.brood$ocean_label <- NA
-s.info.brood$ocean_label <- ifelse(s.info.brood$Ocean.Region == "WC", "West Coast", s.info.brood$ocean_label)
-s.info.brood$ocean_label <- ifelse(s.info.brood$Ocean.Region == "GOA", "Gulf of Alaska", s.info.brood$ocean_label)
-s.info.brood$ocean_label <- ifelse(s.info.brood$Ocean.Region == "BS", "Bering Sea", s.info.brood$ocean_label)
 
-s.info.brood$ocean_label2 <- NA
-s.info.brood$ocean_label2 <- ifelse(s.info.brood$Ocean.Region2 == "WC", "West Coast", s.info.brood$ocean_label2)
-s.info.brood$ocean_label2 <- ifelse(s.info.brood$Ocean.Region2 == "GOA", "Gulf of Alaska", s.info.brood$ocean_label2)
-s.info.brood$ocean_label2 <- ifelse(s.info.brood$Ocean.Region2 == "BS", "Bering Sea", s.info.brood$ocean_label2)
+s.info.brood$alpha_region <- ifelse(s.info.brood$Region == "Fraser River", "FR", "AK")
+s.info.brood$ocean_label <- case_when(s.info.brood$Ocean.Region == "WC" ~ "West Coast",
+                                      s.info.brood$Ocean.Region == "GOA" ~ "Gulf of Alaska",
+                                      s.info.brood$Ocean.Region == "BS" ~ "Bering Sea")
+s.info.brood$ocean_label2 <- case_when(s.info.brood$Ocean.Region2 == "WC" ~ "West Coast", 
+                                       s.info.brood$Ocean.Region2 == "GOA" ~ "Gulf of Alaska", 
+                                       s.info.brood$Ocean.Region2 == "BS" ~ "Bering Sea",
+                                       s.info.brood$Ocean.Region2 == "SEAK" ~ "Southeast Alaska")
 
 write.csv(s.info.brood, "./data/master_stock_info.csv", row.names = FALSE)
 

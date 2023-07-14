@@ -10,10 +10,6 @@ if(!dir.exists("./output/hbm_fit/"))
 if(!dir.exists("./output/hbm_loo/"))
     dir.create("./output/hbm_loo/")
 
-# Resolve conflicts
-conflicted::conflicts_prefer(plyr::ozone)
-conflicted::conflicts_prefer(coda::traceplot)
-
 
 ## Get data for Stan ---------------------------------------
 stan.dat.sst  <- stan_data_dyn(sock, "sst_anom_stnd",

@@ -54,7 +54,7 @@ unique(master.bt_w_cov1$Stock.ID)
 
 
 ## Add derived columns
-master.bt_w_cov2 <- plyr::ddply(master.bt_w_cov1, .(Stock.ID), transform,
+master.bt_w_cov2 <- ddply(master.bt_w_cov1, .(Stock.ID), transform,
                                 RS = R/S,
                                 RS_stnd = scale(R/S)[ , 1],
                                 lnRS = log(R/S),

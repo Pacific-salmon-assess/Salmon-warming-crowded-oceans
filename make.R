@@ -14,20 +14,19 @@ unlink("./pub", recursive = TRUE)
 
 time.start <- proc.time()
 
-#source("data_download.R") # ONLY if data have changed
 source ("functions.R")
 source("load.R") #(1)
-# source("data_download.R")  ## only needs to be run if data have changed
+# source("data_download.R")  ## ONLY if climate data have changed - very long run time
 source("sock_data_clean.R") #(2)
 source("sst_import_process.R") #(3)
 source("sst_explore.R") #(4)
 source("sock_covariates.R") #(5)
 source("sock_explore.R") #(6)
 source("single_stock.R") # (7)
-source("hbm_fit.R") #(8)
+source("stat_hbm_fit.R") #(8)
 source("pub.R") #(9)
-source("dynamic_hbm_fit.R") #(10)
-source("dynamic_hbm_inf.R") #(11)
+source("dyn_hbm_fit.R") #(10)
+source("dyn_hbm_inf.R") #(11)
 source("hmm_test_fit.R") # (12)
 
 

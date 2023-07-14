@@ -39,19 +39,27 @@ geographic.order <- function(x) {
 
 
 ## hb05_density_df -----------------------------------------
-hb05_density_df <- function(stanfit) {
-  
+hb05_density_df <- function(stanfit, ocean.regions = 3) {
+
   ## Get posterior matrices
   lst.f <- hb.posterior.list(stanfit)
   
   ## Density smoothness
   adjust <- 1.5
   
+  if(ocean.regions == 3) region_col <- sock.info$Ocean.Region 
+  else if (ocean.regions == 4) region_col <- sock.info$Ocean.Region2
+  
   ## Define region column indices
-  ind.wc  <- match(sock.info$Stock[which(sock.info$Ocean.Region == "WC")], levels(sock$Stock) ) 
-  ind.goa <- match(sock.info$Stock[which(sock.info$Ocean.Region == "GOA")], levels(sock$Stock) )#last(ind.wc) + 1: sum(sock.info$Ocean.Region == "GOA") 
-  ind.bs  <- match(sock.info$Stock[which(sock.info$Ocean.Region == "BS")], levels(sock$Stock) )# which(sock.info$Ocean.Region == "BS") #last(ind.goa) +1: sum(sock.info$Ocean.Region == "BS") 
+  ind.wc  <- match(sock.info$Stock[which(region_col == "WC")], levels(sock$Stock) ) 
+  ind.goa <- match(sock.info$Stock[which(region_col == "GOA")], levels(sock$Stock) )#last(ind.wc) + 1: sum(sock.info$Ocean.Region == "GOA") 
+  ind.bs  <- match(sock.info$Stock[which(region_col == "BS")], levels(sock$Stock) )# which(sock.info$Ocean.Region == "BS") #last(ind.goa) +1: sum(sock.info$Ocean.Region == "BS") 
+  ind.seak <- match(sock.info$Stock[which(region_col == "SEAK")], levels(sock$Stock))
   ind.reg <- list(ind.bs, ind.goa, ind.wc)
+  
+  if(ocean.regions == 4) 
+    ind.reg[[length(ind.reg)+1]] <- ind.seak
+  
   
   ## Extract stock-specific param matrices
   s.alpha <- lst.f[["alpha"]]
@@ -82,9 +90,11 @@ hb05_density_df <- function(stanfit) {
   s.den.wc.gamma  <- col_density(pc.s.gamma[ , ind.wc], plot.it = FALSE, adjust = adjust)
   s.den.goa.gamma <- col_density(pc.s.gamma[ , ind.goa], plot.it = FALSE, adjust = adjust)
   s.den.bs.gamma  <- col_density(pc.s.gamma[ , ind.bs], plot.it = FALSE, adjust = adjust)
+  if(ocean.regions == 4) s.den.seak.gamma <- col_density(pc.s.gamma[ , ind.seak], plot.it = FALSE, adjust = adjust)
   s.den.wc.kappa  <- col_density(pc.s.kappa[ , ind.wc], plot.it = FALSE, adjust = adjust)
   s.den.goa.kappa <- col_density(pc.s.kappa[ , ind.goa], plot.it = FALSE, adjust = adjust)
   s.den.bs.kappa  <- col_density(pc.s.kappa[ , ind.bs], plot.it = FALSE, adjust = adjust)
+  if(ocean.regions == 4) s.den.seak.kappa <- col_density(pc.s.kappa[ , ind.seak], plot.it = FALSE, adjust = adjust)
   #s.den.wc.chi    <- col_density(pc.s.chi[ , ind.wc], plot.it = FALSE, adjust = adjust)
   #s.den.goa.chi   <- col_density(pc.s.chi[ , ind.goa], plot.it = FALSE, adjust = adjust)
   #s.den.bs.chi    <- col_density(pc.s.chi[ , ind.bs], plot.it = FALSE, adjust = adjust)
@@ -92,6 +102,7 @@ hb05_density_df <- function(stanfit) {
   s.den.wc.joint  <- col_density(pc.s.joint[ , ind.wc], plot.it = FALSE, adjust = adjust)
   s.den.goa.joint <- col_density(pc.s.joint[ , ind.goa], plot.it = FALSE, adjust = adjust)
   s.den.bs.joint  <- col_density(pc.s.joint[ , ind.bs], plot.it = FALSE, adjust = adjust)
+  if(ocean.regions == 4)  s.den.seak.joint  <- col_density(pc.s.joint[ , ind.seak], plot.it = FALSE, adjust = adjust)
   
   m.den.gamma <- col_density(pc.m.gamma, plot.it = FALSE, adjust = adjust)
   m.den.kappa <- col_density(pc.m.kappa, plot.it = FALSE, adjust = adjust)
@@ -107,9 +118,10 @@ hb05_density_df <- function(stanfit) {
     x <- m.lst[[i]]
     x.df <- reshape2::melt(x$x, varnames = c("n", "region"), value.name = "x")
     y.df <- reshape2::melt(x$y, varnames = c("n", "region"), value.name = "y")
-    x.df$region <- ifelse(x.df$region == 1, "West Coast", x.df$region)
-    x.df$region <- ifelse(x.df$region == 2, "Gulf of Alaska", x.df$region)
-    x.df$region <- ifelse(x.df$region == 3, "Bering Sea", x.df$region)
+    x.df$region <- dplyr::case_when( x.df$region == 1 ~ "West Coast",
+                                     x.df$region == 2 ~ "Gulf of Alaska",
+                                     x.df$region == 3 ~ "Bering Sea",
+                                     x.df$region == 4 ~ "Southeast Alaska" )
     y.df$region <- x.df$region
     var  <- ifelse(i == 1, "SST", NA)
     var  <- ifelse(i == 2, "Comp", var)
@@ -183,12 +195,38 @@ hb05_density_df <- function(stanfit) {
   })
   s.bs.df <- do.call(rbind, s.bs.lst.df)
   
+  if(ocean.regions == 4) {
+    s.seak.lst <- list(s.den.seak.gamma,
+                     s.den.seak.kappa,
+                     #s.den.seak.chi,
+                     s.den.seak.joint)
+    s.seak.lst.df <- lapply(seq_along(s.seak.lst), function(i) {
+      x <- s.seak.lst[[i]]
+      x.df <- reshape2::melt(x$x, varnames = c("n", "stock"), value.name = "x")
+      y.df <- reshape2::melt(x$y, varnames = c("n", "stock"), value.name = "y")
+      x.df$region <- "Southeast Alaska"
+      y.df$region <- "Southeast Alaska"
+      var  <- ifelse(i == 1, "SST", NA)
+      var  <- ifelse(i == 2, "Comp", var)
+      var  <- ifelse(i == 3, "SST + Comp", var)
+      #var  <- ifelse(i == 4, "SST + Comp + SST x Comp", var)
+      x.df$var <- var
+      y.df$var <- var
+      merge(x.df, y.df, by = c("n", "stock", "region", "var"), sort = FALSE)
+    })
+    s.seak.df <- do.call(rbind, s.seak.lst.df)
+  }
+ #browser()
   ## Combine region stock-specific data frames
-  s.df <- rbind(s.wc.df, s.goa.df, s.bs.df)
+  if(ocean.regions == 3) s.df <- rbind(s.wc.df, s.goa.df, s.bs.df) else
+  if(ocean.regions == 4) s.df <- rbind(s.wc.df, s.goa.df, s.bs.df, s.seak.df)
   
   ## Set factor levels
   s.df$var <- factor(s.df$var, levels = c("SST", "Comp" , "SST + Comp")) #, "SST + Comp + SST x Comp"))
   m.df$var <- factor(m.df$var, levels = c("SST", "Comp" , "SST + Comp")) #, "SST + Comp + SST x Comp"))
+  #m.df$region <- factor(m.df$region, levels=c("West Coast", "Gulf of Alaska", "Bering Sea", "Southeast Alaska"))
+  #s.df$region <- factor(s.df$region, levels=c("West Coast", "Gulf of Alaska", "Bering Sea", "Southeast Alaska"))
+  
   
   out <- list(stock = s.df,
               region = m.df)
@@ -692,21 +730,20 @@ plot_post_pc <- function(stanfit, y,
     }
     
     g <- ppc_scatter_avg(y, yrep[[1]]) +
-        ggtitle("Observed vs. predicted")
+        labs(title="Observed vs. predicted")
     print(g)
 
     g <- ppc_stat_2d(y, yrep[[1]]) +
-        ggtitle("Y rep: target distributions")
+        labs(title="Y rep: target distributions")
     print(g)
 
     g <- ppc_dens_overlay(y = y, yrep = yrep[[1]][1:100, ]) +
-        ggtitle("Y rep: posterior predictive check")
+        labs(title="Y rep: posterior predictive check")
     print(g)
     
-    # this is giving error "Assigned data must be compatible with existing data"
     g <- ppc_dens_overlay_grouped(y = y, yrep = yrep[[1]][1:50, ], 
                                   group=data$Stock)  +
-        ggtitle("Y rep: posterior predictive check")
+        labs(title="Y rep: posterior predictive check")
     print(g) 
 
     if(!is.null(pdf.path)) {
@@ -1429,6 +1466,9 @@ single.stock.fit <- function(formulas, years, plot.path) {
     ## get unique ocean.regions and stock names
     reg1 <- subset(sock, select = c("Stock", "Ocean.Region"))
     regions <- reg1[!duplicated(reg1), ]
+    reg2 <- subset(sock, select = c("Stock", "Ocean.Region2"))
+    regions2 <- reg2[!duplicated(reg2), ]
+    
 
     for(i in seq_along(mod.list)) {
         m.formula <- mod.list[[i]]
@@ -1458,6 +1498,7 @@ single.stock.fit <- function(formulas, years, plot.path) {
         m.coef$Stock <- factor(m.coef$Stock, levels = names(m.fit), ordered=is.ordered(sock$geo_id))
         m.coef <- merge(m.coef, regions, by = "Stock", all.x = TRUE, sort = FALSE)
         mod.coef[[i]] <- m.coef
+        m.coef.oc2 <- merge(m.coef, regions2, by = "Stock", all.x = TRUE, sort = FALSE)
 
         ## Create r.squared data.frame
         m.rsq <- summary(m.fit)$r.squared
@@ -1522,7 +1563,8 @@ single.stock.fit <- function(formulas, years, plot.path) {
                          })
         print(g)
         dev.off()
-
+        
+        # colours = first ocean region grouping (3 groups)
         pdf(paste0(i.path.f, "_coef_dot_all.pdf"), width = dot.width + 2, height = 8)
         g <- xyplot(as.factor(Stock) ~ value | variable, data = m.coef,
                     groups = Ocean.Region,
@@ -1541,31 +1583,78 @@ single.stock.fit <- function(formulas, years, plot.path) {
                     })
         print(g)
         dev.off()
-
+        
+        # colours = first ocean region grouping (3 groups)
         if(m.name != "model1a") {
-            pdf(paste0(i.path.f, "_coef_dot_covars.pdf"), width = dot.width, height = 8)
-
-            g <- xyplot(as.factor(Stock) ~ value | variable, data = m.coef,
-                        subset = !variable %in% c("(Intercept)", "S"),
-                        groups = Ocean.Region,
-                        par.settings = theme.mjm(),
-                        par.strip.text = list(cex = 0.7),
-                        layout = c(NA, 1),
-                        scales = list(x = list(relation = "same")),
-                        ylab = "",
-                        xlab = "Coefficient",
-                        main = "Single-stock model coefficients by stock",
-                        sub = g.sub,
-                        auto.key = list(space = "right"),
-                        panel = function(x, y, ...) {
-                            panel.abline(v = 0, col = "grey60", lty = 2)
-                            panel.xyplot(x, y, ...)
-                        })
-            print(g)
-
-            dev.off()
+          pdf(paste0(i.path.f, "_coef_dot_covars.pdf"), width = dot.width, height = 8)
+          
+          g <- xyplot(as.factor(Stock) ~ value | variable, data = m.coef,
+                      subset = !variable %in% c("(Intercept)", "S"),
+                      groups = Ocean.Region,
+                      par.settings = theme.mjm(),
+                      par.strip.text = list(cex = 0.7),
+                      layout = c(NA, 1),
+                      scales = list(x = list(relation = "same")),
+                      ylab = "",
+                      xlab = "Coefficient",
+                      main = "Single-stock model coefficients by stock",
+                      sub = g.sub,
+                      auto.key = list(space = "right"),
+                      panel = function(x, y, ...) {
+                        panel.abline(v = 0, col = "grey60", lty = 2)
+                        panel.xyplot(x, y, ...)
+                      })
+          print(g)
+          
+          dev.off()
         }
 
+        # colours = second ocean region grouping (4 groups)
+        pdf(paste0(i.path.f, "_coef_dot_all_oc2.pdf"), width = dot.width + 2, height = 8)
+        g <- xyplot(as.factor(Stock) ~ value | variable, data = m.coef.oc2,
+                    groups = Ocean.Region2,
+                    par.settings = theme.mjm(),
+                    par.strip.text = list(cex = 0.7),
+                    layout = c(NA, 1),
+                    scales = list(x = list(relation = "free")),
+                    ylab = "",
+                    xlab = "Coefficient",
+                    main = "Single-stock model coefficients by stock",
+                    sub = g.sub,
+                    auto.key = list(space = "right"),
+                    panel = function(x, y, ...) {
+                      panel.abline(v = 0, col = "grey60", lty = 2)
+                      panel.xyplot(x, y, ...)
+                    })
+        print(g)
+        dev.off()
+
+        # colours = second ocean region grouping (4 groups)
+        if(m.name != "model1a") {
+          pdf(paste0(i.path.f, "_coef_dot_covars_oc2.pdf"), width = dot.width, height = 8)
+          
+          g <- xyplot(as.factor(Stock) ~ value | variable, data = m.coef.oc2,
+                      subset = !variable %in% c("(Intercept)", "S"),
+                      groups = Ocean.Region2,
+                      par.settings = theme.mjm(),
+                      par.strip.text = list(cex = 0.7),
+                      layout = c(NA, 1),
+                      scales = list(x = list(relation = "same")),
+                      ylab = "",
+                      xlab = "Coefficient",
+                      main = "Single-stock model coefficients by stock",
+                      sub = g.sub,
+                      auto.key = list(space = "right"),
+                      panel = function(x, y, ...) {
+                        panel.abline(v = 0, col = "grey60", lty = 2)
+                        panel.xyplot(x, y, ...)
+                      })
+          print(g)
+          
+          dev.off()
+        }
+
+        
         pdf(paste0(i.path.f, "_resid_scatter.pdf"), width = 10, height = 8)
         g <- xyplot(residuals ~ fitted, data = rf,
                     par.settings = theme.mjm(),

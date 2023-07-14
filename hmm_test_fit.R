@@ -11,7 +11,6 @@ hmm_out <- list()
 #loop over stocks
 for ( i in 1:nlevels(sock$Stock) ) {
 
-  
 # Filter to one stock
 hmm.dat <- dplyr::filter(sock, Stock == levels(sock$Stock)[i]) 
 
@@ -100,9 +99,10 @@ hmm_tidy %>% ggplot(aes(x=beta1, y=factor(stock, levels=asc.beta), colour=state_
   geom_point() # this actually hurts my eyes
 
 
-# LOO
+# LOO example
 # elpd1=loo::loo(posterior::as_draws_matrix(ll1_df)) # insert the log-likelihood
 # loo::loo_compare(elpd1,elpd2)
+
 
 
 
