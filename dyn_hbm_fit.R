@@ -1,14 +1,14 @@
 ## Fit NONSTATIONARY hierarchical Bayesian models
 # This is adapted from: https://github.com/michaelmalick/sockeye-nonstationary
 
-if(!dir.exists("./figures/hbm_fit/"))
-    dir.create("./figures/hbm_fit/")
+if(!dir.exists("./figures/dyn/hbm_fit/"))
+    dir.create("./figures/dyn/hbm_fit/")
 
-if(!dir.exists("./output/hbm_fit/"))
-    dir.create("./output/hbm_fit/")
+if(!dir.exists("./output/models/dyn/"))
+    dir.create("./output/models/dyn/")
 
-if(!dir.exists("./output/hbm_loo/"))
-    dir.create("./output/hbm_loo/")
+if(!dir.exists("./output/diagnostics/dyn/"))
+    dir.create("./output/diagnostics/dyn/")
 
 
 ## Get data for Stan ---------------------------------------
@@ -57,7 +57,7 @@ hbm3.sst <- rstan::stan(file = "./stan/3_hbm_ar1_x2era3.stan",
                         seed = sample(1:1e6, 1),
                         control = list(adapt_delta = 0.90,
                                        max_treedepth = 10))
-save(hbm3.sst, file = "./output/hbm_fit/hbm3_sst.RData")
+save(hbm3.sst, file = "./output/models/dyn/hbm3_sst.RData")
 
 hbm5.sst <- rstan::stan(file = "./stan/5_hbm_ar1_x2nonstat_sigma_diff.stan",
                         data = stan.dat.sst,
@@ -70,7 +70,7 @@ hbm5.sst <- rstan::stan(file = "./stan/5_hbm_ar1_x2nonstat_sigma_diff.stan",
                         seed = sample(1:1e6, 1),
                         control = list(adapt_delta = 0.98,
                                        max_treedepth = 10))
-save(hbm5.sst, file = "./output/hbm_fit/hbm5_sst.RData")
+save(hbm5.sst, file = "./output/models/dyn/hbm5_sst.RData")
 
 
 ## Comp
@@ -86,7 +86,7 @@ hbm3.comp <- rstan::stan(file = "./stan/3_hbm_ar1_x2era3.stan",
                         seed = sample(1:1e6, 1),
                         control = list(adapt_delta = 0.90,
                                        max_treedepth = 10))
-save(hbm3.comp, file = "./output/hbm_fit/hbm3_comp.RData")
+save(hbm3.comp, file = "./output/models/dyn/hbm3_comp.RData")
 
 hbm5.comp <- rstan::stan(file = "./stan/5_hbm_ar1_x2nonstat_sigma_diff.stan",
                         data = stan.dat.comp,
@@ -99,7 +99,7 @@ hbm5.comp <- rstan::stan(file = "./stan/5_hbm_ar1_x2nonstat_sigma_diff.stan",
                         seed = sample(1:1e6, 1),
                         control = list(adapt_delta = 0.98,
                                        max_treedepth = 10))
-save(hbm5.comp, file = "./output/hbm_fit/hbm5_comp.RData")
+save(hbm5.comp, file = "./output/models/dyn/hbm5_comp.RData")
 
 
 ## Check pathology -----------------------------------------
@@ -150,14 +150,14 @@ rstan::get_elapsed_time(hbm5.comp)
 
 ## SST
 
-pdf("./figures/hbm_fit/hbm3_sst_diag.pdf", width = 7, height = 5)
+pdf("./figures/dyn/hbm_fit/hbm3_sst_diag.pdf", width = 7, height = 5)
     coda_neff(get_neff(hbm3.sst, pars = pars.hbm3), total_draws(hbm3.sst))
     coda_rhat(get_rhat(hbm3.sst, pars = pars.hbm3))
     coda_diag(As.mcmc.list(hbm3.sst, pars = pars.hbm3))
 dev.off()
 
 
-pdf("./figures/hbm_fit/hbm5_sst_diag.pdf", width = 7, height = 5)
+pdf("./figures/dyn/hbm_fit/hbm5_sst_diag.pdf", width = 7, height = 5)
     coda_neff(get_neff(hbm5.sst, pars = pars.hbm5), total_draws(hbm5.sst))
     coda_rhat(get_rhat(hbm5.sst, pars = pars.hbm5))
     coda_diag(As.mcmc.list(hbm5.sst, pars = pars.hbm5))
@@ -165,14 +165,14 @@ dev.off()
 
 ## Comp
 
-pdf("./figures/hbm_fit/hbm3_comp_diag.pdf", width = 7, height = 5)
+pdf("./figures/dyn/hbm_fit/hbm3_comp_diag.pdf", width = 7, height = 5)
 coda_neff(get_neff(hbm3.comp, pars = pars.hbm3), total_draws(hbm3.comp))
 coda_rhat(get_rhat(hbm3.comp, pars = pars.hbm3))
 coda_diag(As.mcmc.list(hbm3.comp, pars = pars.hbm3))
 dev.off()
 
 
-pdf("./figures/hbm_fit/hbm5_comp_diag.pdf", width = 7, height = 5)
+pdf("./figures/dyn/hbm_fit/hbm5_comp_diag.pdf", width = 7, height = 5)
 coda_neff(get_neff(hbm5.comp, pars = pars.hbm5), total_draws(hbm5.comp))
 coda_rhat(get_rhat(hbm5.comp, pars = pars.hbm5))
 coda_diag(As.mcmc.list(hbm5.comp, pars = pars.hbm5))
@@ -181,11 +181,11 @@ dev.off()
 
 
 ## Posterior predictive checks -----------------------------
-plot_post_pc(hbm3.sst, stan.dat.sst$y, pdf.path = "./figures/hbm_fit/hbm3_sst_yrep.pdf")
-plot_post_pc(hbm5.sst, stan.dat.sst$y, pdf.path = "./figures/hbm_fit/hbm5_sst_yrep.pdf")
+plot_post_pc(hbm3.sst, stan.dat.sst$y, pdf.path = "./figures/dyn/hbm_fit/hbm3_sst_yrep.pdf")
+plot_post_pc(hbm5.sst, stan.dat.sst$y, pdf.path = "./figures/dyn/hbm_fit/hbm5_sst_yrep.pdf")
 
-plot_post_pc(hbm3.comp, stan.dat.comp$y, pdf.path = "./figures/hbm_fit/hbm3_comp_yrep.pdf")
-plot_post_pc(hbm5.comp, stan.dat.comp$y, pdf.path = "./figures/hbm_fit/hbm5_comp_yrep.pdf")
+plot_post_pc(hbm3.comp, stan.dat.comp$y, pdf.path = "./figures/dyn/hbm_fit/hbm3_comp_yrep.pdf")
+plot_post_pc(hbm5.comp, stan.dat.comp$y, pdf.path = "./figures/dyn/hbm_fit/hbm5_comp_yrep.pdf")
 
 
 
@@ -200,11 +200,11 @@ loo.hbm5.comp <- rstan::loo(hbm5.comp, cores = 4)
 
 
 
-save(loo.hbm3.sst, file = "./output/hbm_loo/loo_hbm3_sst.RData")
-save(loo.hbm5.sst, file = "./output/hbm_loo/loo_hbm5_sst.RData")
+save(loo.hbm3.sst, file = "./output/diagnostics/dyn/loo_hbm3_sst.RData")
+save(loo.hbm5.sst, file = "./output/diagnostics/dyn/loo_hbm5_sst.RData")
 
-save(loo.hbm3.comp, file = "./output/hbm_loo/loo_hbm3_comp.RData")
-save(loo.hbm5.comp, file = "./output/hbm_loo/loo_hbm5_comp.RData")
+save(loo.hbm3.comp, file = "./output/diagnostics/dyn/loo_hbm3_comp.RData")
+save(loo.hbm5.comp, file = "./output/diagnostics/dyn/loo_hbm5_comp.RData")
 
 
 
@@ -218,21 +218,21 @@ sum(pareto_k_values(loo.hbm5.comp) > 0.7)
 
 ## SST
 
-pdf("./figures/hbm_fit/hbm3_sst_loo.pdf", width = 7, height = 5)
+pdf("./figures/dyn/hbm_fit/hbm3_sst_loo.pdf", width = 7, height = 5)
     plot(loo.hbm3.sst, label_points = TRUE)
 dev.off()
 
-pdf("./figures/hbm_fit/hbm5_sst_loo.pdf", width = 7, height = 5)
+pdf("./figures/dyn/hbm_fit/hbm5_sst_loo.pdf", width = 7, height = 5)
     plot(loo.hbm5.sst, label_points = TRUE)
 dev.off()
 
 ## Comp
 
-pdf("./figures/hbm_fit/hbm3_comp_loo.pdf", width = 7, height = 5)
+pdf("./figures/dyn/hbm_fit/hbm3_comp_loo.pdf", width = 7, height = 5)
 plot(loo.hbm3.comp, label_points = TRUE)
 dev.off()
 
-pdf("./figures/hbm_fit/hbm5_comp_loo.pdf", width = 7, height = 5)
+pdf("./figures/dyn/hbm_fit/hbm5_comp_loo.pdf", width = 7, height = 5)
 plot(loo.hbm5.comp, label_points = TRUE)
 dev.off()
 

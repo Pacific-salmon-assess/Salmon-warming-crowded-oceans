@@ -110,8 +110,8 @@ r2 <- grep("^R[[:digit:]]\\.[[:digit:]]", names(bt), value = TRUE)
 all.equal(sort(r1), sort(r2))
 
 bt.out.1 <- bt[complete.cases(bt),]                # drop years with missing data
-bt.out.2 <- subset(bt.out.1, Stock.ID != 166) # drop Osoyooos for now, do not have ocean entry coordinates
-bt.out.2 <- subset(bt.out.2, Stock.ID != 144) # drop Frazer, hatchery influence
+bt.out.2 <- subset(bt.out.1, Stock != "Osoyoos") # drop Osoyooos for now, do not have ocean entry coordinates
+bt.out.2 <- subset(bt.out.2, Stock != "Frazer") # drop Frazer, hatchery influence
 bt.out.3 <- subset(bt.out.2,BY <= 2015) # currently have pink-NP data up to 2021 (+6 yr)
 bt.out.4 <- subset(bt.out.3,BY > 1949)        # do this because pre 1950 data is very sparse
 

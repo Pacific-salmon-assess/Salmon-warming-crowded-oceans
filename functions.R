@@ -41,6 +41,9 @@ geographic.order <- function(x) {
 ## hb05_density_df -----------------------------------------
 hb05_density_df <- function(stanfit, ocean.regions = 3) {
 
+  # this function has been modified a lot to fit specific purposes but needs work
+  # to make it more generally applicable
+  
   ## Get posterior matrices
   lst.f <- hb.posterior.list(stanfit)
   
@@ -51,14 +54,18 @@ hb05_density_df <- function(stanfit, ocean.regions = 3) {
   else if (ocean.regions == 4) region_col <- sock.info$Ocean.Region2
   
   ## Define region column indices
-  ind.wc  <- match(sock.info$Stock[which(region_col == "WC")], levels(sock$Stock) ) 
-  ind.goa <- match(sock.info$Stock[which(region_col == "GOA")], levels(sock$Stock) )#last(ind.wc) + 1: sum(sock.info$Ocean.Region == "GOA") 
-  ind.bs  <- match(sock.info$Stock[which(region_col == "BS")], levels(sock$Stock) )# which(sock.info$Ocean.Region == "BS") #last(ind.goa) +1: sum(sock.info$Ocean.Region == "BS") 
-  ind.seak <- match(sock.info$Stock[which(region_col == "SEAK")], levels(sock$Stock))
-  ind.reg <- list(ind.bs, ind.goa, ind.wc)
-  
-  if(ocean.regions == 4) 
-    ind.reg[[length(ind.reg)+1]] <- ind.seak
+  if (fitnam[[n]] == "hb05c"){ #Use 2020 data for control model
+    control_dat <- sock.info[sock.info$Stock %in% c.stk,] 
+    ind.wc  <- which(control_dat$Ocean.Region == "WC")
+    ind.goa <- which(control_dat$Ocean.Region == "GOA")
+    ind.bs  <- which(control_dat$Ocean.Region == "BS")
+  } else {
+    ind.wc  <- match(sock.info$Stock[which(region_col == "WC")], levels(sock$Stock) ) 
+    ind.goa <- match(sock.info$Stock[which(region_col == "GOA")], levels(sock$Stock) )
+    ind.bs  <- match(sock.info$Stock[which(region_col == "BS")], levels(sock$Stock) )
+    ind.seak <- match(sock.info$Stock[which(region_col == "SEAK")], levels(sock$Stock))
+    ind.reg <- ifelse(ocean.regions == 3, list(ind.bs, ind.goa, ind.wc), list(ind.bs, ind.goa, ind.wc, ind.seak) )
+  }
   
   
   ## Extract stock-specific param matrices
@@ -118,10 +125,17 @@ hb05_density_df <- function(stanfit, ocean.regions = 3) {
     x <- m.lst[[i]]
     x.df <- reshape2::melt(x$x, varnames = c("n", "region"), value.name = "x")
     y.df <- reshape2::melt(x$y, varnames = c("n", "region"), value.name = "y")
-    x.df$region <- dplyr::case_when( x.df$region == 1 ~ "West Coast",
-                                     x.df$region == 2 ~ "Gulf of Alaska",
-                                     x.df$region == 3 ~ "Bering Sea",
-                                     x.df$region == 4 ~ "Southeast Alaska" )
+    if(ocean.regions == 4) {
+      x.df$region <- dplyr::case_when(x.df$region == 1 ~ "West Coast",
+                                      x.df$region == 2 ~ "Southeast Alaska",
+                                      x.df$region == 3 ~ "Gulf of Alaska",
+                                      x.df$region == 4 ~ "Bering Sea" )
+    } else {
+      x.df$region <- dplyr::case_when( x.df$region == 1 ~ "West Coast",
+                                       x.df$region == 2 ~ "Gulf of Alaska",
+                                       x.df$region == 3 ~ "Bering Sea" )
+    }
+    
     y.df$region <- x.df$region
     var  <- ifelse(i == 1, "SST", NA)
     var  <- ifelse(i == 2, "Comp", var)
