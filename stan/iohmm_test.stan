@@ -37,7 +37,7 @@ A[1] = pi1; // Filler
 
 for (t in 2:N) {
 for (j in 1:K) { // j = current (t)
-unA[t][j] = X1[t]' * w[j];
+unA[t][j] = X1[t] * w[j];
 }
 A[t] = softmax(unA[t]);
 }
