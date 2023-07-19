@@ -33,12 +33,8 @@ transformed parameters {
 { // Forward algorithm log p(z_t = j | y_{1:t})
   real accumulator1[K];
 
-<<<<<<< Updated upstream
-  logalpha[1] = log(pi1) + normal_lpdf(R_S[1] |log_a - b*S[1] + beta1*X1[1], sigma);
-  
-=======
-  for(k in 1:K)logalpha[1,k] = log(pi1) + normal_lpdf(R_S[1] |log_a - b*S[1] + beta1[k]*X1[1], sigma);
->>>>>>> Stashed changes
+ logalpha[1] = log(pi1) + normal_lpdf(R_S[1] |log_a - b*S[1] + beta1*X1[1], sigma);
+ 
 
   for (t in 2:N) {
   for (j in 1:K) { // j = current (t)
