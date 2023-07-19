@@ -14,6 +14,7 @@ data {
 parameters {
   // Discrete state model
   simplex[K] A[K]; // transition probabilities
+  simplex[K] pi1; // initial state probabilities
 
   // A[i][j] = p(z_t = j | z_{t-1} = i)
   // Continuous observation model
@@ -24,26 +25,27 @@ parameters {
 }
 
 transformed parameters {
-  simplex[K] pi1; // initial state probabilities
   vector[K] logalpha[N];
   real b; //
-
-  pi1=rep_vector(1.0/K,K);
 
   b=exp(log_b);
 
 { // Forward algorithm log p(z_t = j | y_{1:t})
   real accumulator1[K];
 
+<<<<<<< Updated upstream
   logalpha[1] = log(pi1) + normal_lpdf(R_S[1] |log_a - b*S[1] + beta1*X1[1], sigma);
   
+=======
+  for(k in 1:K)logalpha[1,k] = log(pi1) + normal_lpdf(R_S[1] |log_a - b*S[1] + beta1[k]*X1[1], sigma);
+>>>>>>> Stashed changes
 
   for (t in 2:N) {
   for (j in 1:K) { // j = current (t)
   for (i in 1:K) { // i = previous (t-1)
   // Murphy (2012) p. 609 eq. 17.48
   // belief state + transition prob + local evidence at t
-  accumulator1[i] = logalpha[t-1, i] + log(A[i, j]) + normal_lpdf(R_S[t] |log_a - b*S[t]+ beta1[j]*X1[t], sigma);
+  accumulator1[i] = logalpha[t-1, i] + log(A[i, j]) + normal_lpdf(R_S[t] |log_a - b*S[t]+ beta1[i]*X1[t], sigma);
   }
   logalpha[t, j] = log_sum_exp(accumulator1);
   }
@@ -51,13 +53,12 @@ transformed parameters {
   } // Forward
 }
 model{
-
   log_a ~ normal(1.5,2.5);
   log_b ~ normal(-12,3);
   beta1 ~ normal(0,1); //set priors for both sets at 1 std
-  
   sigma ~ normal(0,1); //half normal on variance (lower limit of zero)
-    
+  
+  pi1 ~ dirichlet(rep(1,K));
   for(k in 1:K){
   A[k,] ~ dirichlet(alpha_dirichlet[k,]);
   }
@@ -74,8 +75,12 @@ generated quantities {
   vector[K] beta[N];
   vector[K] gamma[N];
   
+<<<<<<< Updated upstream
   real S_max;
  
+=======
+  real S_max; 
+>>>>>>> Stashed changes
   
   { // Forward algortihm
   for (t in 1:N)

@@ -30,7 +30,6 @@ transformed parameters {
   vector[K] logalpha[N];
   real b; //
 
-  pi1=rep_vector(1.0/K,K);
 { // Transition probability matrix p(z_t = j | z_{t-1} = i, u)
 
 unA[1] = pi1; // Filler
@@ -72,7 +71,7 @@ model{
 
   sigma ~ normal(0,1); //half normal on variance (lower limit of zero)
     
-  p1~ dirichlet(rep(1,K));
+  pi1 ~ dirichlet(rep(1,K));
   
   target += log_sum_exp(logalpha[N]);
 }
