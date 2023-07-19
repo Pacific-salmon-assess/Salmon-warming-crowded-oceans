@@ -17,3 +17,15 @@ unique(infill$Stock[which(infill$Infill==TRUE)]) # across 13 stocks #all but fou
 # See what was filtered
 summary(filter(filter45, Filter==TRUE)) # 7 obs filtered out
 unique(filter45$Stock[which(filter45$Filter==TRUE)]) # 5 stocks #all removed from analysis due to ts length
+
+
+## -- Some unused plots from early HMM exploration (single-stock) --##
+
+# Covariate effects for each state by stock
+## Density plots of beta1 estimates # not that useful
+hmm_tidy %>% ggplot(aes(x=beta1, fill=state_K)) + 
+  geom_histogram() + theme_minimal()
+# Dot plot of the covar effects by stock
+asc.beta <- hmm_tidy$stock[match(sort(unique(hmm_tidy$beta1[which(hmm_tidy$state_K == "State 1")])), hmm_tidy$beta1)]
+hmm_tidy %>% ggplot(aes(x=beta1, y=factor(stock, levels=asc.beta), colour=state_K)) +
+  geom_point() # this actually hurts my eyes
