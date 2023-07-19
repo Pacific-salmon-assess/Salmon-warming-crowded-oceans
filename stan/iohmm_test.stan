@@ -71,7 +71,7 @@ model{
 
   sigma ~ normal(0,1); //half normal on variance (lower limit of zero)
     
-  pi1 ~ dirichlet(rep(1,K));
+  pi1 ~ dirichlet(rep_vector(1,K));
   
   target += log_sum_exp(logalpha[N]);
 }
