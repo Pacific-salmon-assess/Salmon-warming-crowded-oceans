@@ -899,8 +899,7 @@ stan_data_stat <- function(data,
     ##               TRUE indicates prior predictive distributions will be
     ##               sampled only
   
-    library(plyr) # need to mask dplyr functions
-  
+
     sock.stan <- data
 
     ## Set factor levels for Ocean.Region
@@ -914,11 +913,11 @@ stan_data_stat <- function(data,
     ## Get grouping factor for series
     sock.stan[["OC_REGION_DUMMY"]] <- sock.stan[[var.region]]
     #browser()
-    grp.df <- plyr::ddply(sock.stan, .(Stock), summarize,
+    grp.df <- plyr::ddply(sock.stan, .(Stock), plyr::summarize,
                           group = unique(OC_REGION_DUMMY))
     g.grp <- as.numeric(factor(grp.df$group, levels = unique(grp.df$group)))
 
-    a.grp.df <- plyr::ddply(sock.stan, .(Stock), summarize,
+    a.grp.df <- plyr::ddply(sock.stan, .(Stock), plyr::summarize,
                             group = unique(Region))
     a.grp <- ifelse(a.grp.df$group == "Fraser River", 1, 2)
 
@@ -998,7 +997,7 @@ stan_data_dyn <- function(data,
   ##               sampled only
   
   sock.stan <- data
-  
+  #browser()
   ## Set factor levels for var.region
   sock.stan[[var.region]] <- factor(sock.stan[[var.region]],
                                    levels = unique(sock.stan[[var.region]]))
@@ -1010,12 +1009,12 @@ stan_data_dyn <- function(data,
   ## Get grouping factor for series
   sock.stan[["OC_REGION_DUMMY"]] <- sock.stan[[var.region]]
   
-  grp.df <- plyr::ddply(sock.stan, .(Stock), summarize,
-                        group = unique(var.region))
+  grp.df <- plyr::ddply(sock.stan, .(Stock), plyr::summarize,
+                        group = unique(OC_REGION_DUMMY))
   g.grp <- as.numeric(factor(grp.df$group, levels = unique(grp.df$group)))
   
-  a.grp.df <- plyr::ddply(sock.stan, .(Stock), summarize,
-                          group = unique(region))
+  a.grp.df <- plyr::ddply(sock.stan, .(Stock), plyr::summarize,
+                          group = unique(Region))
   a.grp <- ifelse(a.grp.df$group == "Fraser River", 1, 2)
   
   
@@ -1039,9 +1038,9 @@ stan_data_dyn <- function(data,
   
   if(scale.x1) {
     x1 <- plyr::ddply(data, .(Stock), transform,
-                      x1 = scale(spawners)[ , 1])$x1
+                      x1 = scale(S)[ , 1])$x1
   } else {
-    x1 = data$spawners
+    x1 = data$S
   }
   
   if(is.null(breakpoint2)) {
@@ -1056,7 +1055,7 @@ stan_data_dyn <- function(data,
   }
   
   
-  lst <- list(y = sock.stan$ln_rps,
+  lst <- list(y = sock.stan$lnRS,
               x1 = x1,
               x2 = sock.stan[[var.x2]],
               g_group = g.grp,
@@ -1083,7 +1082,7 @@ stan_data_dyn <- function(data,
 }
 
 if(FALSE) {
-  stan_data(sock.covar, "sst_anom_stnd")
+  stan_data(sock.covar, "early_sst_stnd")
 }
 
 
@@ -1998,7 +1997,7 @@ sst.averager <- function(info, sst, distance = 400) {
 
         sst.sub.mnths <- sst.sub[sst.sub$month %in% months, ]
 
-        sst.avg <- ddply(sst.sub.mnths, .(year), summarize,
+        sst.avg <- ddply(sst.sub.mnths, .(year), plyr::summarize,
                                sst = mean(sst, na.rm = TRUE),
                                sst.anom = mean(sst.anom, na.rm = TRUE))
 

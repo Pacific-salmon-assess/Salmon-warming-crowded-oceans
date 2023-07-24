@@ -12,9 +12,10 @@ if(!dir.exists("./output/diagnostics/dyn/"))
 
 
 ## Get data for Stan ---------------------------------------
-stan.dat.sst  <- stan_data_dyn(sock, "sst_anom_stnd",
+stan.dat.sst  <- stan_data_dyn(sock, "early_sst_stnd",
                            breakpoint1 = 1977,
                            breakpoint2 = 1989,
+                           var.region = "Ocean.Region",
                            scale.x1 = TRUE)
 save(stan.dat.sst, file = "./output/stan_dat_sst.RData")
 

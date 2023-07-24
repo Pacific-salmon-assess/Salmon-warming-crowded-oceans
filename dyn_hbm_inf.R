@@ -216,16 +216,16 @@ save(hbm.gamma.era.stock.s2, file = "./output/hbm_gamma_era_stock_s2.RData")
 
 ## Gamma: different ----------------------------------------
 
-lst.hbm5 <- list(SST  = hbm5.sst,
-                 NPGO = hbm5.npgo,
-                 PDO  = hbm5.pdo)
+lst.hbm5 <- list(SST  = hbm5.sst)
+                 #NPGO = hbm5.npgo,
+                 #PDO  = hbm5.pdo)
 
 dfl.hbm5 <- lapply(seq_along(lst.hbm5), function(i) {
     probs <- c(0.025, 0.05, 0.10, 0.50, 0.90, 0.95, 0.975)
     summ <- summary(lst.hbm5[[i]], pars = "gamma", probs = probs)[[1]]
-    df <- data.frame(stock = sock.covar$stock,
-                     ocean_region = sock.covar$ocean_region,
-                     brood_yr = sock.covar$brood_yr,
+    df <- data.frame(Stock = sock$Stock,
+                     Ocean.Region = sock$Ocean.Region,
+                     BY = sock$BY,
                      gamma = summ[ , "50%"],
                      lower = summ[ , "10%"],
                      upper = summ[ , "90%"],
@@ -237,10 +237,10 @@ dfl.hbm5 <- lapply(seq_along(lst.hbm5), function(i) {
 
 df.hbm5 <- plyr::rbind.fill(dfl.hbm5)
 df.hbm5 <- ocean_region_lab(df.hbm5)
-df.hbm5 <- plyr::ddply(df.hbm5, .(ocean_region_lab, var, stock), transform,
+df.hbm5 <- plyr::ddply(df.hbm5, .(ocean_region_lab, var, Stock), transform,
                        sig = (lower < 0 & upper < 0) |
                              (lower > 0 & upper > 0))
-df.hbm5$var <- factor(df.hbm5$var, levels = c("NPGO", "PDO", "SST"))
+df.hbm5$var <- factor(df.hbm5$var, levels = c("SST")) #NPGO", "PDO", "SST"))
 
 hbm.gamma.diff <- df.hbm5
 save(hbm.gamma.diff, file = "./output/hbm_gamma_diff.RData")
