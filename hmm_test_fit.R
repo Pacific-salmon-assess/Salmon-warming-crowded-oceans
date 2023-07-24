@@ -98,26 +98,6 @@ print(g)
 dev.off()
 
 
-## Plot the expected beta1 (covariate term)
-# Load dynamic model outputs
-load("./output/models/dyn/hbm5_sst.Rdata", verbose=T)
-rw_dat <- rstan::extract(hbm5.sst)
-rw_covar <- apply(rw_dat$gamma, 2, median )
-# Need to run dyn model with same dataset to continue
-
-pdf("./figures/hmm-ss/ss1_expb1_timeseries.pdf")
-for(i in 1:nlevels(sock$Stock)){
-  covar_ts <- hmm_tidy_ss1 %>% filter(stock==levels(sock$Stock)[i]) %>% 
-    mutate(gamma_prod = beta1*gamma) %>% dplyr::summarize(covar = sum(gamma_prod), .by=BY)
-  
-  g <- ggplot(covar_ts) +
-    geom_point(aes(x=BY, y=covar)) +
-    geom_line(aes(x=BY, y=covar)) + 
-    labs(title=levels(sock$Stock)[i]) + theme_minimal() 
-  print(g)
-}
-dev.off()
-
 
 ## hmm_ss2 [Single Stock version 2] : 3 states, 2,1,1 transition matrix
 ## --------------------------------------------------------------------------------
@@ -334,34 +314,165 @@ for(i in 1:nlevels(sock$Stock)){
 }
 
 
-# LOO example
-# elpd1=loo::loo(posterior::as_draws_matrix(ll1_df)) # insert the log-likelihood
-# loo::loo_compare(elpd1,elpd2)
 
 
 
-## IOHMM ----- ##
+## Input-output HMM (IOHMM) test : varying transition matrix
+## ------------------------------------------------------------ ##
 
-hmm.dat <- dplyr::filter(sock, Stock == levels(sock$Stock)[1]) 
-
-hmm.stan.dat <- list( 
-  N = nrow(hmm.dat),
-  R_S = hmm.dat$lnRS,
-  S = hmm.dat$S,
-  K = nlvl,
-  X1 = hmm.dat$early_sst_stnd, # covariate = SST
-  alpha_dirichlet = matrix(c(2,1,1,2), nrow=2) )
+iohmm_out_ss1 <- list() # Master list length = N stocks
 
 
-# Kept all the specs from hmm.fit script ??
-iohmm <- rstan::stan(file = "./stan/iohmm_test.stan",
-                       data = hmm.stan.dat,
-                       warmup = 1000,
-                       iter = 4000,
-                       cores = 4,
-                       chains = 4,
-                       seed = 123,
-                       control = list(adapt_delta = 0.90,
-                                      max_treedepth = 10))
-save(hmm_ss1, file = paste0("./output/models/hmm-ss/hmm_ss1_", levels(sock$Stock)[i], ".Rdata"))
+for(i in 1:nlevels(sock$Stock)){
+  
+  nlvl = 2 # 2 state model 
+    
+  hmm.dat <- dplyr::filter(sock, Stock == levels(sock$Stock)[i]) # extract data for 1 stock
+  
+  
+  hmm.stan.dat <- list( #Get stan data
+    N = nrow(hmm.dat),
+    R_S = hmm.dat$lnRS,
+    S = hmm.dat$S,
+    K = nlvl,
+    X1 = hmm.dat$early_sst_stnd, # covariate = SST
+    alpha_dirichlet = matrix(c(2,1,1,2), nrow=2) )
+  
+  
+  # Run the stan model
+  iohmm <- rstan::stan(file = "./stan/iohmm_test.stan",
+                         data = hmm.stan.dat,
+                         warmup = 1000,
+                         iter = 4000,
+                         cores = 4,
+                         chains = 4,
+                         seed = 123,
+                         control = list(adapt_delta = 0.90,
+                                        max_treedepth = 10))
+  save(iohmm, file = paste0("./output/models/hmm-ss/iohmm_ss1_", levels(sock$Stock)[i], ".Rdata"))
+  
+  
+  ## Extract parameters of interest
+  post <- rstan::extract(iohmm)
+  params_out <- c("beta1", "gamma", "alpha", "beta", "log_lik")
+  
+  ## Store parameters of interest
+  hmm_outputs <- array(NA, dim=c(length(params_out), nlvl, nrow(hmm.dat))) # Stock-specific array of results - overwritten each loop
+  dimnames(hmm_outputs) <- list( params_out, c("State 1", "State 2"), hmm.dat$BY)
+  
+  # beta1 : dim (6000, 2=K)
+  hmm_outputs[1,,] <- rep( apply(post$beta1, 2, median), times=hmm.stan.dat$N) 
+  # gamma : dim (6000, N years, 2=K)
+  hmm_outputs[2,,] <- t( apply(post$gamma, c(2,3), median) )
+  # alpha : dim (6000, N years, 2=K)
+  hmm_outputs[3,,] <- t( apply(post$alpha, c(2,3), median) )
+  # beta : dim (6000, N years, 2=K) # beta is ricker b 
+  hmm_outputs[4,,] <- t( apply(post$beta, c(2,3), median) )
+  # log_lik : dim(6000, N years) 
+  hmm_outputs[5,,] <- rep( apply(post$log_lik, c(2), median), each=nlvl )
+  
+  
+  iohmm_out_ss1[[i]] <- hmm_outputs
 
+}
+
+
+## Visualizations
+
+# Wrangle the list of arrays into a dataframe 
+names(iohmm_out_ss1) <- levels(sock$Stock)
+hmm_out <- lapply(iohmm_out_ss1, plyr::adply, .margins=c(2,3))
+hmm_out <- dplyr::bind_rows(hmm_out, .id="stock")
+names(hmm_out)[2:3] <- c("state_K", "BY")
+hmm_out$BY <- as.numeric(as.character(hmm_out$BY)) # this is so dumb
+iohmm_tidy_ss1 <- hmm_out
+
+## Plot gamma (state 1) over time
+pdf("./figures/hmm-ss/iohmm_ss1_gamma_timeseries.pdf")
+for(i in 1:nlevels(sock$Stock)){
+  g <- iohmm_tidy_ss1 %>% filter(state_K == "State 1", stock==levels(sock$Stock)[i]) %>%
+    ggplot() +
+    geom_abline(intercept=0.5, slope=0, colour="grey70", lty="dashed") +
+    geom_point(aes(x=BY, y=gamma)) +
+    geom_line(aes(x=BY, y=gamma)) + 
+    labs(title=levels(sock$Stock)[i]) + theme_minimal() 
+  print(g)
+}
+dev.off()
+
+
+## Model comparison ------------------------------ ##
+
+## Plot the expected beta1 (covariate term) over time
+
+# Load dynamic model outputs
+load("./output/hbm_gamma_diff.RData", verbose=T)
+
+
+pdf("./figures/hmm-ss/model-compare_timeseries.pdf")
+for(i in 1:nlevels(sock$Stock)){
+  rw_covar_ts <- filter(hbm.gamma.diff, Stock == levels(sock$Stock)[i])
+  
+  b1_ss1 <- hmm_tidy_ss1 %>% filter(stock==levels(sock$Stock)[i]) %>% 
+    mutate(gamma_prod = beta1*gamma) %>% dplyr::summarize(covar = sum(gamma_prod), .by=BY)
+  b1_ss2 <- hmm_tidy_ss2 %>% filter(stock==levels(sock$Stock)[i]) %>% 
+    mutate(gamma_prod = beta1*gamma) %>% dplyr::summarize(covar = sum(gamma_prod), .by=BY)
+  b1_iohmm <- iohmm_tidy_ss1 %>% filter(stock==levels(sock$Stock)[i]) %>% 
+    mutate(gamma_prod = beta1*gamma) %>% dplyr::summarize(covar = sum(gamma_prod), .by=BY)
+  
+  g <- ggplot() +
+    geom_line(data = b1_ss1, aes(x=BY, y=covar, col='Single-Stock HMM')) + # HMM ss1
+    geom_line(data = rw_covar_ts, aes(x=BY, y=gamma, col = 'Hierarchical RW')) + # RW
+    geom_line(data = b1_iohmm, aes(x=BY, y=covar, col='Single-Stock \n Input-Output HMM')) + # IOHMM
+    #geom_line(data = b1_ss2, aes(x=BY, y=covar, col='Three-state HMM')) +
+    labs(title=levels(sock$Stock)[i], y = "SST effect", x = "Year", col = NULL) + 
+    scale_colour_manual(values = c('Single-Stock HMM'='mediumblue', 'Hierarchical RW'='maroon', 'Single-Stock \n Input-Output HMM'='orange', 'Three-state HMM'='darkgreen')) +
+    theme_minimal()
+  print(g)
+}
+dev.off()
+
+
+## Compare gammas for IOHMM and HMM-ss1 
+
+## Plot gamma (state 1) over time
+pdf("./figures/hmm-ss/iohmm-hmm_gamma_compare.pdf")
+for(i in 1:nlevels(sock$Stock)){
+  temp_iohmm <- iohmm_tidy_ss1 %>% filter(state_K == "State 1", stock==levels(sock$Stock)[i])
+  temp_hmm <- hmm_tidy_ss1 %>% filter(state_K == "State 1", stock==levels(sock$Stock)[i])
+  g <- ggplot() +
+    geom_abline(intercept=0.5, slope=0, colour="grey70", lty="dashed") +
+    geom_line(data=temp_hmm, aes(x=BY, y=gamma, col='HMM')) +
+    geom_line(data=temp_iohmm, aes(x=BY, y=gamma, col='IOHMM')) + 
+    scale_colour_manual(values=c('IOHMM'='orange', 'HMM'='mediumblue')) +
+    labs(title=levels(sock$Stock)[i]) + theme_minimal() 
+  print(g)
+}
+dev.off()
+
+
+## TEST STOCKS ##
+test_nam <- c("Meziadin", "Bowron", "Egegik")
+test_ind <- which(levels(sock$Stock) %in% test_nam)
+
+## compare w1 with gamma for iohmm
+load(paste0("./output/models/hmm-ss/iohmm_ss1_", test_nam[2], ".Rdata"), verbose=T)
+fit_summ <- summary(iohmm)$summary
+sst_ts <- sock$early_sst_stnd[sock$Stock == test_nam[2]]
+w1 <- fit_summ["w[1]","mean"] * sst_ts 
+w2 <- fit_summ["w[2]","mean"] * sst_ts
+A1 <- fit_summ[paste0("A[", 1:66, ",1]"),"mean"]
+softmax <- exp(pr1) / (exp(pr1) + exp(pr2))
+A1 == softmax
+
+temp_iohmm <- iohmm_tidy_ss1 %>% filter(state_K == "State 1", stock==test_nam[2])
+temp_hmm <- hmm_tidy_ss1 %>% filter(state_K == "State 1", stock==test_nam[2])
+g <- ggplot() +
+  geom_abline(intercept=0.5, slope=0, colour="grey70", lty="dashed") +
+  geom_line(data=temp_iohmm, aes(x=BY, y=gamma, col='smoothed gamma[1]')) + 
+  geom_line(data=NULL, aes(x=temp_iohmm$BY, y=softmax, col='softmax w[1]')) + 
+  scale_colour_manual(values=c('smoothed gamma[1]'='orange', 'softmax w[1]'='purple')) +
+  labs(title=test_nam[2], y=NULL, color=NULL) + theme_minimal() 
+png("./figures/hmm-ss/w1_gamma1_Meziadin.png")
+print(g)
+dev.off()
