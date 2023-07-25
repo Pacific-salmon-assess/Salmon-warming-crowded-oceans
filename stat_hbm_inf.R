@@ -1,7 +1,7 @@
 ## (8) Recreate the tables and figures in the publication ##
 ## ------------------------------------------------------ ##
 
-#TODO add single-stock estimates overlaid on dot-plots
+#TODO add single-stock estimates overlaid on dot-plots (now just for 4-OR fits)
 
 
 if(!dir.exists("./figures/stat/pub/")) dir.create("./figures/stat/pub/")
@@ -199,6 +199,48 @@ for(n in 1:length(fit)) {
       print(g)
   dev.off()
   
+  
+  ## Dot-density plot with overlaid single-stock coefficients --------------------------
+  
+  ss.dat <- ss.all.yrs$coef$model4a %>% 
+    dplyr::filter(variable %in% c("early_sst_stnd", "np_pinks_sec_stnd")) %>% 
+    dplyr::mutate(var = ifelse(variable == "early_sst_stnd", "SST", "Comp"))
+  df.dot.ss <- left_join(df.dot, ss.dat, by=c("Stock", "var"))
+  df.dot.ss$var <- factor(df.dot.ss$var, levels=c("SST", "Comp"))
+  
+  g <- ggplot(df.dot.ss) +
+    geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
+    geom_point(aes(x = mean, y = Stock, color = ocean_region_lab, shape = ocean_region_lab, fill=ocean_region_lab)) +
+    geom_segment(aes(y = Stock, yend = Stock, x = `2.5%`, xend = `97.5%`,
+                     color = ocean_region_lab), linewidth = 0.25) +
+    geom_segment(data = df.mu, aes(y = ystart, yend = yend, x = mu_mean, xend = mu_mean,
+                                   color = ocean_region_lab), linewidth = 0.25) +
+    geom_rect(data = df.mu, aes(xmin = mu_2.5, xmax = mu_97.5, ymin = ystart,
+                                ymax = yend, fill = ocean_region_lab),
+              alpha = 0.2) +
+    geom_point(aes(x=value, y=Stock, colour=ocean_region_lab, shape=ocean_region_lab), fill="transparent") +
+    scale_color_manual(values = rev(col.region)) +
+    scale_shape_manual(values = c(22, 21, 24), guide = "legend") +
+    scale_fill_manual(values = rev(col.region), guide="none") +
+    guides(shape = guide_legend(override.aes = list(shape=c(15, 16, 17)))) +
+    labs(x = "Coefficient",
+         y = "",
+         color = "",
+         shape = "") +
+    facet_wrap( ~ var) +
+    scale_x_continuous(breaks=c(-0.25,0,0.25))+
+    theme_sleek(base_size = 10) +
+    theme(legend.justification = c(0, 0),
+          legend.position = c(0.01, 0.87),
+          legend.key.size = unit(10, "pt"),
+          legend.background = element_blank(),
+          legend.text = element_text(size = 8),
+          panel.spacing.x = unit(-0.5, "pt"))
+
+    
+   pdf(paste0("./figures/stat/pub/Sfig_coef_dot_main_ss_", fitnam[[n]], ".pdf"), width = 6.5, height = 6.0)
+   print(g)
+   dev.off()
   
   
   ## Fig: Map + covars ---------------------------------------
@@ -633,7 +675,49 @@ for (n in 1:length(fit.oc)){
   pdf(paste0("./figures/stat/pub/Sfig_coef_dot_main_", fitnam.oc[[n]], ".pdf"), width = 6.5, height = 6.0)
   print(g)
   dev.off()
-
+  
+  ## Fig: Dot + density main with single stock estimates overlaid
+  
+  ss.dat <- ss.all.yrs$coef$model4a %>% 
+    dplyr::filter(variable %in% c("early_sst_stnd", "np_pinks_sec_stnd")) %>% 
+    dplyr::mutate(var = ifelse(variable == "early_sst_stnd", "SST", "Comp"))
+  df.dot.ss <- left_join(df.dot, ss.dat, by=c("Stock", "var"))
+  df.dot.ss$var <- factor(df.dot.ss$var, levels=c("SST", "Comp"))
+  
+  g <- ggplot(df.dot.ss) +
+    geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
+    geom_point(aes(x = mean, y = Stock, color = ocean_region_lab, shape = ocean_region_lab, fill=ocean_region_lab)) +
+    geom_segment(aes(y = Stock, yend = Stock, x = `2.5%`, xend = `97.5%`,
+                     color = ocean_region_lab), linewidth = 0.25) +
+    geom_segment(data = df.mu, aes(y = ystart, yend = yend, x = mu_mean, xend = mu_mean,
+                                   color = ocean_region_lab), linewidth = 0.25) +
+    geom_rect(data = df.mu, aes(xmin = mu_2.5, xmax = mu_97.5, ymin = ystart,
+                                ymax = yend, fill = ocean_region_lab),
+              alpha = 0.2) +
+    geom_point(aes(x=value, y=Stock, colour=ocean_region_lab, shape=ocean_region_lab), fill="transparent") +
+    scale_color_manual(values = rev(col.region)) +
+    scale_shape_manual(values = c(22, 21, 24, 23), guide = "legend") +
+    scale_fill_manual(values = rev(col.region), guide="none") +
+    guides(shape = guide_legend(override.aes = list(shape=c(15, 16, 17, 18)))) +
+    labs(x = "Coefficient",
+         y = "",
+         color = "",
+         shape = "") +
+    facet_wrap( ~ var) +
+    scale_x_continuous(breaks=c(-0.25,0,0.25))+
+    theme_sleek(base_size = 10) +
+    theme(legend.justification = c(0, 0),
+          legend.position = c(0.01, 0.87),
+          legend.key.size = unit(10, "pt"),
+          legend.background = element_blank(),
+          legend.text = element_text(size = 8),
+          panel.spacing.x = unit(-0.5, "pt"))
+  
+  
+  pdf(paste0("./figures/stat/pub/Sfig_coef_dot_main_ss_", fitnam.oc[[n]], ".pdf"), width = 6.5, height = 6.0)
+  print(g)
+  dev.off()
+  
   
   
   ## Fig: Map + covars ---------------------------------------
