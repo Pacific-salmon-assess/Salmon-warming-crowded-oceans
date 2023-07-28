@@ -63,7 +63,7 @@ for ( i in 1:nlevels(sock$Stock) ) {
   hmm_outputs[2,,] <- t( apply(post$gamma, c(2,3), median) )
   # alpha : dim (6000, N years, 2=K)
   hmm_outputs[3,,] <- t( apply(post$alpha, c(2,3), median) )
-  # beta : dim (6000, N years, 2=K) # beta is ricker b 
+  # beta : dim (6000, N years, 2=K) #  
   hmm_outputs[4,,] <- t( apply(post$beta, c(2,3), median) )
   # log_lik : dim(6000, N years) 
   hmm_outputs[5,,] <- rep( apply(post$log_lik, c(2), median), each=nlvl )
@@ -73,30 +73,6 @@ for ( i in 1:nlevels(sock$Stock) ) {
 
 
 }
-
-## Visualizations
-
-# Wrangle the list of arrays into a dataframe 
-names(hmm_out_ss1) <- levels(sock$Stock)
-hmm_out <- lapply(hmm_out_ss1, plyr::adply, .margins=c(2,3))
-hmm_out <- dplyr::bind_rows(hmm_out, .id="stock")
-names(hmm_out)[2:3] <- c("state_K", "BY")
-hmm_out$BY <- as.numeric(as.character(hmm_out$BY)) # this is so dumb
-hmm_tidy_ss1 <- hmm_out
-
-## Plot gamma (state 1) over time
-pdf("./figures/hmm-ss/ss1_gamma_timeseries.pdf")
-for(i in 1:nlevels(sock$Stock)){
-g <- hmm_tidy_ss1 %>% filter(state_K == "State 1", stock==levels(sock$Stock)[i]) %>%
-  ggplot() +
-  geom_abline(intercept=0.5, slope=0, colour="grey70", lty="dashed") +
-  geom_point(aes(x=BY, y=gamma)) +
-  geom_line(aes(x=BY, y=gamma)) + 
-  labs(title=levels(sock$Stock)[i]) + theme_minimal() 
-print(g)
-}
-dev.off()
-
 
 
 ## hmm_ss2 [Single Stock version 2] : 3 states, 2,1,1 transition matrix
@@ -151,7 +127,7 @@ for ( i in 1:nlevels(sock$Stock) ) {
   hmm_outputs[2,,] <- t( apply(post$gamma, c(2,3), median) )
   # alpha : dim (6000, N years, 2=K)
   hmm_outputs[3,,] <- t( apply(post$alpha, c(2,3), median) )
-  # beta : dim (6000, N years, 2=K) # beta is ricker b 
+  # beta : dim (6000, N years, 2=K) #  
   hmm_outputs[4,,] <- t( apply(post$beta, c(2,3), median) )
   # log_lik : dim(6000, N years) 
   hmm_outputs[5,,] <- rep( apply(post$log_lik, c(2), median), each=nlvl )
@@ -161,33 +137,6 @@ for ( i in 1:nlevels(sock$Stock) ) {
   
   
 }
-
-## Visualizations
-
-# Wrangle the list of arrays into a dataframe 
-names(hmm_out_ss2) <- levels(sock$Stock)
-hmm_out <- lapply(hmm_out_ss2, plyr::adply, .margins=c(2,3))
-hmm_out <- dplyr::bind_rows(hmm_out, .id="stock")
-names(hmm_out)[2:3] <- c("state_K", "BY")
-hmm_out$BY <- as.numeric(as.character(hmm_out$BY)) # this is so dumb
-hmm_tidy_ss2 <- hmm_out
-
-## Plot gamma (state 1) over time
-pdf("./figures/hmm-ss/ss2_gamma_timeseries.pdf")
-for(i in 1:nlevels(sock$Stock)){
-  dat_temp <- filter(hmm_tidy_ss2, stock==levels(sock$Stock)[i])
-  g <- ggplot() +
-    geom_abline(intercept=0.5, slope=0, colour="grey70", lty="dashed") +
-    geom_point(data=dat_temp[which(dat_temp$state_K == "State 1"),], aes(x=BY, y=gamma), col="black") +
-    geom_point(data=dat_temp[which(dat_temp$state_K == "State 2"),], aes(x=BY, y=gamma), col="blue") +
-    geom_point(data=dat_temp[which(dat_temp$state_K == "State 3"),], aes(x=BY, y=gamma), col="lightblue") +
-    geom_line(data=dat_temp[which(dat_temp$state_K == "State 1"),], aes(x=BY, y=gamma), col="black") +
-    geom_line(data=dat_temp[which(dat_temp$state_K == "State 2"),], aes(x=BY, y=gamma), col="blue") +
-    geom_line(data=dat_temp[which(dat_temp$state_K == "State 3"),], aes(x=BY, y=gamma), col="lightblue") +
-    labs(title=levels(sock$Stock)[i]) + theme_minimal() 
-  print(g)
-}
-dev.off()
 
 
 
@@ -243,7 +192,7 @@ for ( i in 1:nlevels(sock$Stock) ) {
   hmm_outputs[2,,] <- t( apply(post$gamma, c(2,3), median) )
   # alpha : dim (6000, N years, 2=K)
   hmm_outputs[3,,] <- t( apply(post$alpha, c(2,3), median) )
-  # beta : dim (6000, N years, 2=K) # beta is ricker b 
+  # beta : dim (6000, N years, 2=K) #  
   hmm_outputs[4,,] <- t( apply(post$beta, c(2,3), median) )
   # log_lik : dim(6000, N years) 
   hmm_outputs[5,,] <- rep( apply(post$log_lik, c(2), median), each=nlvl )
@@ -253,67 +202,6 @@ for ( i in 1:nlevels(sock$Stock) ) {
   
   
 }
-
-
-## Visualizations
-
-# Wrangle the list of arrays into a dataframe 
-names(hmm_out_ss3) <- levels(sock$Stock)
-hmm_out <- lapply(hmm_out_ss3, plyr::adply, .margins=c(2,3))
-hmm_out <- dplyr::bind_rows(hmm_out, .id="stock")
-names(hmm_out)[2:3] <- c("state_K", "BY")
-hmm_out$BY <- as.numeric(as.character(hmm_out$BY)) # this is so dumb
-hmm_tidy_ss3 <- hmm_out
-
-## Plot gamma (state 1) over time
-pdf("./figures/hmm-ss/ss3_gamma_timeseries.pdf")
-for(i in 1:nlevels(sock$Stock)){
-  g <- hmm_tidy_ss3 %>% filter(state_K == "State 1", stock==levels(sock$Stock)[i]) %>%
-    ggplot() +
-    geom_abline(intercept=0.5, slope=0, colour="grey70", lty="dashed") +
-    geom_point(aes(x=BY, y=gamma)) +
-    geom_line(aes(x=BY, y=gamma)) + 
-    labs(title=levels(sock$Stock)[i]) + theme_minimal() 
-  print(g)
-}
-dev.off()
-
-
-## Diagnostics
-elpd_ss1 <- list()
-elpd_ss2 <- list()
-elpd_ss3 <- list()
-comp_ss1_ss2 <- list()
-comp_ss1_ss3 <- list()
-
-for(i in 1:nlevels(sock$Stock)){
-  ## Load fits for version 1 
-  load(paste0("./output/models/hmm-ss/hmm_ss1_", levels(sock$Stock)[i], ".Rdata"), verbose=T)  
-  post_ss1 <- rstan::extract(hmm_ss1)
-  # Save elpd
-  elpd_ss1[[i]] <- loo::loo(posterior::as_draws_matrix(post_ss1$log_lik))
-
-  ## Load fits for version 2
-  load(paste0("./output/models/hmm-ss/hmm_ss2_", levels(sock$Stock)[i], ".Rdata"), verbose=T)
-  post_ss2 <- rstan::extract(hmm_ss2)
-  # Save elpd
-  elpd_ss2[[i]] <- loo::loo(posterior::as_draws_matrix(post_ss2$log_lik))
-  
-  ## Load fits for version 2
-  load(paste0("./output/models/hmm-ss/hmm_ss3_", levels(sock$Stock)[i], ".Rdata"), verbose=T)
-  post_ss3 <- rstan::extract(hmm_ss3)
-  # Save elpd
-  elpd_ss3[[i]] <- loo::loo(posterior::as_draws_matrix(post_ss3$log_lik))
-  
-  ## -- Comparisons -- ##
-  # 2-state versus 3-state model
-  comp_ss1_ss2[[i]] <- loo::loo_compare(elpd_ss1[[i]], elpd_ss2[[i]])
-  
-  # 2,1 versus 4,1 transition matrix
-  comp_ss1_ss3[[i]] <- loo::loo_compare(elpd_ss1[[i]], elpd_ss3[[i]])
-}
-
-
 
 
 
@@ -366,7 +254,7 @@ for(i in 1:nlevels(sock$Stock)){
   hmm_outputs[2,,] <- t( apply(post$gamma, c(2,3), median) )
   # alpha : dim (6000, N years, 2=K)
   hmm_outputs[3,,] <- t( apply(post$alpha, c(2,3), median) )
-  # beta : dim (6000, N years, 2=K) # beta is ricker b 
+  # beta : dim (6000, N years, 2=K) 
   hmm_outputs[4,,] <- t( apply(post$beta, c(2,3), median) )
   # log_lik : dim(6000, N years) 
   hmm_outputs[5,,] <- rep( apply(post$log_lik, c(2), median), each=nlvl )
@@ -377,102 +265,3 @@ for(i in 1:nlevels(sock$Stock)){
 }
 
 
-## Visualizations
-
-# Wrangle the list of arrays into a dataframe 
-names(iohmm_out_ss1) <- levels(sock$Stock)
-hmm_out <- lapply(iohmm_out_ss1, plyr::adply, .margins=c(2,3))
-hmm_out <- dplyr::bind_rows(hmm_out, .id="stock")
-names(hmm_out)[2:3] <- c("state_K", "BY")
-hmm_out$BY <- as.numeric(as.character(hmm_out$BY)) # this is so dumb
-iohmm_tidy_ss1 <- hmm_out
-
-## Plot gamma (state 1) over time
-pdf("./figures/hmm-ss/iohmm_ss1_gamma_timeseries.pdf")
-for(i in 1:nlevels(sock$Stock)){
-  g <- iohmm_tidy_ss1 %>% filter(state_K == "State 1", stock==levels(sock$Stock)[i]) %>%
-    ggplot() +
-    geom_abline(intercept=0.5, slope=0, colour="grey70", lty="dashed") +
-    geom_point(aes(x=BY, y=gamma)) +
-    geom_line(aes(x=BY, y=gamma)) + 
-    labs(title=levels(sock$Stock)[i]) + theme_minimal() 
-  print(g)
-}
-dev.off()
-
-
-## Model comparison ------------------------------ ##
-
-## Plot the expected beta1 (covariate term) over time
-
-# Load dynamic model outputs
-load("./output/hbm_gamma_diff.RData", verbose=T)
-
-
-pdf("./figures/hmm-ss/model-compare_timeseries.pdf")
-for(i in 1:nlevels(sock$Stock)){
-  rw_covar_ts <- filter(hbm.gamma.diff, Stock == levels(sock$Stock)[i])
-  
-  b1_ss1 <- hmm_tidy_ss1 %>% filter(stock==levels(sock$Stock)[i]) %>% 
-    mutate(gamma_prod = beta1*gamma) %>% dplyr::summarize(covar = sum(gamma_prod), .by=BY)
-  b1_ss2 <- hmm_tidy_ss2 %>% filter(stock==levels(sock$Stock)[i]) %>% 
-    mutate(gamma_prod = beta1*gamma) %>% dplyr::summarize(covar = sum(gamma_prod), .by=BY)
-  b1_iohmm <- iohmm_tidy_ss1 %>% filter(stock==levels(sock$Stock)[i]) %>% 
-    mutate(gamma_prod = beta1*gamma) %>% dplyr::summarize(covar = sum(gamma_prod), .by=BY)
-  
-  g <- ggplot() +
-    geom_line(data = b1_ss1, aes(x=BY, y=covar, col='Single-Stock HMM')) + # HMM ss1
-    geom_line(data = rw_covar_ts, aes(x=BY, y=gamma, col = 'Hierarchical RW')) + # RW
-    geom_line(data = b1_iohmm, aes(x=BY, y=covar, col='Single-Stock \n Input-Output HMM')) + # IOHMM
-    #geom_line(data = b1_ss2, aes(x=BY, y=covar, col='Three-state HMM')) +
-    labs(title=levels(sock$Stock)[i], y = "SST effect", x = "Year", col = NULL) + 
-    scale_colour_manual(values = c('Single-Stock HMM'='mediumblue', 'Hierarchical RW'='maroon', 'Single-Stock \n Input-Output HMM'='orange', 'Three-state HMM'='darkgreen')) +
-    theme_minimal()
-  print(g)
-}
-dev.off()
-
-
-## Compare gammas for IOHMM and HMM-ss1 
-
-## Plot gamma (state 1) over time
-pdf("./figures/hmm-ss/iohmm-hmm_gamma_compare.pdf")
-for(i in 1:nlevels(sock$Stock)){
-  temp_iohmm <- iohmm_tidy_ss1 %>% filter(state_K == "State 1", stock==levels(sock$Stock)[i])
-  temp_hmm <- hmm_tidy_ss1 %>% filter(state_K == "State 1", stock==levels(sock$Stock)[i])
-  g <- ggplot() +
-    geom_abline(intercept=0.5, slope=0, colour="grey70", lty="dashed") +
-    geom_line(data=temp_hmm, aes(x=BY, y=gamma, col='HMM')) +
-    geom_line(data=temp_iohmm, aes(x=BY, y=gamma, col='IOHMM')) + 
-    scale_colour_manual(values=c('IOHMM'='orange', 'HMM'='mediumblue')) +
-    labs(title=levels(sock$Stock)[i]) + theme_minimal() 
-  print(g)
-}
-dev.off()
-
-
-## TEST STOCKS ##
-test_nam <- c("Meziadin", "Bowron", "Egegik")
-test_ind <- which(levels(sock$Stock) %in% test_nam)
-
-## compare w1 with gamma for iohmm
-load(paste0("./output/models/hmm-ss/iohmm_ss1_", test_nam[2], ".Rdata"), verbose=T)
-fit_summ <- summary(iohmm)$summary
-sst_ts <- sock$early_sst_stnd[sock$Stock == test_nam[2]]
-w1 <- fit_summ["w[1]","mean"] * sst_ts 
-w2 <- fit_summ["w[2]","mean"] * sst_ts
-A1 <- fit_summ[paste0("A[", 1:66, ",1]"),"mean"]
-softmax <- exp(pr1) / (exp(pr1) + exp(pr2))
-A1 == softmax
-
-temp_iohmm <- iohmm_tidy_ss1 %>% filter(state_K == "State 1", stock==test_nam[2])
-temp_hmm <- hmm_tidy_ss1 %>% filter(state_K == "State 1", stock==test_nam[2])
-g <- ggplot() +
-  geom_abline(intercept=0.5, slope=0, colour="grey70", lty="dashed") +
-  geom_line(data=temp_iohmm, aes(x=BY, y=gamma, col='smoothed gamma[1]')) + 
-  geom_line(data=NULL, aes(x=temp_iohmm$BY, y=softmax, col='softmax w[1]')) + 
-  scale_colour_manual(values=c('smoothed gamma[1]'='orange', 'softmax w[1]'='purple')) +
-  labs(title=test_nam[2], y=NULL, color=NULL) + theme_minimal() 
-png("./figures/hmm-ss/w1_gamma1_Meziadin.png")
-print(g)
-dev.off()
