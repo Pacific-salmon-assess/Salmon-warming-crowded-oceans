@@ -20,33 +20,53 @@ parameters {
   // Continuous observation model
   real<lower=0> log_a; // max. productivity
   real log_b; // rate capacity - fixed in this
-  real<lower=0> sigma; // observation standard deviations
+  vector<lower=0>[K] sigma; // observation standard deviations
   ordered[K] beta1; //covariate 1 - K states
+  
+  vector<lower = -1, upper = 1>[K] rho; //autocorrelation in prod. residuals
 }
 
 transformed parameters {
   vector[K] logalpha[N];
   real b; //
+  vector[K] mu[N]; //expectation for each state at each time
+  vector[K] epsilon[N]; //residuals
+  vector<lower=0>[K] sigmaAR;
 
   b=exp(log_b);
 
+ 
+ 
 { // Forward algorithm log p(z_t = j | y_{1:t})
   real accumulator1[K];
-
- logalpha[1] = log(pi1) + normal_lpdf(R_S[1] |log_a - b*S[1] + beta1*X1[1], sigma);
- 
-
+  mu[1][1] = log_a - b*S[1] + beta1[1]*X1[1]; //initial expectation - state 1
+  mu[1][2] = log_a - b*S[1] + beta1[2]*X1[1]; //initial expectation - state 2
+  epsilon[1][1] = R_S[1] - mu[1][1]; //initial residual - state 1
+  epsilon[1][2] = R_S[1] - mu[1][2]; //initial residual - state 2
+  
+  //first-step of log likelihoods
+  for(j in 1:2){logalpha[1][j] = log(pi1[j]) + normal_lpdf(R_S[1] |mu[1][j], sigma[j]);
+  
+   sigmaAR[j] = sigma[j]*sqrt(1-rho[j]^2);
+  }
+  
+  //for every other observation:
   for (t in 2:N) {
   for (j in 1:K) { // j = current (t)
   for (i in 1:K) { // i = previous (t-1)
+  mu[t][j]= log_a - b*S[t] + beta1[j]*X1[t]+(rho[j]*epsilon[t-1][j]);
+  epsilon[t][j]= R_S[t] - mu[t][j];
+  
   // Murphy (2012) p. 609 eq. 17.48
   // belief state + transition prob + local evidence at t
-  accumulator1[i] = logalpha[t-1, i] + log(A[i, j]) + normal_lpdf(R_S[t] |log_a - b*S[t]+ beta1[i]*X1[t], sigma);
+  accumulator1[i] = logalpha[t-1, i] + log(A[i, j]) + normal_lpdf(R_S[t] |mu[t][j], sigmaAR[j]);
   }
   logalpha[t, j] = log_sum_exp(accumulator1);
   }
   }
   } // Forward
+  
+   
 }
 model{
   log_a ~ normal(1.5,2.5);
@@ -54,7 +74,13 @@ model{
   beta1 ~ normal(0,1); //set priors for both sets at 1 std
   sigma ~ normal(0,1); //half normal on variance (lower limit of zero)
   
-  pi1 ~ dirichlet(rep(1,K));
+  //autocorrelation term
+  rho ~ uniform(-1,1);
+  
+  //initial state probs.
+  pi1 ~ dirichlet(rep_vector(1,K));
+  
+  //transition matrix
   for(k in 1:K){
   A[k,] ~ dirichlet(alpha_dirichlet[k,]);
   }
@@ -71,7 +97,7 @@ generated quantities {
   vector[K] beta[N];
   vector[K] gamma[N];
   
-  real S_max;
+  real S_max; 
   
   { // Forward algortihm
   for (t in 1:N)
@@ -89,7 +115,7 @@ generated quantities {
   for (i in 1:K) { // i = next (t)
   // Murphy (2012) Eq. 17.58
   // backwards t + transition prob + local evidence at t
-  accumulator2[i] = logbeta[t, i] + log(A[j, i]) + normal_lpdf(R_S[t] | log_a - b*S[t]+beta1[i]*X1[t], sigma);
+  accumulator2[i] = logbeta[t, i] + log(A[j, i]) + normal_lpdf(R_S[t] | mu[t][i], sigmaAR[i]);
   }
   logbeta[t-1, j] = log_sum_exp(accumulator2);
   }
@@ -111,13 +137,13 @@ generated quantities {
   real delta[N, K]; // max prob for the sequence up to t
   // that ends with an emission from state k
   for (j in 1:K)
-  delta[1, K] = normal_lpdf(R_S[1] | log_a - b*S[1]+beta1[j]*X1[1], sigma);
+  delta[1, K] = normal_lpdf(R_S[1] | mu[1][j], sigma);
   for (t in 2:N) {
     for (j in 1:K) { // j = current (t)
       delta[t, j] = negative_infinity();
       for (i in 1:K) { // i = previous (t-1)
         real logp;
-        logp = delta[t-1, i] + log(A[i, j]) + normal_lpdf(R_S[t] | log_a - b*S[t]+beta1[j]*X1[t], sigma);
+        logp = delta[t-1, i] + log(A[i, j]) + normal_lpdf(R_S[t] | mu[t][j], sigmaAR[j]);
         if (logp > delta[t, j]) {
           bpointer[t, j] = i;
           delta[t, j] = logp;
@@ -134,8 +160,8 @@ generated quantities {
   }
   }
 
-
-for(n in 1:N)log_lik[n] = normal_lpdf(R_S[n]|log_a - S[n]*b+beta1[zstar[n]]*X1[n], sigma);
+log_lik[1] = normal_lpdf(R_S[1]|mu[1][zstar[1]], sigma);
+for(n in 2:N)log_lik[n] = normal_lpdf(R_S[n]|mu[n][zstar[n]], sigmaAR);
    
 S_max = 1/b;
 
