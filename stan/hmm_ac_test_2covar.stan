@@ -56,12 +56,12 @@ transformed parameters {
   for (t in 2:N) {
   for (j in 1:K) { // j = current (t)
   for (i in 1:K) { // i = previous (t-1)
-  mu[t][j]= log_a - b*S[t] + beta1[j]*X1[t] + beta2[j]*X2[t] + (rho*epsilon[t-1][j]);
-  epsilon[t][j]= R_S[t] - mu[t][j];
+  mu[t][i]= log_a - b*S[t] + beta1[i]*X1[t] + beta2[i]*X2[t] + (rho*epsilon[t-1][i]);
+  epsilon[t][i]= R_S[t] - mu[t][i];
   
   // Murphy (2012) p. 609 eq. 17.48
   // belief state + transition prob + local evidence at t
-  accumulator1[i] = logalpha[t-1, i] + log(A[i, j]) + normal_lpdf(R_S[t] |mu[t][j], sigmaAR);
+  accumulator1[i] = logalpha[t-1, i] + log(A[i, j]) + normal_lpdf(R_S[t] |mu[t][i], sigmaAR);
   }
   logalpha[t, j] = log_sum_exp(accumulator1);
   }
@@ -74,6 +74,7 @@ model{
   log_a ~ normal(1.5,2.5);
   log_b ~ normal(-12,3);
   beta1 ~ normal(0,1); //set priors for both sets at 1 std
+  beta2 ~ normal(0,1); //set priors for both sets at 1 std
   sigma ~ normal(0,1); //half normal on variance (lower limit of zero)
   
   //autocorrelation term
