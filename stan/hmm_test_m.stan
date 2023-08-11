@@ -1,3 +1,5 @@
+//HMM - modified to incorporate gaps in the R-S time-series
+
 functions {
   vector normalize(vector x) {
   return x / sum(x);
