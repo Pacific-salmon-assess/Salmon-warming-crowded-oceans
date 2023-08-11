@@ -1,3 +1,7 @@
+// Hidden Markov Model -- 1 time-varying covariate + K hidden states + AR1 error
+// Rho - Autocorrelation shared across K states
+// Single-stock
+
 functions {
   vector normalize(vector x) {
   return x / sum(x);

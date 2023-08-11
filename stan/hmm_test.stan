@@ -1,3 +1,7 @@
+// 'Base' Hidden Markov Model -- 1 time-varying covariate + K hidden states 
+// Single-stock 
+
+
 functions {
   vector normalize(vector x) {
   return x / sum(x);
