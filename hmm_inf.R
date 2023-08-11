@@ -38,6 +38,39 @@ for(i in 1:nlevels(sock$Stock)){
 }
 dev.off()
 
+  # (1a) Posterior estimates of covariate states - beta
+    # Load and format data
+for(i in 1:nlevels(sock$Stock)){
+  load(paste0("./output/models/hmm-ss/hmm_ss1_", levels(sock$Stock)[i], ".Rdata"))
+  post <- rstan::extract(hmm_ss1)
+  post_beta <- lapply(col_density(post$beta1, plot.it=F), plyr::adply, .margins=c(1,2))
+  beta_df <- join(post_beta$x, post_beta$y, by=c("X1","X2"))
+  beta_df$Stock = levels(sock$Stock)[i]
+  names(beta_df) <- c("n", "state", "x", "y", "Stock")
+  if(i==1) 
+    beta_df_master <- beta_df else
+    beta_df_master <- rbind(beta_df_master, beta_df)
+}
+beta_df_master <- left_join(beta_df_master, sock.info[,c("Stock", "Ocean.Region2")], by='Stock')
+beta_df_master$Stock <- factor(beta_df_master$Stock, levels=levels(sock$Stock))
+
+    # Plot  
+g <- ggplot(beta_df_master) + geom_path(aes(x=x, y=y, col=Ocean.Region2)) + 
+  facet_grid(rows=vars(Stock), as.table=F, switch="y") + 
+  scale_colour_manual(values=col.region) +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        strip.text.y.left = element_text(angle=0),
+        strip.background = element_rect(fill="transparent", colour="transparent"),
+        strip.text = element_text(size=7),
+        panel.spacing.y = unit(0, unit="cm"),
+        panel.background = element_rect(fill="white"),
+        legend.position = "none") +
+  labs(y="", x="Covariate effect")
+pdf("./figures/hmm-ss/beta1_post.pdf", width=5, height=10)
+print(g)
+dev.off()
+
 
   # (2) Multi-panel grid
 hmm_tidy_ss1 <- left_join(hmm_tidy_ss1, sock.info[,c("Stock", "Ocean.Region2")], by=c('stock'='Stock'))
@@ -82,7 +115,6 @@ g <- ggplot(hmm_tidy_ss1) +
 pdf("./figures/hmm-ss/b1_dot_ss1.pdf")
 print(g)
 dev.off()
-
 
   # (2) Dot plot of timeseries means of posterior mean covariate effect & 95% quant 
 
@@ -209,7 +241,54 @@ for(i in 1:nlevels(sock$Stock)){
 }
 dev.off()
 
+
+
+## HMM with Autocorrelation test 
+## ------------------------------------------------------------ ##
+  #SST
+names(hmm_ac_out_ss1) <- levels(sock$Stock)[1:length(hmm_ac_out_ss1)]
+hmm_out <- lapply(hmm_ac_out_ss1, plyr::adply, .margins=c(2,3))
+hmm_out <- dplyr::bind_rows(hmm_out, .id="stock")
+names(hmm_out)[2:3] <- c("state_K", "BY")
+hmm_out$BY <- as.numeric(as.character(hmm_out$BY)) # this is so dumb
+hmm_ac_tidy_ss1 <- hmm_out
+
+## Plot gamma (state 1) over time
+pdf("./figures/hmm-ss/hmm_ac_ss1_gamma_timeseries.pdf")
+for(i in 1:length(hmm_ac_out_ss1)){
+  g <- hmm_ac_tidy_ss1 %>% filter(state_K == "State 1", stock==levels(sock$Stock)[i]) %>%
+    ggplot() +
+    geom_abline(intercept=0.5, slope=0, colour="grey70", lty="dashed") +
+    geom_point(aes(x=BY, y=gamma)) +
+    geom_line(aes(x=BY, y=gamma)) + 
+    labs(title=levels(sock$Stock)[i]) + theme_minimal() 
+  print(g)
+}
+dev.off()
+
+  # Comp
+names(hmm_ac_out_comp) <- levels(sock$Stock)[1:length(hmm_ac_out_comp)]
+hmm_out <- lapply(hmm_ac_out_comp, plyr::adply, .margins=c(2,3))
+hmm_out <- dplyr::bind_rows(hmm_out, .id="stock")
+names(hmm_out)[2:3] <- c("state_K", "BY")
+hmm_out$BY <- as.numeric(as.character(hmm_out$BY)) # this is so dumb
+hmm_ac_tidy_comp <- hmm_out
+
+## Plot gamma (state 1) over time
+pdf("./figures/hmm-ss/hmm_ac_comp_gamma_timeseries.pdf")
+for(i in 1:length(hmm_ac_out_comp)){
+  g <- hmm_ac_tidy_comp %>% filter(state_K == "State 1", stock==levels(sock$Stock)[i]) %>%
+    ggplot() +
+    geom_abline(intercept=0.5, slope=0, colour="grey70", lty="dashed") +
+    geom_point(aes(x=BY, y=gamma)) +
+    geom_line(aes(x=BY, y=gamma)) + 
+    labs(title=levels(sock$Stock)[i]) + theme_minimal() 
+  print(g)
+}
+dev.off()
     
+
+
 ## Model comparison 
 ## --------------------------------------------------------------------------
 
@@ -240,6 +319,34 @@ for(i in 1:nlevels(sock$Stock)){
   print(g)
 }
 dev.off()
+
+
+
+
+# Realized covariate (beta1) over time - Compare HMM with Autocorrelation vs without
+
+rho <- vector(length=length(hmm_ac_out_ss1))
+
+pdf("./figures/hmm-ss/AC-model-compare_timeseries.pdf")
+for(i in 1:length(hmm_ac_out_ss1)){
+  rw_covar_ts <- filter(hbm.gamma.diff, Stock == levels(sock$Stock)[i])
+  
+  b1_ss1 <- hmm_tidy_ss1 %>% filter(stock==levels(sock$Stock)[i]) %>% 
+    mutate(gamma_prod = beta1*gamma) %>% dplyr::summarize(covar = sum(gamma_prod), .by=BY)
+  b1_ac <- hmm_ac_tidy_ss1 %>% filter(stock==levels(sock$Stock)[i]) %>% 
+    mutate(gamma_prod = beta1*gamma) %>% dplyr::summarize(covar = sum(gamma_prod), .by=BY)
+  rho[i] <- filter(hmm_ac_tidy_ss1, stock==levels(sock$Stock)[i])[1,"rho"]
+  
+  g <- ggplot() +
+    geom_line(data = b1_ss1, aes(x=BY, y=covar, col='HMM (no AC)')) +
+    geom_line(data = b1_ac, aes(x=BY, y=covar, col='HMM with Autocorrelation')) + 
+    labs(title=levels(sock$Stock)[i], subtitle = paste("Rho =", round(rho[i], 2)), y = "SST effect", x = "Year", col = NULL) + 
+    scale_colour_manual(values = c('HMM (no AC)'='mediumblue', 'HMM with Autocorrelation'='orange')) +
+    theme_minimal()
+  print(g)
+}
+dev.off()
+
 
 
 
@@ -276,6 +383,8 @@ for(i in 1:nlevels(sock$Stock)){
   # 2,1 versus 4,1 transition matrix
   comp_ss1_ss3[[i]] <- loo::loo_compare(elpd_ss1[[i]], elpd_ss3[[i]])
 }
+
+
 
 
 

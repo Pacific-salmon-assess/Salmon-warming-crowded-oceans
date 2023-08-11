@@ -265,3 +265,179 @@ for(i in 1:nlevels(sock$Stock)){
 }
 
 
+
+## HMM with Autocorrelation test 
+## ------------------------------------------------------------ ##
+
+
+hmm_ac_out_ss1 <- list() # Master list length = N stocks
+
+
+for(i in 1:nlevels(sock$Stock)){
+  
+  nlvl = 2 # 2 state model 
+  
+  hmm.dat <- dplyr::filter(sock, Stock == levels(sock$Stock)[i]) # extract data for 1 stock
+  
+  
+  hmm.stan.dat <- list( #Get stan data
+    N = nrow(hmm.dat),
+    R_S = hmm.dat$lnRS,
+    S = hmm.dat$S,
+    K = nlvl,
+    X1 = hmm.dat$early_sst_stnd, # covariate = SST
+    alpha_dirichlet = matrix(c(2,1,1,2), nrow=2) )
+  
+  
+  # Run the stan model
+  hmm_ac <- rstan::stan(file = "./stan/hmm_ac_test.stan",
+                       data = hmm.stan.dat,
+                       warmup = 1000,
+                       iter = 4000,
+                       cores = 4,
+                       chains = 4,
+                       seed = 123,
+                       control = list(adapt_delta = 0.90,
+                                      max_treedepth = 10))
+  save(hmm_ac, file = paste0("./output/models/hmm-ss/hmm_ac_", levels(sock$Stock)[i], ".Rdata"))
+  
+  
+  ## Extract parameters of interest
+  post <- rstan::extract(hmm_ac)
+  params_out <- c("beta1", "gamma", "alpha", "beta", "log_lik", "rho")
+  
+  ## Store parameters of interest
+  hmm_outputs <- array(NA, dim=c(length(params_out), nlvl, nrow(hmm.dat))) # Stock-specific array of results - overwritten each loop
+  dimnames(hmm_outputs) <- list( params_out, c("State 1", "State 2"), hmm.dat$BY)
+  
+  # beta1 : dim (6000, 2=K)
+  hmm_outputs[1,,] <- rep( apply(post$beta1, 2, median), times=hmm.stan.dat$N) 
+  # gamma : dim (6000, N years, 2=K)
+  hmm_outputs[2,,] <- t( apply(post$gamma, c(2,3), median) )
+  # alpha : dim (6000, N years, 2=K)
+  hmm_outputs[3,,] <- t( apply(post$alpha, c(2,3), median) )
+  # beta : dim (6000, N years, 2=K) 
+  hmm_outputs[4,,] <- t( apply(post$beta, c(2,3), median) )
+  # log_lik : dim(6000, N years) 
+  hmm_outputs[5,,] <- rep( apply(post$log_lik, c(2), median), each=nlvl )
+  # rho : dim (iterations)
+  hmm_outputs[6,,] <- median(post$rho)
+  
+  hmm_ac_out_ss1[[i]] <- hmm_outputs
+  
+}
+
+
+
+## Competitor covariate : hmm_ac -------------------------------- ##
+
+
+hmm_ac_out_comp <- list() # Master list length = N stocks
+
+
+for(i in 1:nlevels(sock$Stock)){
+  
+  nlvl = 2 # 2 state model 
+  
+  hmm.dat <- dplyr::filter(sock, Stock == levels(sock$Stock)[i]) # extract data for 1 stock
+  
+  
+  hmm.stan.dat <- list( #Get stan data
+    N = nrow(hmm.dat),
+    R_S = hmm.dat$lnRS,
+    S = hmm.dat$S,
+    K = nlvl,
+    X1 = hmm.dat$np_pinks_sec_stnd, # covariate = Comp
+    alpha_dirichlet = matrix(c(2,1,1,2), nrow=2) )
+  
+  
+  # Run the stan model
+  hmm_ac <- rstan::stan(file = "./stan/hmm_ac_test.stan",
+                        data = hmm.stan.dat,
+                        warmup = 1000,
+                        iter = 4000,
+                        cores = 4,
+                        chains = 4,
+                        seed = 123,
+                        control = list(adapt_delta = 0.90,
+                                       max_treedepth = 10))
+  save(hmm_ac, file = paste0("./output/models/hmm-ss/hmm_ac_comp_", levels(sock$Stock)[i], ".Rdata"))
+  
+  
+  ## Extract parameters of interest
+  post <- rstan::extract(hmm_ac)
+  params_out <- c("beta1", "gamma", "alpha", "beta", "log_lik", "rho")
+  
+  ## Store parameters of interest
+  hmm_outputs <- array(NA, dim=c(length(params_out), nlvl, nrow(hmm.dat))) # Stock-specific array of results - overwritten each loop
+  dimnames(hmm_outputs) <- list( params_out, c("State 1", "State 2"), hmm.dat$BY)
+  
+  # beta1 : dim (6000, 2=K)
+  hmm_outputs[1,,] <- rep( apply(post$beta1, 2, median), times=hmm.stan.dat$N) 
+  # gamma : dim (6000, N years, 2=K)
+  hmm_outputs[2,,] <- t( apply(post$gamma, c(2,3), median) )
+  # alpha : dim (6000, N years, 2=K)
+  hmm_outputs[3,,] <- t( apply(post$alpha, c(2,3), median) )
+  # beta : dim (6000, N years, 2=K) 
+  hmm_outputs[4,,] <- t( apply(post$beta, c(2,3), median) )
+  # log_lik : dim(6000, N years) 
+  hmm_outputs[5,,] <- rep( apply(post$log_lik, c(2), median), each=nlvl )
+  # rho : dim (iterations)
+  hmm_outputs[6,,] <- median(post$rho)
+  
+  hmm_ac_out_comp[[i]] <- hmm_outputs
+  
+}
+
+
+
+##------------ Two-covariate model test
+
+# AC 2-covar model
+hmm.dat <- dplyr::filter(sock, Stock == levels(sock$Stock)[21])
+hmm.stan.dat <- list( 
+  N = nrow(hmm.dat),
+  R_S = hmm.dat$lnRS,
+  S = hmm.dat$S,
+  K = nlvl,
+  X1 = hmm.dat$early_sst_stnd, # covariate 1 = SST
+  X2 =  hmm.dat$np_pinks_sec_stnd, # covariate 2 = Comp
+  alpha_dirichlet = matrix(c(2,1,1,2), nrow=2) )
+
+hmm_2covar <- rstan::stan(file = "./stan/hmm_ac_test_2covar.stan",
+                      data = hmm.stan.dat,
+                      warmup = 1000,
+                      iter = 4000,
+                      cores = 4,
+                      chains = 4,
+                      seed = 123,
+                      control = list(adapt_delta = 0.90,
+                                     max_treedepth = 10))
+save(hmm_2covar, file = paste0("./output/models/hmm-ss/hmm_2covar", levels(sock$Stock)[21], ".Rdata"))
+
+
+## Base 2-covar model
+hmm.dat <- dplyr::filter(sock, Stock == levels(sock$Stock)[21])
+hmm.stan.dat <- list( 
+  N = nrow(hmm.dat),
+  R_S = hmm.dat$lnRS,
+  S = hmm.dat$S,
+  K = nlvl,
+  X1 = hmm.dat$early_sst_stnd, # covariate 1 = SST
+  X2 =  hmm.dat$np_pinks_sec_stnd, # covariate 2 = Comp
+  alpha_dirichlet = matrix(c(2,1,1,2), nrow=2) )
+
+hmm_base_2covar <- rstan::stan(file = "./stan/hmm_test_2covar.stan",
+                          data = hmm.stan.dat,
+                          warmup = 1000,
+                          iter = 4000,
+                          cores = 4,
+                          chains = 4,
+                          seed = 123,
+                          control = list(adapt_delta = 0.90,
+                                         max_treedepth = 10))
+save(hmm_base_2covar, file = paste0("./output/models/hmm-ss/hmm_base_2covar", levels(sock$Stock)[21], ".Rdata"))
+post <- rstan::extract(hmm_base_2covar)
+summ <- rstan::summary(hmm_base_2covar)$summary
+gamma1_dat <- summ[paste0("gamma[", 1:nrow(hmm.dat), ",1]"), "mean"]
+ggplot() + geom_point(aes(x=1:25, y=gamma1_dat)) + geom_line(aes(x=1:25, y=gamma1_dat))
