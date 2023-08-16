@@ -8,38 +8,17 @@ for(i in list.files(path = "./output/hbm_fit/", pattern = "*.RData$")) {
     load(paste("./output/hbm_fit/", i, sep = ""))
 }
 
+## Extract model outputs 
+## ----------------------------------------------------------
 
-## Gamma: era ----------------------------------------------
 
-mcmc.hbm2.sst  <- As.mcmc.list(hbm2.sst,  pars = pars.hbm2)
-mcmc.hbm2.npgo <- As.mcmc.list(hbm2.npgo,  pars = pars.hbm2)
-mcmc.hbm2.pdo  <- As.mcmc.list(hbm2.pdo,  pars = pars.hbm2)
+## Eras model : hbm3 ----------------------------------------
+
 mcmc.hbm3.sst  <- As.mcmc.list(hbm3.sst,  pars = pars.hbm3)
-mcmc.hbm3.npgo <- As.mcmc.list(hbm3.npgo, pars = pars.hbm3)
-mcmc.hbm3.pdo  <- As.mcmc.list(hbm3.pdo,  pars = pars.hbm3)
-
-lst.hbm2 <- list(SST  = mcmc.hbm2.sst,
-                 NPGO = mcmc.hbm2.npgo,
-                 PDO  = mcmc.hbm2.pdo)
-lst.hbm3 <- list(SST  = mcmc.hbm3.sst,
-                 NPGO = mcmc.hbm3.npgo,
-                 PDO  = mcmc.hbm3.pdo)
+lst.hbm3 <- list(SST  = mcmc.hbm3.sst)
 
 
-dfl.hbm2 <- lapply(seq_along(lst.hbm2), function(i) {
-    mcmc <- lst.hbm2[[i]]
-    df.wide <- coda_df(mcmc, grep("mu_gamma", coda::varnames(mcmc),
-                                  value = TRUE))
-    df.long <- reshape2::melt(df.wide, id.vars = c("chain", "iter"),
-                              variable.name = "par")
-    # browser()
-    info <- data.frame(par = as.character(unique(df.long$par)),
-                       ocean_region = c("WC", "GOA", "BS"),
-                       era = rep("all", 3))
-    df <- plyr::join(df.long, info, by = "par")
-    df$var <- names(lst.hbm2)[i]
-    return(df)
-})
+# Summarized dataframe (across stocks)
 
 dfl.hbm3 <- lapply(seq_along(lst.hbm3), function(i) {
     mcmc <- lst.hbm3[[i]]
@@ -57,31 +36,8 @@ dfl.hbm3 <- lapply(seq_along(lst.hbm3), function(i) {
     return(df)
 })
 
-df.hbm2.3 <- rbind(plyr::rbind.fill(dfl.hbm3), plyr::rbind.fill(dfl.hbm2))
-df.hbm2.3$era <- factor(df.hbm2.3$era, levels = unique(df.hbm2.3$era))
-df.hbm2.3 <- ocean_region_lab(df.hbm2.3)
 
-hbm.gamma.era <- df.hbm2.3
-save(hbm.gamma.era, file = "./output/hbm_gamma_era.RData")
-
-
-
-
-## Stock specific era
-dfl.hbm2.st <- lapply(seq_along(lst.hbm2), function(i) {
-    mcmc <- lst.hbm2[[i]]
-    df.wide <- coda_df(mcmc, grep("^gamma", coda::varnames(mcmc),
-                                  value = TRUE))
-    df.long <- reshape2::melt(df.wide, id.vars = c("chain", "iter"),
-                              variable.name = "par")
-    info <- sock.info[ , c("stock_no", "stock", "ocean_region")]
-    info$par <- paste0("gamma[", info$stock_no, "]")
-    info$era <- "all"
-    info <- ocean_region_lab(info)
-    df <- plyr::join(info, df.long, by = "par")
-    df$var <- names(lst.hbm2)[i]
-    return(df)
-})
+# Stock-specific dataframe
 
 dfl.hbm3.st <- lapply(seq_along(lst.hbm3), function(i) {
     mcmc <- lst.hbm3[[i]]
@@ -89,137 +45,26 @@ dfl.hbm3.st <- lapply(seq_along(lst.hbm3), function(i) {
                                   value = TRUE))
     df.long <- reshape2::melt(df.wide, id.vars = c("chain", "iter"),
                               variable.name = "par")
-    info <- sock.info[ , c("stock_no", "stock", "ocean_region")]
+    info <- sock.info[ , c("Stock.ID", "Stock", "Ocean.Region2")]
     info1 <- info; info2 <- info; info3 <- info
-    info1$par <- paste0("gamma1[", info1$stock_no, "]")
-    info2$par <- paste0("gamma2[", info2$stock_no, "]")
-    info3$par <- paste0("gamma3[", info3$stock_no, "]")
+    info1$par <- paste0("gamma1[", 1:nlevels(info$Stock), "]")
+    info2$par <- paste0("gamma2[", 1:nlevels(info$Stock), "]")
+    info3$par <- paste0("gamma3[", 1:nlevels(info$Stock), "]")
     info1$era <- "early"
     info2$era <- "middle"
     info3$era <- "late"
     info <- rbind(info1, info2, info3)
-    info <- ocean_region_lab(info)
+    info <- ocean_region_lab(info, var="Ocean.Region2")
     df <- plyr::join(info, df.long, by = "par")
     df$var <- names(lst.hbm3)[i]
     return(df)
 })
 
-df.hbm2.3.st <- rbind(plyr::rbind.fill(dfl.hbm3.st), plyr::rbind.fill(dfl.hbm2.st))
-df.hbm2.3.st$era <- factor(df.hbm2.3.st$era, levels = unique(df.hbm2.3.st$era))
 
-hbm.gamma.era.stock <- df.hbm2.3.st
-save(hbm.gamma.era.stock, file = "./output/hbm_gamma_era_stock.RData")
-
-
-
-## Gamma s2: era -------------------------------------------
-
-mcmc.hbm2.sst.s2  <- As.mcmc.list(hbm2.sst.s2,  pars = pars.hbm2)
-mcmc.hbm2.npgo.s2 <- As.mcmc.list(hbm2.npgo.s2,  pars = pars.hbm2)
-mcmc.hbm2.pdo.s2  <- As.mcmc.list(hbm2.pdo.s2,  pars = pars.hbm2)
-mcmc.hbm3.sst.s2  <- As.mcmc.list(hbm3.sst.s2,  pars = pars.hbm3)
-mcmc.hbm3.npgo.s2 <- As.mcmc.list(hbm3.npgo.s2, pars = pars.hbm3)
-mcmc.hbm3.pdo.s2  <- As.mcmc.list(hbm3.pdo.s2,  pars = pars.hbm3)
-
-lst.hbm2.s2 <- list(SST  = mcmc.hbm2.sst.s2,
-                    NPGO = mcmc.hbm2.npgo.s2,
-                    PDO  = mcmc.hbm2.pdo.s2)
-lst.hbm3.s2 <- list(SST  = mcmc.hbm3.sst.s2,
-                    NPGO = mcmc.hbm3.npgo.s2,
-                    PDO  = mcmc.hbm3.pdo.s2)
-
-
-dfl.hbm2.s2 <- lapply(seq_along(lst.hbm2.s2), function(i) {
-    mcmc <- lst.hbm2.s2[[i]]
-    df.wide <- coda_df(mcmc, grep("mu_gamma", coda::varnames(mcmc),
-                                  value = TRUE))
-    df.long <- reshape2::melt(df.wide, id.vars = c("chain", "iter"),
-                              variable.name = "par")
-    # browser()
-    info <- data.frame(par = as.character(unique(df.long$par)),
-                       ocean_region = c("WC", "GOA", "BS"),
-                       era = rep("all", 3))
-    df <- plyr::join(df.long, info, by = "par")
-    df$var <- names(lst.hbm2.s2)[i]
-    return(df)
-})
-
-dfl.hbm3.s2 <- lapply(seq_along(lst.hbm3.s2), function(i) {
-    mcmc <- lst.hbm3.s2[[i]]
-    df.wide <- coda_df(mcmc, grep("mu_gamma", coda::varnames(mcmc),
-                                  value = TRUE))
-    df.long <- reshape2::melt(df.wide, id.vars = c("chain", "iter"),
-                              variable.name = "par")
-    info <- data.frame(par = as.character(unique(df.long$par)),
-                       ocean_region = rep(c("WC", "GOA", "BS"), 3),
-                       era = c(rep("early", 3),
-                               rep("middle", 3),
-                               rep("late", 3)))
-    df <- plyr::join(df.long, info, by = "par")
-    df$var <- names(lst.hbm3.s2)[i]
-    return(df)
-})
-
-df.hbm2.3.s2 <- rbind(plyr::rbind.fill(dfl.hbm3.s2), plyr::rbind.fill(dfl.hbm2.s2))
-df.hbm2.3.s2$era <- factor(df.hbm2.3.s2$era, levels = unique(df.hbm2.3.s2$era))
-df.hbm2.3.s2 <- ocean_region_lab(df.hbm2.3.s2)
-
-hbm.gamma.era.s2 <- df.hbm2.3.s2
-save(hbm.gamma.era.s2, file = "./output/hbm_gamma_era_s2.RData")
-
-
-
-## Stock specific era
-dfl.hbm2.st.s2 <- lapply(seq_along(lst.hbm2.s2), function(i) {
-    mcmc <- lst.hbm2.s2[[i]]
-    df.wide <- coda_df(mcmc, grep("^gamma", coda::varnames(mcmc),
-                                  value = TRUE))
-    df.long <- reshape2::melt(df.wide, id.vars = c("chain", "iter"),
-                              variable.name = "par")
-    info <- sock.info[ , c("stock_no", "stock", "ocean_region")]
-    info$par <- paste0("gamma[", info$stock_no, "]")
-    info$era <- "all"
-    info <- ocean_region_lab(info)
-    df <- plyr::join(info, df.long, by = "par")
-    df$var <- names(lst.hbm2.s2)[i]
-    return(df)
-})
-
-dfl.hbm3.st.s2 <- lapply(seq_along(lst.hbm3.s2), function(i) {
-    mcmc <- lst.hbm3.s2[[i]]
-    df.wide <- coda_df(mcmc, grep("^gamma", coda::varnames(mcmc),
-                                  value = TRUE))
-    df.long <- reshape2::melt(df.wide, id.vars = c("chain", "iter"),
-                              variable.name = "par")
-    info <- sock.info[ , c("stock_no", "stock", "ocean_region")]
-    info1 <- info; info2 <- info; info3 <- info
-    info1$par <- paste0("gamma1[", info1$stock_no, "]")
-    info2$par <- paste0("gamma2[", info2$stock_no, "]")
-    info3$par <- paste0("gamma3[", info3$stock_no, "]")
-    info1$era <- "early"
-    info2$era <- "middle"
-    info3$era <- "late"
-    info <- rbind(info1, info2, info3)
-    info <- ocean_region_lab(info)
-    df <- plyr::join(info, df.long, by = "par")
-    df$var <- names(lst.hbm3.s2)[i]
-    return(df)
-})
-
-df.hbm2.3.st.s2 <- rbind(plyr::rbind.fill(dfl.hbm3.st.s2), plyr::rbind.fill(dfl.hbm2.st.s2))
-df.hbm2.3.st.s2$era <- factor(df.hbm2.3.st.s2$era, levels = unique(df.hbm2.3.st.s2$era))
-
-hbm.gamma.era.stock.s2 <- df.hbm2.3.st.s2
-save(hbm.gamma.era.stock.s2, file = "./output/hbm_gamma_era_stock_s2.RData")
-
-
-
-## Gamma: different ----------------------------------------
+## Dynamic model: hbm5  ------------------------------------
 
 lst.hbm5 <- list(SST  = hbm5.sst)
-                 #NPGO = hbm5.npgo,
-                 #PDO  = hbm5.pdo)
-
+                 
 dfl.hbm5 <- lapply(seq_along(lst.hbm5), function(i) {
     probs <- c(0.025, 0.05, 0.10, 0.50, 0.90, 0.95, 0.975)
     summ <- summary(lst.hbm5[[i]], pars = "gamma", probs = probs)[[1]]
@@ -240,122 +85,127 @@ df.hbm5 <- ocean_region_lab(df.hbm5)
 df.hbm5 <- plyr::ddply(df.hbm5, .(ocean_region_lab, var, Stock), transform,
                        sig = (lower < 0 & upper < 0) |
                              (lower > 0 & upper > 0))
-df.hbm5$var <- factor(df.hbm5$var, levels = c("SST")) #NPGO", "PDO", "SST"))
+df.hbm5$var <- factor(df.hbm5$var, levels = c("SST")) 
 
 hbm.gamma.diff <- df.hbm5
 save(hbm.gamma.diff, file = "./output/hbm_gamma_diff.RData")
 
 
 
-## Gamma s1: different -------------------------------------
+## Graphics 
+## ------------------------------------------------
 
-lst.hbm5.s1 <- list(SST  = hbm5.sst.s1,
-                    NPGO = hbm5.npgo.s1,
-                    PDO  = hbm5.pdo.s1)
+## Dot-plots of alpha, beta, sigma 
+plot_hbm_dot(hbm3.sst, pdf.file = "./figures/dyn/hbm_inf/hbm3_sst_dot.pdf")
+plot_hbm_dot(hbm5.sst, pdf.file = "./figures/dyn/hbm_inf/hbm5_sst_dot.pdf")
 
-dfl.hbm5.s1 <- lapply(seq_along(lst.hbm5.s1), function(i) {
-    probs <- c(0.025, 0.05, 0.10, 0.50, 0.90, 0.95, 0.975)
-    summ <- summary(lst.hbm5.s1[[i]], pars = "gamma", probs = probs)[[1]]
-    df <- data.frame(stock = sock.covar$stock,
-                     ocean_region = sock.covar$ocean_region,
-                     brood_yr = sock.covar$brood_yr,
-                     gamma = summ[ , "50%"],
-                     lower = summ[ , "10%"],
-                     upper = summ[ , "90%"],
-                     var = names(lst.hbm5.s1)[i])
-    return(df)
-})
-
-df.hbm5.s1 <- plyr::rbind.fill(dfl.hbm5.s1)
-df.hbm5.s1 <- ocean_region_lab(df.hbm5.s1)
-df.hbm5.s1 <- plyr::ddply(df.hbm5.s1, .(ocean_region_lab, var, stock), transform,
-                          sig = any((lower < 0 & upper < 0) |
-                                    (lower > 0 & upper > 0)))
-df.hbm5.s1$var <- factor(df.hbm5.s1$var, levels = c("NPGO", "PDO", "SST"))
-
-hbm.gamma.diff.s1 <- df.hbm5.s1
-save(hbm.gamma.diff.s1, file = "./output/hbm_gamma_diff_s1.RData")
+## Posterior density of alpha
+plot_hbm_dens(hbm3.sst, pdf.file = "./figures/dyn/hbm_inf/hbm3_sst_dens.pdf")
+plot_hbm_dens(hbm5.sst, pdf.file = "./figures/dyn/hbm_inf/hbm5_sst_dens.pdf")
 
 
+## Dot-plots of covariate effects: Eras (hbm3)
 
-## Gamma: same ---------------------------------------------
+# hb_param_df function copy with change allowing multiple eras: 
+#TODO modify function code instead of copying here
+  s.par <- as.data.frame(summary(hbm3.sst, pars = c("gamma1", "gamma2", "gamma3"), probs = c(0.025, 0.05, 0.10, 0.50, 0.90, 0.95, 0.975))[[1]])
+  s.par$par <- rep(c("gamma1", "gamma2", "gamma3"), each=nlevels(sock$Stock))
+  s.par$Stock <- sock.info$Stock
+  s.par$Ocean.Region <- sock.info$Ocean.Region
+  
+  s.mu <- as.data.frame(summary(hbm3.sst, pars = paste0("mu_", c("gamma1", "gamma2", "gamma3")),
+                                probs = c(0.025, 0.05, 0.10, 0.50, 0.90, 0.95, 0.975))[[1]])
+  names(s.mu) <- paste0("mu_", names(s.mu))
+  s.mu[["Ocean.Region"]] <- unique(sock.info[["Ocean.Region"]])
+  s.mu$par <- rep(c("gamma1", "gamma2", "gamma3"), each=3)
+  
+  df.dot.era <- dplyr::left_join(s.par, s.mu, by = c('Ocean.Region', 'par'))
 
-lst.hbm6 <- list(SST  = hbm6.sst,
-                 NPGO = hbm6.npgo,
-                 PDO  = hbm6.pdo)
+  df.dot.era <- ocean_region_lab(df.dot.era, factor=FALSE)
+  df.dot.era$Stock <- factor(df.dot.era$Stock, levels = levels(sock$Stock)) 
+  df.dot.era$era <- df.dot.era$par
+#df.dot.era$var <- factor(df.dot.era$var, levels = c("SST")) #, "Comp" )) # ,"SST x Comp"))
 
-dfl.hbm6 <- lapply(seq_along(lst.hbm6), function(i) {
-    probs <- c(0.025, 0.05, 0.10, 0.50, 0.90, 0.95, 0.975)
-    summ <- summary(lst.hbm6[[i]], pars = "gamma", probs = probs)[[1]]
-    dat <- sock.covar
-    dat$ocean_region <- factor(dat$ocean_region,
-                               levels = unique(dat$ocean_region))
-    df <- plyr::ddply(dat, .(ocean_region), function(x) {
-                  brood_yr <- min(x$brood_yr):max(x$brood_yr)
-                  ocean_region <- rep(unique(x$ocean_region),
-                                      length(unique(x$brood_yr)))
-                  data.frame(brood_yr = brood_yr,
-                             ocean_region = ocean_region) })
-    df$gamma <- summ[ , "50%"]
-    df$lower <- summ[ , "5%"]
-    df$upper <- summ[ , "95%"]
-    df$var <- names(lst.hbm6)[i]
-    return(df)
-})
+df.mu.era <- plyr::ddply(df.dot.era, .(Ocean.Region), dplyr::summarize,
+                     mu_mean = unique(mu_mean),
+                     mu_2.5 = unique(`mu_2.5%`),
+                     mu_97.5 = unique(`mu_97.5%`),
+                     ocean_region_lab = unique(ocean_region_lab),
+                     ystart = Stock[1],
+                     yend = Stock[length(Stock)],
+                     era = unique(par))
 
-df.hbm6 <- plyr::rbind.fill(dfl.hbm6)
-df.hbm6 <- ocean_region_lab(df.hbm6)
-df.hbm6$var <- factor(df.hbm6$var, levels = c("NPGO", "PDO", "SST"))
+# Set colours 
+col.region <- chroma::qpal(7, luminance = 40)[c(1, 3, 5)]
 
-hbm.gamma.same <- df.hbm6
-save(hbm.gamma.same, file = "./output/hbm_gamma_same.RData")
-
-
-
-## Graphics ------------------------------------------------
-
-## Base model
-plot_hbm_dot(hbm1, pdf.file = "./figures/hbm_inf/hbm1_dot.pdf")
-plot_hbm_dens(hbm1, "./figures/hbm_inf/hbm1_sst_dens.pdf")
-
-
-## SST
-plot_hbm_dot(hbm2.sst, pdf.file = "./figures/hbm_inf/hbm2_sst_dot.pdf")
-plot_hbm_dot(hbm3.sst, pdf.file = "./figures/hbm_inf/hbm3_sst_dot.pdf")
-plot_hbm_dot(hbm4.sst, pdf.file = "./figures/hbm_inf/hbm4_sst_dot.pdf")
-plot_hbm_dot(hbm5.sst, pdf.file = "./figures/hbm_inf/hbm5_sst_dot.pdf")
-plot_hbm_dot(hbm6.sst, pdf.file = "./figures/hbm_inf/hbm6_sst_dot.pdf")
-
-plot_hbm_dens(hbm2.sst, "./figures/hbm_inf/hbm2_sst_dens.pdf")
-plot_hbm_dens(hbm3.sst, "./figures/hbm_inf/hbm3_sst_dens.pdf")
-plot_hbm_dens(hbm4.sst, "./figures/hbm_inf/hbm4_sst_dens.pdf")
-plot_hbm_dens(hbm5.sst, "./figures/hbm_inf/hbm5_sst_dens.pdf")
-plot_hbm_dens(hbm6.sst, "./figures/hbm_inf/hbm6_sst_dens.pdf")
-
-
-## NPGO
-plot_hbm_dot(hbm2.npgo, pdf.file = "./figures/hbm_inf/hbm2_npgo_dot.pdf")
-plot_hbm_dot(hbm3.npgo, pdf.file = "./figures/hbm_inf/hbm3_npgo_dot.pdf")
-plot_hbm_dot(hbm4.npgo, pdf.file = "./figures/hbm_inf/hbm4_npgo_dot.pdf")
-plot_hbm_dot(hbm5.npgo, pdf.file = "./figures/hbm_inf/hbm5_npgo_dot.pdf")
-plot_hbm_dot(hbm6.npgo, pdf.file = "./figures/hbm_inf/hbm6_npgo_dot.pdf")
-
-plot_hbm_dens(hbm2.npgo, "./figures/hbm_inf/hbm2_npgo_dens.pdf")
-plot_hbm_dens(hbm3.npgo, "./figures/hbm_inf/hbm3_npgo_dens.pdf")
-plot_hbm_dens(hbm4.npgo, "./figures/hbm_inf/hbm4_npgo_dens.pdf")
-plot_hbm_dens(hbm5.npgo, "./figures/hbm_inf/hbm5_npgo_dens.pdf")
-plot_hbm_dens(hbm6.npgo, "./figures/hbm_inf/hbm6_npgo_dens.pdf")
+# plot and save
+pdf("./figures/dyn/hbm_inf/eras_coef_dot.pdf")
+g <- ggplot(df.dot.era) +
+  geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
+  geom_point(aes(x = mean, y = Stock, color = ocean_region_lab, shape = ocean_region_lab, fill=ocean_region_lab)) +
+  geom_segment(aes(y = Stock, yend = Stock, x = `2.5%`, xend = `97.5%`,
+                   color = ocean_region_lab), linewidth = 0.25) +
+  geom_segment(data = df.mu.era, aes(y = ystart, yend = yend, x = mu_mean, xend = mu_mean,
+                                 color = ocean_region_lab), linewidth = 0.25) +
+  geom_rect(data = df.mu.era, aes(xmin = mu_2.5, xmax = mu_97.5, ymin = ystart,
+                              ymax = yend, fill = ocean_region_lab),
+            alpha = 0.2) +
+  scale_color_manual(values = rev(col.region)) +
+  scale_shape_manual(values = c(15:17), guide = "legend") +
+  scale_fill_manual(values = rev(col.region), guide="none") +
+  guides(shape = guide_legend(override.aes = list(shape=c(15:17)))) +
+  labs(x = "Coefficient",
+       y = "",
+       color = "",
+       shape = "") +
+  facet_wrap( ~ era, labeller = labeller(era = c("gamma1" = "< 1976", "gamma2" = "1977 - 1988", "gamma3" = "1989 - 2015"))) +
+  scale_x_continuous(breaks=c(-0.25,0,0.25))+
+  theme_sleek(base_size = 10) +
+  theme(legend.justification = c(0, 0),
+        legend.position = c(0.80, 0.52),
+        legend.key.size = unit(10, "pt"),
+        legend.background = element_blank(),
+        legend.text = element_text(size = 8),
+        panel.spacing.x = unit(-0.5, "pt"))
+print(g)
+dev.off()
 
 
-## PDO
-plot_hbm_dot(hbm2.pdo, pdf.file = "./figures/hbm_inf/hbm2_pdo_dot.pdf")
-plot_hbm_dot(hbm3.pdo, pdf.file = "./figures/hbm_inf/hbm3_pdo_dot.pdf")
-plot_hbm_dot(hbm4.pdo, pdf.file = "./figures/hbm_inf/hbm4_pdo_dot.pdf")
-plot_hbm_dot(hbm5.pdo, pdf.file = "./figures/hbm_inf/hbm5_pdo_dot.pdf")
-plot_hbm_dot(hbm6.pdo, pdf.file = "./figures/hbm_inf/hbm6_pdo_dot.pdf")
+## Stock-specific covariate effects: random walk # Stacked gamma timeseries
 
-plot_hbm_dens(hbm2.pdo, "./figures/hbm_inf/hbm2_pdo_dens.pdf")
-plot_hbm_dens(hbm3.pdo, "./figures/hbm_inf/hbm3_pdo_dens.pdf")
-plot_hbm_dens(hbm4.pdo, "./figures/hbm_inf/hbm4_pdo_dens.pdf")
-plot_hbm_dens(hbm5.pdo, "./figures/hbm_inf/hbm5_pdo_dens.pdf")
-plot_hbm_dens(hbm6.pdo, "./figures/hbm_inf/hbm6_pdo_dens.pdf")
+g <- ggplot(hbm.gamma.diff) + geom_line(aes(x=BY, y=gamma, col=Ocean.Region)) + 
+  facet_grid(rows=vars(Stock), switch ="y", scales="free_y", as.table=F) + 
+  scale_colour_manual(values=col.region) +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        strip.text.y.left = element_text(angle=0),
+        strip.background = element_rect(fill="transparent", colour="transparent"),
+        strip.text = element_text(size=7, ),
+        panel.spacing.y = unit(0, unit="cm"),
+        panel.background = element_rect(fill="white"),
+        legend.position = "none") +
+  labs(y="", x="Brood Year")
+pdf("./figures/dyn/hbm_inf/hbm5_stacked_gamma_ts.pdf", width=5, height=10)
+print(g)
+dev.off()
+
+
+
+## Regional average timeseries : hbm 5
+
+hbm5.gamma.st <- ddply(hbm.gamma.diff, "Stock", moving_average_df, value="gamma")
+hbm5.gamma.avg <- hbm5.gamma.st %>% 
+  group_by(Ocean.Region, BY) %>%
+  dplyr::summarize(mean_ma= mean(ma, na.rm=T), mean_ma_sd = sd(ma, na.rm=T))
+
+g <- ggplot(hbm5.gamma.avg) +
+  geom_line(data=hbm5.gamma.st, aes(x=BY, y=gamma, group=Stock, col=Ocean.Region), alpha=0.2) +
+  geom_line(aes(x=BY, y=mean_ma, col=Ocean.Region), linewidth=1) +
+  geom_ribbon(aes(x=BY, y=mean_ma, ymin=mean_ma-mean_ma_sd, ymax=mean_ma+mean_ma_sd, fill=Ocean.Region), alpha=0.2) +
+  facet_wrap(vars(Ocean.Region), nrow=2) + ylim(c(-1,1)) + 
+  scale_colour_manual(values=col.region, aesthetics=c("colour", "fill")) +
+  theme_minimal()
+pdf("./figures/dyn/hbm_inf/hbm5_grouped_gamma.pdf")  
+print(g)
+dev.off()
+  

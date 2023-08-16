@@ -9,6 +9,7 @@ data-downloaded/sst_raw
 figures
 output
 pub
-archive
+archive/**/*
+!archive/**/*.stan #ignore all archived items except stan models
 #scripts
 explore

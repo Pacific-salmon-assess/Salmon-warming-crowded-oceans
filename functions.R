@@ -776,7 +776,7 @@ hb_param_df <- function(stanfit, par, region.var, var = NULL, info = sock.info) 
     ## par = parameter name
     ## region.var = column name in sock.info of region variable
     ## var = optional variable name, add as column "var" to output data.frame
-
+  
     probs <- c(0.025, 0.05, 0.10, 0.50, 0.90, 0.95, 0.975)
     s.par <- as.data.frame(summary(stanfit, pars = par, probs = probs)[[1]])
     s.par$par <- par
@@ -788,7 +788,7 @@ hb_param_df <- function(stanfit, par, region.var, var = NULL, info = sock.info) 
                                   probs = probs)[[1]])
     names(s.mu) <- paste0("mu_", names(s.mu))
     s.mu[[region.var]] <- unique(info[[region.var]])
-
+browser()
     s.out <- plyr::join(s.par, s.mu, by = region.var)
     names(s.out)[names(s.out) == region.var] <- "region"
     s.out$var <- var
@@ -2554,3 +2554,17 @@ theme.mjm <- function(fontsize = 11, ...) {
         box.3d            = list(col = "grey70", lwd = lwd))
     modifyList(modifyList(standard.theme("pdf"), theme), simpleTheme(...))
 }
+
+
+## moving average_df
+moving_average_df <- function(x, value, lag = 2) {  # Create user-defined function
+  ma=NA
+  ma_sd=NA
+  for(t in c(lag+1):c(nrow(x))){
+    x1=x[c(t-lag):c(t+lag), value] 
+    ma[t]=mean(as.vector(x1))
+    ma_sd[t]=sd(as.vector(x1))
+  }
+  return(cbind(x, ma, ma_sd))
+}
+

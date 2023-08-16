@@ -1,5 +1,6 @@
-// Hidden Markov Model -- 1 time-varying covariate + K hidden states + AR1 error
-// Rho - Autocorrelation differs among K states
+// Hidden Markov Model -- 2 time-varying covariates + K hidden states + AR1 error
+// Rho - Autocorrelation shared across K states
+// 'X1' covariate determines states
 // Single-stock
 
 functions {
@@ -13,6 +14,7 @@ data {
   vector[N] S; //spawners in time T
   int<lower=1> K; //number of hidden regime states
   vector[N] X1; // vector for covariate 1
+  vector[N] X2; // vector for covariate 2
   matrix[K,K] alpha_dirichlet; //prior inputs for dirichlet 
  }
 parameters {
@@ -24,10 +26,10 @@ parameters {
   // Continuous observation model
   real<lower=0> log_a; // max. productivity
   real log_b; // rate capacity - fixed in this
-  vector<lower=0>[K] sigma; // observation standard deviations
-  ordered[K] beta1; //covariate 1 - K states
-  
-  vector<lower = -1, upper = 1>[K] rho; //autocorrelation in prod. residuals
+  ordered[K] beta1; //covariate 1 - 'K' states
+  vector[K] beta2; // covariate 2 - 'K' states ## should it be ordered as well?
+  real<lower=0> sigma; // observation standard deviations
+  real<lower = -1, upper = 1> rho; //autocorrelation in prod. residuals
 }
 
 transformed parameters {
@@ -35,35 +37,32 @@ transformed parameters {
   real b; //
   vector[K] mu[N]; //expectation for each state at each time
   vector[K] epsilon[N]; //residuals
-  vector<lower=0>[K] sigmaAR;
+  real sigmaAR;
 
   b=exp(log_b);
 
- 
+  sigmaAR = sigma*sqrt(1-rho^2);
  
 { // Forward algorithm log p(z_t = j | y_{1:t})
   real accumulator1[K];
-  mu[1][1] = log_a - b*S[1] + beta1[1]*X1[1]; //initial expectation - state 1
-  mu[1][2] = log_a - b*S[1] + beta1[2]*X1[1]; //initial expectation - state 2
+  mu[1][1] = log_a - b*S[1] + beta1[1]*X1[1] + beta2[1]*X2[1]; //initial expectation - state 1
+  mu[1][2] = log_a - b*S[1] + beta1[2]*X1[1] + beta2[2]*X2[1]; //initial expectation - state 2
   epsilon[1][1] = R_S[1] - mu[1][1]; //initial residual - state 1
   epsilon[1][2] = R_S[1] - mu[1][2]; //initial residual - state 2
   
-  //first-step of log likelihoods
-  for(j in 1:2){logalpha[1][j] = log(pi1[j]) + normal_lpdf(R_S[1] |mu[1][j], sigma[j]);
-  
-   sigmaAR[j] = sigma[j]*sqrt(1-rho[j]^2);
-  }
+  //first-step of log likelihoods:
+  for(j in 1:2){logalpha[1][j] = log(pi1[j]) + normal_lpdf(R_S[1] |mu[1][j], sigma);}
   
   //for every other observation:
   for (t in 2:N) {
   for (j in 1:K) { // j = current (t)
   for (i in 1:K) { // i = previous (t-1)
-  mu[t][j]= log_a - b*S[t] + beta1[j]*X1[t]+(rho[j]*epsilon[t-1][j]);
-  epsilon[t][j]= R_S[t] - mu[t][j];
+  mu[t][i]= log_a - b*S[t] + beta1[i]*X1[t] + beta2[i]*X2[t] + (rho*epsilon[t-1][i]);
+  epsilon[t][i]= R_S[t] - mu[t][i];
   
   // Murphy (2012) p. 609 eq. 17.48
   // belief state + transition prob + local evidence at t
-  accumulator1[i] = logalpha[t-1, i] + log(A[i, j]) + normal_lpdf(R_S[t] |mu[t][j], sigmaAR[j]);
+  accumulator1[i] = logalpha[t-1, i] + log(A[i, j]) + normal_lpdf(R_S[t] |mu[t][i], sigmaAR);
   }
   logalpha[t, j] = log_sum_exp(accumulator1);
   }
@@ -76,6 +75,7 @@ model{
   log_a ~ normal(1.5,2.5);
   log_b ~ normal(-12,3);
   beta1 ~ normal(0,1); //set priors for both sets at 1 std
+  beta2 ~ normal(0,1); //set priors for both sets at 1 std
   sigma ~ normal(0,1); //half normal on variance (lower limit of zero)
   
   //autocorrelation term
@@ -93,13 +93,13 @@ model{
 }
 generated quantities {
   vector[N] log_lik;
-  int<lower=1, upper=K> zstar[N];
+  int<lower=1, upper=K> zstar[N]; // most likely regime state sequence
   real logp_zstar;
-  vector[K] alpha[N];
+  vector[K] alpha[N]; // forward state probabilities
   vector[K] logbeta[N];
   vector[K] loggamma[N];
-  vector[K] beta[N];
-  vector[K] gamma[N];
+  vector[K] beta[N]; // backward state probabilities
+  vector[K] gamma[N]; // forward-backward state probabilities
   
   real S_max; 
   
@@ -119,7 +119,7 @@ generated quantities {
   for (i in 1:K) { // i = next (t)
   // Murphy (2012) Eq. 17.58
   // backwards t + transition prob + local evidence at t
-  accumulator2[i] = logbeta[t, i] + log(A[j, i]) + normal_lpdf(R_S[t] | mu[t][i], sigmaAR[i]);
+  accumulator2[i] = logbeta[t, i] + log(A[j, i]) + normal_lpdf(R_S[t] | mu[t][i], sigmaAR);
   }
   logbeta[t-1, j] = log_sum_exp(accumulator2);
   }
@@ -147,7 +147,7 @@ generated quantities {
       delta[t, j] = negative_infinity();
       for (i in 1:K) { // i = previous (t-1)
         real logp;
-        logp = delta[t-1, i] + log(A[i, j]) + normal_lpdf(R_S[t] | mu[t][j], sigmaAR[j]);
+        logp = delta[t-1, i] + log(A[i, j]) + normal_lpdf(R_S[t] | mu[t][j], sigmaAR);
         if (logp > delta[t, j]) {
           bpointer[t, j] = i;
           delta[t, j] = logp;
