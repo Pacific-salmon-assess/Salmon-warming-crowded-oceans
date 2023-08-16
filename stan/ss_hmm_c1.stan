@@ -55,8 +55,8 @@ transformed parameters {
   for (t in 2:N) {
   for (j in 1:K) { // j = current (t)
   for (i in 1:K) { // i = previous (t-1)
-  mu[t][j]= log_a - b*S[t] + beta1[j]*X1[t]+(rho*epsilon[t-1][j]);
-  epsilon[t][j]= R_S[t] - mu[t][j];
+  mu[t][i]= log_a - b*S[t] + beta1[i]*X1[t]+(rho*epsilon[t-1][i]);
+  epsilon[t][i]= R_S[t] - mu[t][i];
   
   // Murphy (2012) p. 609 eq. 17.48
   // belief state + transition prob + local evidence at t
