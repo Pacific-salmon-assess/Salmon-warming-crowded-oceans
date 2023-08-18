@@ -1,0 +1,138 @@
+---
+title: "Comparative (re)analysis of spatial and temporal variation in Pacific salmon responses to a warming and more crowded North Pacific Ocean"
+date: '`r format(Sys.time(), "%d %B, %Y")`'
+output:
+  html_document:
+    collapsed: no
+    fig_caption: yes
+    highlight: espresso
+    number_sections: yes
+    smooth_scroll: yes
+    theme: sandstone
+    toc: yes
+    toc_float: yes
+---
+
+```{=html}
+<style type="text/css">
+
+body{ /* Normal  */
+      font-size: 13px;
+  }
+td {  /* Table  */
+  font-size: 13px;
+}
+h1.title {
+  font-size: 24px;
+  color: Black;
+}
+h1 { /* Header 1 */
+  font-size: 19px;
+  color: Black;
+}
+h2 { /* Header 2 */
+  font-size: 15px;
+  color: Black;
+}
+h3 { /* Header 3 */
+  font-size: 15px;
+  color: Black;
+}
+</style>
+```
+# Purpose
+
+This document summarizes preliminary results of analyses that seek to quantifying the extent to which salmon productivity is correlated with (a) ocean conditions during early marine life and (b) potential salmon competitors later in marine life, and the degree to which these relationships vary over time and space. More details on motivation for project can be found [here](https://docs.google.com/document/d/10S7fLbRe9TfdlgTrm0hEvXyFVNHW8M8M/edit) and all code to reproduce the analyses in this document is [here](https://github.com/Pacific-salmon-assess/Salmon-warming-crowded-oceans). All findings are preliminary and subject to change.
+
+# Methods
+
+We are fitting four general classes of spawner-recruitment models to characterize relationships between ocean conditions and salmon productivity over time:
+
+1.  Stationary models that estimate a single time invariant relationship between ocean conditions and salmon productivity (e.g., Connors et al. 2020)
+
+2.  A-priori change point models that allow relationships to vary among periods that corresponded with observed Northeast Pacific regime shifts in 1976/77 and 1988/89, as well as the onset of the recent marine heat wave period in 2014 (e.g., Malick 2020)
+
+3.  Random walk models that allow relationships to evolve through time (e.g., Malick 2020)
+
+4.  Hidden Markov models that allow relationships to vary according to the state (regime) the system is in, where the sequence of states and state specific relationships are estimated using a Hidden Markov Model framework.
+
+Details on model formulation are provided below. These models are fit in a Bayesian estimation framework using Stan and compared using approximate leave-one-out cross validation. Inference will be primarily based on the magnitude, direction, and uncertainty of standardized covariate effects and the degree to which they vary over time and across ocean regions, species, and life histories.
+
+## Data
+
+### Spawner-recruitment time-series
+
+FIGURE: multi-panel plots of ln(R/S) timeseries
+
+### Covariates
+
+Our analysis is focused on two covariates:
+
+1.  Sea surface temperatures near juvenile salmon ocean-entry points to index regional-scale environmental variability during the first few months in the ocean, which are hypothesized to represent a critical period in the Pacific salmon life cycle that can strongly influence year class strength.
+
+2.  The abundance of sockeye, chum, and pink salmon across the North Pacific in the second and/or third years of marine life as an index of potential direct or indirect competition for food. This approach is consistent with research that has suggested some salmon species primarily exhibit responses to competition with other salmon during their second and/or third growing seasons at sea (Connors et al. 2012; Ruggerone and Connors 2015).
+
+FIGURE: Multi-panel plots for each covariate (columns covariates, rows regions, faint lines individual stocks, thick line median)
+
+## Stationary models
+
+## A-priori models
+
+## Randaom walk models
+
+## Hidden Markov models
+
+# Results
+
+```{r setup, include=FALSE}
+# libraries and global settings ----
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, cache=FALSE, include=TRUE, dpi=300)
+options(scipen=1, digits=4)
+
+# read in data and models ----
+
+```
+
+## Stationary models
+
+FIGURE: Regional covariate coefficient posterior distributions (with faint lines for stock specific posteriors) panel for each covariate
+
+FIGURE: Caterpillar plot (stock specific and regional posteriors by covariate, stocks as rows)
+
+```{r stationary models, include=FALSE}
+# code to generate figures...
+```
+
+## A-priori models
+
+FIGURE: Time period covariate coefficient posteriors grouped by region and covariate
+
+FIGURE: Time period covariate coefficient posteriors grouped by region and covariate, stacked by stock
+
+```{r Apriori models, include=FALSE}
+# code to generate figures...
+```
+
+## Random walk models
+
+FIGURE: Time series of covariate coefficient posteriors (mean across stocks in bold, faint lines for individual stocks) grouped by region and covariate
+
+FIGURE: "sparkline plots" (like above but with time series of posteriors, stocks as rows)
+
+```{r random walk models, include=FALSE}
+# code to generate figures...
+```
+
+## Hidden Markov models
+
+FIGURE: Gamma timeseries grouped by region (mean across stocks in bold)
+
+FIGURE: Realized coefficients and state coefficients (both as caterpillar-ish plots)
+
+FIGURE: 2 state plots - add measure of uncertainty (density hist or box and whiskers)
+
+```{r hidden markov models, include=FALSE}
+# code to generate figures...
+```
