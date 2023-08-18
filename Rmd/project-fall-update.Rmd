@@ -107,7 +107,7 @@ FIGURE: Caterpillar plot (stock specific and regional posteriors by covariate, s
 
 ## A-priori models
 
-FIGURE: Time period covariate coefficient posteriors grouped by region and covariate
+FIGURE: Time period covariate coefficient regional posteriors grouped by covariate
 
 FIGURE: Time period covariate coefficient posteriors grouped by region and covariate, stacked by stock
 
