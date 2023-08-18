@@ -48,11 +48,11 @@ This document summarizes preliminary results of analyses that seek to quantifyin
 
 We are fitting four general classes of spawner-recruitment models to characterize relationships between ocean conditions and salmon productivity over time:
 
-1.  Stationary models that estimate a single time invariant relationship between ocean conditions and salmon productivity (e.g., Connors et al. 2020)
+1.  Stationary models that estimate a single time invariant relationship between ocean conditions and salmon productivity (e.g., [Connors et al. 2020](https://cdnsciencepub.com/doi/full/10.1139/cjfas-2019-0422))
 
-2.  A-priori change point models that allow relationships to vary among periods that corresponded with observed Northeast Pacific regime shifts in 1976/77 and 1988/89, as well as the onset of the recent marine heat wave period in 2014 (e.g., Malick 2020)
+2.  A-priori change point models that allow relationships to vary among periods that corresponded with observed Northeast Pacific regime shifts in 1976/77 and 1988/89, as well as the onset of the recent marine heat wave period in 2014 (e.g., [Malick 2020](https://onlinelibrary.wiley.com/doi/10.1111/fog.12469))
 
-3.  Random walk models that allow relationships to evolve through time (e.g., Malick 2020)
+3.  Random walk models that allow relationships to evolve through time (e.g., [Malick 2020](https://onlinelibrary.wiley.com/doi/10.1111/fog.12469))
 
 4.  Hidden Markov models that allow relationships to vary according to the state (regime) the system is in, where the sequence of states and state specific relationships are estimated using a Hidden Markov Model framework.
 
@@ -60,7 +60,7 @@ Details on model formulation are provided below. These models are fit in a Bayes
 
 ## Data
 
-### Spawner-recruitment time-series
+### Spawner-recruitment
 
 FIGURE: multi-panel plots of ln(R/S) timeseries
 
@@ -70,7 +70,7 @@ Our analysis is focused on two covariates:
 
 1.  Sea surface temperatures near juvenile salmon ocean-entry points to index regional-scale environmental variability during the first few months in the ocean, which are hypothesized to represent a critical period in the Pacific salmon life cycle that can strongly influence year class strength.
 
-2.  The abundance of sockeye, chum, and pink salmon across the North Pacific in the second and/or third years of marine life as an index of potential direct or indirect competition for food. This approach is consistent with research that has suggested some salmon species primarily exhibit responses to competition with other salmon during their second and/or third growing seasons at sea (Connors et al. 2012; Ruggerone and Connors 2015).
+2.  The abundance of sockeye, chum, and pink salmon across the North Pacific in the second and/or third years of marine life as an index of potential direct or indirect competition for food. This approach is consistent with research that has suggested some salmon species primarily exhibit responses to competition with other salmon during their second and/or third growing seasons at sea ([Connors et al. 2020](https://cdnsciencepub.com/doi/full/10.1139/cjfas-2019-0422); [Ruggerone and Connors 2015](https://cdnsciencepub.com/doi/full/10.1139/cjfas-2014-0134)).
 
 FIGURE: Multi-panel plots for each covariate (columns covariates, rows regions, faint lines individual stocks, thick line median)
 
@@ -136,3 +136,11 @@ FIGURE: 2 state plots - add measure of uncertainty (density hist or box and whis
 ```{r hidden markov models, include=FALSE}
 # code to generate figures...
 ```
+
+# Next steps
+
+- Explore alternative temporal and spatial domains over which to average SST anomalies to derive the early ocean temperature covariate
+
+- Update sockeye, pink, and chum spawner-recruitment time-series based on data from ADF&G and DFO
+
+- Incorporate Chinook and coho spawner-recruitment time series into analysis
