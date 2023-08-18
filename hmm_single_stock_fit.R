@@ -40,32 +40,14 @@ for(i in 1:nlevels(sock$Stock)){
                        cores = 4,
                        chains = 4,
                        seed = 123,
-                       control = list(adapt_delta = 0.90,
+                       control = list(adapt_delta = 0.95,
                                       max_treedepth = 10))
   save(hmm_ac, file = paste0("./output/models/hmm-ss/hmm_ac_sst_", levels(sock$Stock)[i], ".Rdata"))
   
   
   ## Extract parameters of interest
-  post <- rstan::extract(hmm_ac)
   
-  ## Store parameters of interest
-  hmm_outputs <- array(NA, dim=c(length(params_out), nlvl, nrow(hmm.dat))) # Stock-specific array of results - overwritten each loop
-  dimnames(hmm_outputs) <- list( params_out, c("State 1", "State 2"), hmm.dat$BY)
-  
-  # beta1 : dim (6000, 2=K)
-  hmm_outputs[1,,] <- rep( apply(post$beta1, 2, median), times=hmm.stan.dat$N) 
-  # gamma : dim (6000, N years, 2=K)
-  hmm_outputs[2,,] <- t( apply(post$gamma, c(2,3), median) )
-  # alpha : dim (6000, N years, 2=K)
-  hmm_outputs[3,,] <- t( apply(post$alpha, c(2,3), median) )
-  # beta : dim (6000, N years, 2=K) 
-  hmm_outputs[4,,] <- t( apply(post$beta, c(2,3), median) )
-  # log_lik : dim(6000, N years) 
-  hmm_outputs[5,,] <- rep( apply(post$log_lik, c(2), median), each=nlvl )
-  # rho : dim (iterations)
-  hmm_outputs[6,,] <- median(post$rho)
-  
-  hmm_ac_out_sst[[i]] <- hmm_outputs
+  hmm_ac_out_sst[[i]] <- rstan::summary(hmm_ac, pars = params_out, probs=c(0.025, 0.2, 0.5, 0.8, 0.975))$summary
   
 }
 
@@ -99,33 +81,12 @@ for(i in 1:nlevels(sock$Stock)){
                         cores = 4,
                         chains = 4,
                         seed = 123,
-                        control = list(adapt_delta = 0.90,
+                        control = list(adapt_delta = 0.95,
                                        max_treedepth = 10))
   save(hmm_ac, file = paste0("./output/models/hmm-ss/hmm_ac_comp_", levels(sock$Stock)[i], ".Rdata"))
-  
-  
-  ## Extract parameters of interest
-  post <- rstan::extract(hmm_ac)
-  params_out <- c("beta1", "gamma", "alpha", "beta", "log_lik", "rho")
-  
-  ## Store parameters of interest
-  hmm_outputs <- array(NA, dim=c(length(params_out), nlvl, nrow(hmm.dat))) # Stock-specific array of results - overwritten each loop
-  dimnames(hmm_outputs) <- list( params_out, c("State 1", "State 2"), hmm.dat$BY)
-  
-  # beta1 : dim (6000, 2=K)
-  hmm_outputs[1,,] <- rep( apply(post$beta1, 2, median), times=hmm.stan.dat$N) 
-  # gamma : dim (6000, N years, 2=K)
-  hmm_outputs[2,,] <- t( apply(post$gamma, c(2,3), median) )
-  # alpha : dim (6000, N years, 2=K)
-  hmm_outputs[3,,] <- t( apply(post$alpha, c(2,3), median) )
-  # beta : dim (6000, N years, 2=K) 
-  hmm_outputs[4,,] <- t( apply(post$beta, c(2,3), median) )
-  # log_lik : dim(6000, N years) 
-  hmm_outputs[5,,] <- rep( apply(post$log_lik, c(2), median), each=nlvl )
-  # rho : dim (iterations)
-  hmm_outputs[6,,] <- median(post$rho)
-  
-  hmm_ac_out_comp[[i]] <- hmm_outputs
+
+
+  hmm_ac_out_comp[[i]] <- rstan::summary(hmm_ac, pars = params_out, probs=c(0.025, 0.2, 0.5, 0.8, 0.975))$summary
   
 }
 
@@ -160,7 +121,7 @@ hmm_ac_c2 <- rstan::stan(file = "./stan/ss_hmm_c2.stan",
                       cores = 4,
                       chains = 4,
                       seed = 123,
-                      control = list(adapt_delta = 0.90,
+                      control = list(adapt_delta = 0.95,
                                      max_treedepth = 10))
 save(hmm_ac_c2, file = paste0("./output/models/hmm-ss/hmm_ac_c2_", levels(sock$Stock)[21], ".Rdata"))
 
@@ -215,7 +176,7 @@ for(i in 1:nlevels(sock$Stock)){
                        cores = 4,
                        chains = 4,
                        seed = 123,
-                       control = list(adapt_delta = 0.90,
+                       control = list(adapt_delta = 0.95,
                                       max_treedepth = 10))
   save(iohmm, file = paste0("./output/models/hmm-ss/iohmm_c2", levels(sock$Stock)[i], ".Rdata"))
   
