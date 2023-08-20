@@ -170,8 +170,9 @@ pdf("./figures/stat/hbm_fit/hb05c_loo.pdf", width = 7, height = 5)
 plot(loo.hb05c, label_points = TRUE)
 dev.off()
 
-r2.hb05c <- bayes_R2(sock$lnRS[sock$BY %in% c.by & sock$Stock %in% c.stk, ], as.matrix(hb05r2, pars = "yhat"))
-save(r2.hb05c, file = "./output/diagnostics/r2_hb05c.RData")
+# r2.hb05c <- bayes_R2(sock$lnRS[sock$BY %in% c.by & sock$Stock %in% c.stk, ], as.matrix(hb05c, pars = "yhat")) # BC: not working, incorrect dimensions error
+
+#save(r2.hb05c, file = "./output/diagnostics/r2_hb05c.RData")
 
 pdf("./figures/stat/hbm_fit/hb05c_resid.pdf", width = 8, height = 8)
 plot_hbm_resids(hb05c, sock[sock$BY %in% c.by & sock$Stock %in% c.stk, ])
