@@ -139,8 +139,8 @@ FIGURE: 2 state plots - add measure of uncertainty (density hist or box and whis
 
 # Next steps
 
-- Explore alternative temporal and spatial domains over which to average SST anomalies to derive the early ocean temperature covariate
+-   Explore alternative temporal and spatial domains over which to average SST anomalies to derive the early ocean temperature covariate
 
-- Update sockeye, pink, and chum spawner-recruitment time-series based on data from ADF&G and DFO
+-   Update sockeye, pink, and chum spawner-recruitment time-series based on data from ADF&G and DFO
 
-- Incorporate Chinook and coho spawner-recruitment time series into analysis
+-   Incorporate Chinook and coho spawner-recruitment time series into analysis
