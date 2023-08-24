@@ -395,3 +395,103 @@ summary.df <- plyr::ddply(summary.df, .variables=".id",
     }
     dev.off()
     
+    
+    
+    # Realized covariate (beta1) over time - Compare HMM with Autocorrelation vs without
+    
+    rho <- vector(length=length(hmm_ac_out_ss1))
+    
+    pdf("./figures/hmm-ss/AC-model-compare_timeseries.pdf")
+    for(i in 1:length(hmm_ac_out_ss1)){
+      rw_covar_ts <- filter(hbm.gamma.diff, Stock == levels(sock$Stock)[i])
+      
+      b1_ss1 <- hmm_tidy_ss1 %>% filter(stock==levels(sock$Stock)[i]) %>% 
+        mutate(gamma_prod = beta1*gamma) %>% dplyr::summarize(covar = sum(gamma_prod), .by=BY)
+      b1_ac <- hmm_ac_tidy_ss1 %>% filter(stock==levels(sock$Stock)[i]) %>% 
+        mutate(gamma_prod = beta1*gamma) %>% dplyr::summarize(covar = sum(gamma_prod), .by=BY)
+      rho[i] <- filter(hmm_ac_tidy_ss1, stock==levels(sock$Stock)[i])[1,"rho"]
+      
+      g <- ggplot() +
+        geom_line(data = b1_ss1, aes(x=BY, y=covar, col='HMM (no AC)')) +
+        geom_line(data = b1_ac, aes(x=BY, y=covar, col='HMM with Autocorrelation')) + 
+        labs(title=levels(sock$Stock)[i], subtitle = paste("Rho =", round(rho[i], 2)), y = "SST effect", x = "Year", col = NULL) + 
+        scale_colour_manual(values = c('HMM (no AC)'='mediumblue', 'HMM with Autocorrelation'='orange')) +
+        theme_minimal()
+      print(g)
+    }
+    dev.off()
+    
+    
+## From old HMM-inf code: MODEL COMPARISON FIGURES AND METRICS
+## ------------------------------------------------------------------------
+    
+    # Will redo these at a later date
+    
+    ## --------------------------------------------------------------------------
+    
+    # Realized covariate (beta1) over time - dynamic (RW) + 2x HMM comparison
+    
+    # Load dynamic model outputs
+    load("./output/hbm_gamma_diff.RData", verbose=T)
+    
+    pdf("./figures/hmm-ss/model-compare_timeseries.pdf")
+    for(i in 1:nlevels(sock$Stock)){
+      rw_covar_ts <- filter(hbm.gamma.diff, Stock == levels(sock$Stock)[i])
+      
+      b1_ss1 <- hmm_tidy_ss1 %>% filter(stock==levels(sock$Stock)[i]) %>% 
+        mutate(gamma_prod = beta1*gamma) %>% dplyr::summarize(covar = sum(gamma_prod), .by=BY)
+      b1_ss2 <- hmm_tidy_ss2 %>% filter(stock==levels(sock$Stock)[i]) %>% 
+        mutate(gamma_prod = beta1*gamma) %>% dplyr::summarize(covar = sum(gamma_prod), .by=BY)
+      b1_iohmm <- iohmm_tidy_ss1 %>% filter(stock==levels(sock$Stock)[i]) %>% 
+        mutate(gamma_prod = beta1*gamma) %>% dplyr::summarize(covar = sum(gamma_prod), .by=BY)
+      
+      g <- ggplot() +
+        geom_line(data = b1_ss1, aes(x=BY, y=covar, col='Single-Stock HMM')) + # HMM ss1
+        geom_line(data = rw_covar_ts, aes(x=BY, y=gamma, col = 'Hierarchical RW')) + # RW
+        geom_line(data = b1_iohmm, aes(x=BY, y=covar, col='Single-Stock \n Input-Output HMM')) + # IOHMM
+        #geom_line(data = b1_ss2, aes(x=BY, y=covar, col='Three-state HMM')) +
+        labs(title=levels(sock$Stock)[i], y = "SST effect", x = "Year", col = NULL) + 
+        scale_colour_manual(values = c('Single-Stock HMM'='mediumblue', 'Hierarchical RW'='maroon', 'Single-Stock \n Input-Output HMM'='orange', 'Three-state HMM'='darkgreen')) +
+        theme_minimal()
+      print(g)
+    }
+    dev.off()
+    
+    
+    
+    
+    ## Diagnostics
+    elpd_ss1 <- list()
+    elpd_ss2 <- list()
+    elpd_ss3 <- list()
+    comp_ss1_ss2 <- list()
+    comp_ss1_ss3 <- list()
+    
+    for(i in 1:nlevels(sock$Stock)){
+      ## Load fits for version 1 
+      load(paste0("./output/models/hmm-ss/hmm_ss1_", levels(sock$Stock)[i], ".Rdata"), verbose=T)  
+      post_ss1 <- rstan::extract(hmm_ss1)
+      # Save elpd
+      elpd_ss1[[i]] <- loo::loo(posterior::as_draws_matrix(post_ss1$log_lik))
+      
+      ## Load fits for version 2
+      load(paste0("./output/models/hmm-ss/hmm_ss2_", levels(sock$Stock)[i], ".Rdata"), verbose=T)
+      post_ss2 <- rstan::extract(hmm_ss2)
+      # Save elpd
+      elpd_ss2[[i]] <- loo::loo(posterior::as_draws_matrix(post_ss2$log_lik))
+      
+      ## Load fits for version 2
+      load(paste0("./output/models/hmm-ss/hmm_ss3_", levels(sock$Stock)[i], ".Rdata"), verbose=T)
+      post_ss3 <- rstan::extract(hmm_ss3)
+      # Save elpd
+      elpd_ss3[[i]] <- loo::loo(posterior::as_draws_matrix(post_ss3$log_lik))
+      
+      ## -- Comparisons -- ##
+      # 2-state versus 3-state model
+      comp_ss1_ss2[[i]] <- loo::loo_compare(elpd_ss1[[i]], elpd_ss2[[i]])
+      
+      # 2,1 versus 4,1 transition matrix
+      comp_ss1_ss3[[i]] <- loo::loo_compare(elpd_ss1[[i]], elpd_ss3[[i]])
+    }
+    
+    
