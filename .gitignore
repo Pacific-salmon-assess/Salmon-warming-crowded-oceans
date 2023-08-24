@@ -12,4 +12,4 @@ pub
 archive/**/*
 !archive/**/*.stan #ignore all archived items except stan models
 #scripts
-explore
+/explore.R
