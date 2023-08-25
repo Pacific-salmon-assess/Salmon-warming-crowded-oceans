@@ -5,6 +5,7 @@
 if(!dir.exists("./output/models/hmm-ss/")) dir.create("./output/models/hmm-ss/")
 if(!dir.exists("./figures/hmm-ss/")) dir.create("./figures/hmm-ss/")
 
+#TODO change naming to match model naming
 
 ## single-covariate HMMs
 ## ------------------------------------------------------------ ##
@@ -33,7 +34,7 @@ for(i in 1:nlevels(sock$Stock)){
   
   
   # Run the stan model
-  hmm_ac <- rstan::stan(file = "./stan/ss_hmm_c1.stan",
+  hmm_ac <- rstan::stan(file = "./stan/ss_hmm_1c.stan",
                        data = hmm.stan.dat,
                        warmup = 1000,
                        iter = 4000,
@@ -74,7 +75,7 @@ for(i in 1:nlevels(sock$Stock)){
   
   
   # Run the stan model
-  hmm_ac <- rstan::stan(file = "./stan/ss_hmm_c1.stan",
+  hmm_ac <- rstan::stan(file = "./stan/ss_hmm_1c.stan",
                         data = hmm.stan.dat,
                         warmup = 1000,
                         iter = 4000,
@@ -114,7 +115,7 @@ hmm.stan.dat <- list(
   X2 =  hmm.dat$np_pinks_sec_stnd, # covariate 2 = Comp
   alpha_dirichlet = matrix(c(2,1,1,2), nrow=2) )
 
-hmm_ac_c2 <- rstan::stan(file = "./stan/ss_hmm_c2.stan",
+hmm_ac_c2 <- rstan::stan(file = "./stan/ss_hmm_2c.stan",
                       data = hmm.stan.dat,
                       warmup = 1000,
                       iter = 4000,
