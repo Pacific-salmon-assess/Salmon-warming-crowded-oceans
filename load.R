@@ -6,8 +6,8 @@ library(chroma) # see: https://github.com/michaelmalick/r-chroma
 library(nlme)
 library(car) # needed for vif() function
 library(maps)
-library(dplyr)
 library(plyr)
+library(dplyr)
 library(reshape2)
 library(rworldmap)
 library(ersst)     # see: https://github.com/michaelmalick/r-ersst

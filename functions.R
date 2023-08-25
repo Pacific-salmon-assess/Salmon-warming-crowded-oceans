@@ -788,7 +788,6 @@ hb_param_df <- function(stanfit, par, region.var, var = NULL, info = sock.info) 
                                   probs = probs)[[1]])
     names(s.mu) <- paste0("mu_", names(s.mu))
     s.mu[[region.var]] <- unique(info[[region.var]])
-browser()
     s.out <- plyr::join(s.par, s.mu, by = region.var)
     names(s.out)[names(s.out) == region.var] <- "region"
     s.out$var <- var
@@ -977,16 +976,19 @@ if(FALSE) {
 ## -- stan_data_dyn --------------------------------------------
 stan_data_dyn <- function(data,
                       var.x2 = "early_sst_stnd",
+                      var.x3 = "np_pinks_sec_stnd", 
                       breakpoint1 = 1989,
                       breakpoint2 = NULL,
                       scale.x1 = FALSE,
-                      var.region = "Ocean.Region",
+                      var.region = "Ocean.Region2",
                       prior.sigma.gamma = c(df = 3, mu = 0, sd = 0.5),
+                      prior.sigma.kappa = c(df = 3, mu = 0, sd = 0.5),
                       priors.only = FALSE) {
-  ## Get list of data for input to Stan 'dynamic' models (i.e. random walk and breakpoint, HMM?)
+  ## Get list of data for input to Stan 'dynamic' models (i.e. random walk and era)
   ##
   ## data = data.frame of salmon data
   ## var.x2 = column name in `data` of x2 variable
+  ## var.x3 = column name in 'data' of x3 variable, if any
   ## breakpoint1 = year for start of second era
   ## breakpoint2 = year for start of third era, if NULL, only two eras are
   ##               returned defined by breapoint1
@@ -997,7 +999,6 @@ stan_data_dyn <- function(data,
   ##               sampled only
   
   sock.stan <- data
-  #browser()
   ## Set factor levels for var.region
   sock.stan[[var.region]] <- factor(sock.stan[[var.region]],
                                    levels = unique(sock.stan[[var.region]]))
@@ -1058,6 +1059,7 @@ stan_data_dyn <- function(data,
   lst <- list(y = sock.stan$lnRS,
               x1 = x1,
               x2 = sock.stan[[var.x2]],
+              x3 = sock.stan[[var.x3]],
               g_group = g.grp,
               a_group = a.grp,
               year = year,
@@ -1076,6 +1078,9 @@ stan_data_dyn <- function(data,
               sigma_gamma_df = prior.sigma.gamma[1],
               sigma_gamma_mu = prior.sigma.gamma[2],
               sigma_gamma_sd = prior.sigma.gamma[3],
+              sigma_kappa_df = prior.sigma.kappa[1],
+              sigma_kappa_mu = prior.sigma.kappa[2],
+              sigma_kappa_sd = prior.sigma.kappa[3],
               N = nrow(sock.stan))
   out <- Filter(Negate(is.null), lst)
   return(out)
@@ -2568,3 +2573,18 @@ moving_average_df <- function(x, value, lag = 2) {  # Create user-defined functi
   return(cbind(x, ma, ma_sd))
 }
 
+
+## ocean_region_col
+
+ocean_region_col <- function(x, stock.col="Stock", region="Ocean.Region2"){
+  # Add an 'Ocean.Region' column to a dataframe that lists stock names
+
+  stk <- x[[stock.col]]
+  lookup <- data.frame(Stock = sock.info$Stock, region = sock.info[[region]])
+  stk <- data.frame(Stock = stk)
+  
+  df <- left_join(stk, lookup, by="Stock")
+  x$region <- df$region
+  return(x)
+}
+  
