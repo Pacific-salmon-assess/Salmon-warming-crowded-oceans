@@ -9,8 +9,6 @@ rm(list = ls())
 ## remove reproducible directories
 unlink("./figures", recursive = TRUE)
 unlink("./output", recursive = TRUE)
-unlink("./pub", recursive = TRUE)
-
 
 time.start <- proc.time()
 
@@ -24,10 +22,11 @@ source("sock_covariates.R") #(5)
 source("sock_explore.R") #(6)
 source("stat_single_stock_fit.R") # (7)
 source("stat_hbm_fit.R") #(8)
-source("pub.R") #(9)
+source("stat_hbm_inf.R") #(9)
 source("dyn_hbm_fit.R") #(10)
 source("dyn_hbm_inf.R") #(11)
-source("hmm_test_fit.R") # (12)
+source("hmm_single_stock_fit.R") #(12)
+source("hmm_single_stock_inf.R") #(13)
 
 
 time.run <- proc.time() - time.start
