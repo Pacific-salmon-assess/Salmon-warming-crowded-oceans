@@ -69,7 +69,7 @@ save(pars.gen.quant, file = "./output/pars_gen_quant.RData")
 
 ## SST
 
-era.sst <- rstan::stan(file = "./stan/hbm_era_1c",
+era.sst <- rstan::stan(file = "./stan/hbm_era_1c.stan",
                         data = stan.dat.sst,
                         pars = c(pars_era_1c, pars.gen.quant),
                         warmup = 1000,
