@@ -98,7 +98,7 @@ save(dyn.sst, file = "./output/models/dyn/hbm_dyn_sst.RData")
 
 ## Comp
 
-era.comp <- rstan::stan(file = "./stan/hbm_era_1c",
+era.comp <- rstan::stan(file = "./stan/hbm_era_1c.stan",
                         data = stan.dat.comp,
                         pars = c(pars_era_1c, pars.gen.quant),
                         warmup = 1000,
