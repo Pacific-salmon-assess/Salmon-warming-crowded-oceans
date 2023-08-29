@@ -28,7 +28,11 @@ mod.list <- list(model1a = m1a.formula,
 ## All years of data
 ss.all.yrs <- single.stock.fit(mod.list,
                                years = seq(min(sock$BY), max(sock$BY)),
-                               plot.path = "./figures/single-stock/")
+                               plot.path = "./figures/stat/single-stock/")
+
+if(!dir.exists("./output/models/stat/single-stock")) dir.create("./output/models/stat/single-stock")
+
+save(ss.all.yrs, file = "./output/models/stat/single-stock/single_stock_lms.Rdata")
 
 
 

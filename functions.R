@@ -10,25 +10,28 @@ geographic.order <- function(x) {
                                 # GOA are ordered E->W 
   # Currently only accepts 3 Ocean Regions but could be generalized later
   
-  wc.ind <- bs.ind <- which(names(x) %in% c("Stock", "Lat", "lat")) # WC and BS stocks organized by latitude
+  wc.ind <- bs.ind <- seak.ind <- which(names(x) %in% c("Stock", "Lat", "lat")) # WC and BS stocks organized by latitude
   goa.ind <- which(names(x) %in% c("Stock", "Lon", "lon")) # GOA stocks organized by longitude
   
   # Get stock names in each region
   WC_stk <- unique( x[ which (x$Ocean.Region=="WC"), wc.ind  ] )
+  SEAK_stk <- unique( x[ which (x$Ocean.Region=="SEAK"), seak.ind  ] )
   GOA_stk <- unique( x[ which (x$Ocean.Region=="GOA"), goa.ind ] )
   BS_stk <- unique( x[ which (x$Ocean.Region=="BS"), bs.ind ] )
   
   # Rank by Lat (WC, BS) or Lon (GOA)
   wc.ind <- which(names(WC_stk) %in% c("Lat", "lat"))
+  seak.ind <- which(names(SEAK_stk) %in% c("Lat", "lat"))
   goa.ind <- which(names(GOA_stk) %in% c("Lon", "lon"))
   bs.ind <- which(names(BS_stk) %in% c("Lat", "lat"))
   
   WC_stk$geo_id <- data.table::frankv(WC_stk, cols=wc.ind, ties.method = "first")
-  GOA_stk$geo_id <- nrow(WC_stk) + data.table::frankv(GOA_stk, cols=goa.ind, order=-1L, ties.method = "first")
-  BS_stk$geo_id <- nrow(WC_stk) + nrow(GOA_stk) + data.table::frankv(BS_stk, cols=bs.ind, ties.method="first")
+  SEAK_stk$geo_id <- nrow(SEAK_stk) + data.table::frankv(SEAK_stk, cols=seak.ind, order=-1L, ties.method = "first")
+  GOA_stk$geo_id <- nrow(WC_stk) + nrow(SEAK_stk) data.table::frankv(GOA_stk, cols=goa.ind, order=-1L, ties.method = "first")
+  BS_stk$geo_id <- nrow(WC_stk) + nrow(SEAK_stk) + nrow(GOA_stk) + data.table::frankv(BS_stk, cols=bs.ind, ties.method="first")
   
   #combine them
-  geo.id <-  rbind(WC_stk[, c("Stock", "geo_id")], GOA_stk[, c("Stock", "geo_id")], BS_stk[, c("Stock", "geo_id")])
+  geo.id <-  rbind(WC_stk[, c("Stock", "geo_id")], SEAK_stk[, c("Stock", "geo_id")], GOA_stk[, c("Stock", "geo_id")], BS_stk[, c("Stock", "geo_id")])
   geo.id <- geo.id[order(geo.id$geo_id), ] # sort in ascending order
   
   x$Stock <- factor(x$Stock, levels = geo.id$Stock, ordered = T)
@@ -411,7 +414,7 @@ hb07_density_df <- function(stanfit) {
 
 
 ## ocean_region_lab ----------------------------------------
-ocean_region_lab <- function(data, var = "Ocean.Region", factor = TRUE) {
+ocean_region_lab <- function(data, var = "Ocean.Region2", factor = TRUE) {
     ## Add ocean_region_lab column to data.frame
     ##
     ## data = a data.frame with a "Ocean.Region" column
@@ -444,7 +447,7 @@ plot_hbm_resids <- function(stanfit, data,
     yresid <- summary(stanfit, pars = var.resid)$summary
     yhat   <- summary(stanfit, pars = var.yhat)$summary
     df <- data.frame(stock = data[["Stock"]],
-                     ocean_region = data[["Ocean.Region"]],
+                     ocean_region = data[["Ocean.Region2"]],
                      BY = data[["BY"]],
                      y = data[["lnRS"]],
                      yhat = yhat[ , "mean"],
@@ -781,7 +784,7 @@ hb_param_df <- function(stanfit, par, region.var, var = NULL, info = sock.info) 
     s.par <- as.data.frame(summary(stanfit, pars = par, probs = probs)[[1]])
     s.par$par <- par
     s.par$Stock <- info$Stock
-    s.par$Ocean.Region <- info[[region.var]]
+    s.par$Ocean.Region2 <- info[[region.var]]
     s.par[[region.var]] <- info[[region.var]]
 
     s.mu <- as.data.frame(summary(stanfit, pars = paste0("mu_", par),
@@ -885,7 +888,7 @@ total_draws <- function(stanfit) {
 stan_data_stat <- function(data,
                       var.x2 = "early_sst_stnd",
                       var.x3 = "np_pinks_stnd",
-                      var.region = "Ocean.Region",
+                      var.region = "Ocean.Region2",
                       scale.x1 = FALSE,
                       priors.only = FALSE) {
     ## Get list of data for input to Stan for stationary models 
@@ -1274,18 +1277,18 @@ if(FALSE) {
                          "second_year", "late_sst")
 
 
-    mld.wi2.wc <- clim.wgt.avg(bt.complete[bt.complete$Ocean.Region != "BS", ],
+    mld.wi2.wc <- clim.wgt.avg(bt.complete[bt.complete$Ocean.Region2 != "BS", ],
                                raw.clim.mld.late, "GoAmld_winter",
                                "second_year", "late_mld_winter")
-    mld.wi2.bs <- clim.wgt.avg(bt.complete[bt.complete$Ocean.Region == "BS", ],
+    mld.wi2.bs <- clim.wgt.avg(bt.complete[bt.complete$Ocean.Region2 == "BS", ],
                                raw.clim.mld.late, "Amld_winter",
                                "second_year", "late_mld_winter")
     mld.wi2 <- rbind(mld.wi2.wc, mld.wi2.bs)
 
-    mld.su2.wc <- clim.wgt.avg(bt.complete[bt.complete$Ocean.Region != "BS", ],
+    mld.su2.wc <- clim.wgt.avg(bt.complete[bt.complete$Ocean.Region2 != "BS", ],
                                raw.clim.mld.late, "GoAmld_summer",
                                "second_year", "late_mld_summer")
-    mld.su2.bs <- clim.wgt.avg(bt.complete[bt.complete$Ocean.Region == "BS", ],
+    mld.su2.bs <- clim.wgt.avg(bt.complete[bt.complete$Ocean.Region2 == "BS", ],
                                raw.clim.mld.late, "Amld_summer",
                                "second_year", "late_mld_summer")
     mld.su2 <- rbind(mld.su2.wc, mld.su2.bs)
@@ -1330,7 +1333,7 @@ pink.wgt.avg <- function(brood.table,
 
     if(length(pink.covar) == 1) {
         pink.covar <- rep(pink.covar, 3)
-        names(pink.covar) <- unique(brood.table$Ocean.Region)
+        names(pink.covar) <- unique(brood.table$Ocean.Region2)
     }
 
     for (i in unique(brood.table$Stock.ID)){
@@ -1338,7 +1341,7 @@ pink.wgt.avg <- function(brood.table,
         for (j in unique(brood$BY)){
 
             if(type == "second_year") {
-                reg_i <- as.vector(unique(brood.table$Ocean.Region[brood.table$Stock.ID == i]))
+                reg_i <- as.vector(unique(brood.table$Ocean.Region2[brood.table$Stock.ID == i]))
 
                   if(brood$DetailFlag[brood$BY == j] ==1){ # HH added detail condition to accommodate new stocks that don't have detailed recruit information 
                     np.pink[as.character(j),as.character(i)] <-
@@ -1371,8 +1374,8 @@ pink.wgt.avg <- function(brood.table,
             }
 
             if(type == "geographic") {
-                reg_i <- as.vector(unique(brood.table$Ocean.Region[brood.table$Stock.ID == i]))
-                isBS <- as.vector(unique(brood.table$Ocean.Region[brood.table$Stock.ID == i])) == "BS"
+                reg_i <- as.vector(unique(brood.table$Ocean.Region2[brood.table$Stock.ID == i]))
+                isBS <- as.vector(unique(brood.table$Ocean.Region2[brood.table$Stock.ID == i])) == "BS"
                 if(!isBS){
                     np.pink[as.character(j),as.character(i)] <-
                         (brood$R0.1[brood$BY == j] * 0) +
@@ -1478,8 +1481,10 @@ single.stock.fit <- function(formulas, years, plot.path) {
 
     mod.list <- formulas
     mod.coef <- vector("list", length(mod.list))
+    mod.coef.oc2 <- vector("list", length(mod.list))
     mod.rsq  <- vector("list", length(mod.list))
     names(mod.coef) <- names(mod.list)
+    names(mod.coef.oc2) <- names(mod.list)
 
     ## get unique ocean.regions and stock names
     reg1 <- subset(sock, select = c("Stock", "Ocean.Region"))
@@ -1517,6 +1522,7 @@ single.stock.fit <- function(formulas, years, plot.path) {
         m.coef <- merge(m.coef, regions, by = "Stock", all.x = TRUE, sort = FALSE)
         mod.coef[[i]] <- m.coef
         m.coef.oc2 <- merge(m.coef, regions2, by = "Stock", all.x = TRUE, sort = FALSE)
+        mod.coef.oc2[[i]] <- m.coef.oc2
 
         ## Create r.squared data.frame
         m.rsq <- summary(m.fit)$r.squared
@@ -1788,7 +1794,7 @@ single.stock.fit <- function(formulas, years, plot.path) {
             dev.off()
         }
     }
-    out <- list(coef = mod.coef, rsq = mod.rsq)
+    out <- list(coef = mod.coef.oc2, rsq = mod.rsq)
     return(out)
 }
 
@@ -1888,7 +1894,7 @@ fill.time.series <- function(data) {
     out <- plyr::ddply(df, .(Stock.ID), transform,
                        Region = unique(na.omit(Region)),
                        Sub.Region = unique(na.omit(Sub.Region)),
-                       Ocean.Region = unique(na.omit(Ocean.Region)),
+                       Ocean.Region2 = unique(na.omit(Ocean.Region2)),
                        Lat = unique(na.omit(Lat)),
                        Lon = unique(na.omit(Lon)))
     return(out)

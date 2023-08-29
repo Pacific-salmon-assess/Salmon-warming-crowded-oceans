@@ -69,7 +69,7 @@ save(pars.gen.quant, file = "./output/pars_gen_quant.RData")
 
 ## SST
 
-era.sst <- rstan::stan(file = "./stan/hbm_era_1c",
+era.sst <- rstan::stan(file = "./stan/hbm_era_1c.stan",
                         data = stan.dat.sst,
                         pars = c(pars_era_1c, pars.gen.quant),
                         warmup = 1000,
@@ -78,7 +78,7 @@ era.sst <- rstan::stan(file = "./stan/hbm_era_1c",
                         chains = 4,
                         thin = 3,
                         seed = sample(1:1e6, 1),
-                        control = list(adapt_delta = 0.90,
+                        control = list(adapt_delta = 0.98,
                                        max_treedepth = 10))
 save(era.sst, file = "./output/models/dyn/hbm_era_sst.RData")
 
@@ -98,7 +98,7 @@ save(dyn.sst, file = "./output/models/dyn/hbm_dyn_sst.RData")
 
 ## Comp
 
-era.comp <- rstan::stan(file = "./stan/hbm_era_1c",
+era.comp <- rstan::stan(file = "./stan/hbm_era_1c.stan",
                         data = stan.dat.comp,
                         pars = c(pars_era_1c, pars.gen.quant),
                         warmup = 1000,
@@ -107,7 +107,7 @@ era.comp <- rstan::stan(file = "./stan/hbm_era_1c",
                         chains = 4,
                         thin = 3,
                         seed = sample(1:1e6, 1),
-                        control = list(adapt_delta = 0.90,
+                        control = list(adapt_delta = 0.98,
                                        max_treedepth = 10))
 save(era.comp, file = "./output/models/dyn/hbm_era_comp.RData")
 
@@ -136,9 +136,22 @@ era.2c <- rstan::stan(file = "./stan/hbm_era_2c.stan",
                        chains = 4,
                        thin = 3,
                        seed = sample(1:1e6, 1),
-                       control = list(adapt_delta = 0.90,
+                       control = list(adapt_delta = 0.98,
                                       max_treedepth = 10))
 save(era.2c, file = "./output/models/dyn/hbm_era_2c.RData")
+
+dyn.2c <- rstan::stan(file = "./stan/hbm_dyn_2c.stan",
+                      data = stan.dat.2c,
+                      pars = c(pars_dyn_2c, pars.gen.quant),
+                      warmup = 1000,
+                      iter = 4000,
+                      cores = 4,
+                      chains = 4,
+                      thin = 3,
+                      seed = sample(1:1e6, 1),
+                      control = list(adapt_delta = 0.98,
+                                     max_treedepth = 10))
+save(dyn.2c, file = "./output/models/dyn/hbm_dyn_2c.Rdata")
 
 ## Check pathology -----------------------------------------
 

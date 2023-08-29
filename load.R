@@ -45,10 +45,10 @@ if(!dir.exists("./output/"))
 
 
 ## Load saved HBM outputs
-if(dir.exists("./output/"))
-    load_rdata(path = "./output/", verbose = FALSE)
-if(dir.exists("./output/models/"))
-    load_rdata(path = "./output/models/", verbose = TRUE)
+#if(dir.exists("./output/"))
+#    load_rdata(path = "./output/", verbose = FALSE)
+#if(dir.exists("./output/models/"))
+#    load_rdata(path = "./output/models/", verbose = TRUE)
 
 
 ## Data
