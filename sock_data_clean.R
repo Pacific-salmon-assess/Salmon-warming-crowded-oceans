@@ -2,8 +2,8 @@
 ## ----------------------------------------  ##
 
 
-## This script cleans/processes the raw downloaded sockeye data. The output of
-## this script is a master brood table for the anlaysis and a summary info table
+## This script cleans/processes the raw compiled sockeye data. The output of
+## this script is a master brood table for the analysis and a summary info table
 
 
 ## Read in downloaded data
