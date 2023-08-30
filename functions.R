@@ -1332,7 +1332,7 @@ pink.wgt.avg <- function(brood.table,
     np.pink <- np.pink[order(row.names(np.pink)), ]
 
     if(length(pink.covar) == 1) {
-        pink.covar <- rep(pink.covar, 3)
+        pink.covar <- rep(pink.covar, 4)
         names(pink.covar) <- unique(brood.table$Ocean.Region2)
     }
 
