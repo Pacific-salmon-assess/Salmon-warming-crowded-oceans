@@ -27,7 +27,7 @@ geographic.order <- function(x) {
   
   WC_stk$geo_id <- data.table::frankv(WC_stk, cols=wc.ind, ties.method = "first")
   SEAK_stk$geo_id <- nrow(SEAK_stk) + data.table::frankv(SEAK_stk, cols=seak.ind, order=-1L, ties.method = "first")
-  GOA_stk$geo_id <- nrow(WC_stk) + nrow(SEAK_stk) data.table::frankv(GOA_stk, cols=goa.ind, order=-1L, ties.method = "first")
+  GOA_stk$geo_id <- nrow(WC_stk) + nrow(SEAK_stk) + data.table::frankv(GOA_stk, cols=goa.ind, order=-1L, ties.method = "first")
   BS_stk$geo_id <- nrow(WC_stk) + nrow(SEAK_stk) + nrow(GOA_stk) + data.table::frankv(BS_stk, cols=bs.ind, ties.method="first")
   
   #combine them
@@ -1332,7 +1332,7 @@ pink.wgt.avg <- function(brood.table,
     np.pink <- np.pink[order(row.names(np.pink)), ]
 
     if(length(pink.covar) == 1) {
-        pink.covar <- rep(pink.covar, 3)
+        pink.covar <- rep(pink.covar, 4)
         names(pink.covar) <- unique(brood.table$Ocean.Region2)
     }
 

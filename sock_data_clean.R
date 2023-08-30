@@ -2,8 +2,8 @@
 ## ----------------------------------------  ##
 
 
-## This script cleans/processes the raw downloaded sockeye data. The output of
-## this script is a master brood table for the anlaysis and a summary info table
+## This script cleans/processes the raw compiled sockeye data. The output of
+## this script is a master brood table for the analysis and a summary info table
 
 
 ## Read in downloaded data
@@ -115,6 +115,10 @@ bt.out.2 <- subset(bt.out.2, Stock != "Frazer") # drop Frazer, hatchery influenc
 bt.out.3 <- subset(bt.out.2,BY <= 2015) # currently have pink-NP data up to 2021 (+6 yr)
 bt.out.4 <- subset(bt.out.3,BY > 1949)        # do this because pre 1950 data is very sparse
 
+## Add alternate ocean.region grouping
+bt.out.4$Ocean.Region2 <- bt.out.4$Ocean.Region
+bt.out.4$Ocean.Region2 <- ifelse(bt.out.4$Region %in% c("SEAK", "BC North"), "SEAK", bt.out.4$Ocean.Region2)
+
 ## Fill in missing years that fall w/in min and max BY for each stock
 bt.out.5 <- fill.time.series(bt.out.4) # this adds NAs and is supposed to! 
 
@@ -135,11 +139,6 @@ head(bt.out)
 tail(bt.out)
 sapply(bt.out, class)
 summary(bt.out)
-
-## Add alternate ocean.region grouping
-bt.out$Ocean.Region2 <- bt.out$Ocean.Region
-bt.out$Ocean.Region2 <- ifelse(bt.out$Region %in% c("SEAK", "BC North"), "SEAK", bt.out$Ocean.Region2)
-
 
 write.csv(bt.out, "./data/master_brood_table.csv", row.names = FALSE)
 
