@@ -8,6 +8,8 @@ if(!dir.exists("./figures/stat/hbm_fit/"))
     dir.create("./figures/stat/hbm_fit/")
 if(!dir.exists("./output/models/stat/"))
     dir.create("./output/models/stat/")
+if(!dir.exists("./output/diagnostics/"))
+  dir.create("./output/diagnostics/")
 
 pars.gen.quant <- c("log_lik", "yhat", "yrep", "yresid") ## Generated quantities to monitor
 
