@@ -6,9 +6,9 @@
 
 rm(list = ls())
 
-## remove reproducible directories
-unlink("./figures", recursive = TRUE)
-unlink("./output", recursive = TRUE)
+## remove reproducible directories if starting fresh
+#unlink("./figures", recursive = TRUE)
+#unlink("./output", recursive = TRUE)
 
 time.start <- proc.time()
 
