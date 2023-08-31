@@ -20,7 +20,7 @@ Stock.ID,Species,Stock,Date.data.obtained,Date.data.incorporated,Date.data.updat
 119,Sockeye,Portage,7/1/2017,9/12/2017,5/17/2023,WC,Fraser River,Fraser Late,BC,49.12,-123.06,4,NA,
 120,Sockeye,Weaver,7/1/2017,9/12/2017,5/17/2023,WC,Fraser River,Fraser Late,BC,49.12,-123.06,4,Spawning channel present,
 121,Sockeye,North Barriere,NA,5/17/2023,5/17/2023,WC,Fraser River,,BC,49.12,-123.06,,,Added 5/2023 from PSC_fraser sheet - no info
-122,Sockeye,Sproat,9/1/2017,9/13/2017,NA,WC,BC South,Barkley Sound,BC,49.24,-124.82,9,NA,
+122,Sockeye,Sproat,9/1/2017,9/13/2017,8/31/2023,WC,BC South,Barkley Sound,BC,49.24,-124.82,9,NA,Recieved 7/6/2023 from Colin Bailey
 123,Sockeye,Long Lake,9/1/2017,9/13/2017,NA,WC,BC Central,BC Central,BC,51.29,-127.68,8,NA,
 124,Sockeye,Owikeno,15/7/2019,9/13/2017,NA,WC,BC Central,BC Central,BC,51.68,-127.25,8,updates with complete age coms July 2019,
 125,Sockeye,Atnarko,15/7/2019,NA,NA,WC,BC Central,BC Central,BC,52.38,-126.78,NA,updates with complete age coms July 2019,
@@ -84,7 +84,7 @@ Stock.ID,Species,Stock,Date.data.obtained,Date.data.incorporated,Date.data.updat
 183,Sockeye,Igushik,12/1/2016,9/12/2017,5/17/2023,BS,Bristol Bay,Bristol Bay North,AK,58.68,-158.8,3,All BB tables except Togiak completely redone ~2012 after new genetic analyses on interceptions,
 184,Sockeye,Togiak,12/1/2016,9/13/2017,5/17/2023,BS,Bristol Bay,Bristol Bay North,AK,58.95,-160.45,11,NA,
 185,Sockeye,Goodnews,8/22/2017,9/6/2017,NA,BS,AYK,AYK,AK,59.11,-161.62,7,"Middle Fork of Goodnews River was provided to Rich Brenner by Zachary Liller, ADF&G Research Coordinator for AYK (Division of Commercial Fisheries), on 22 August 2017.",
-1121,Sockeye,Great Central,9/1/2017,9/13/2017,NA,WC,BC South,Barkley Sound,BC,49.24,-124.82,9,NA,
+1121,Sockeye,Great Central,9/1/2017,9/13/2017,8/31/2023,WC,BC South,Barkley Sound,BC,49.24,-124.82,9,NA,Recieved 7/6/2023 from Colin Bailey
 1270,Sockeye,Nass (Meziadin),NA,NA,NA,WC,BC North,BC North ,BC,54.96,-129.9,12,NA,"""Nass(Meziadin)"" and ""meziadin"" should be combined once detailed data updated"
 1330,Sockeye,Klukshu,NA,NA,NA,WC,Yakutat,Yakutat,AK,59.12,-138.66,NA,NA,
 1650,Sockeye,Early Russian River,9/6/2017,NA,NA,GOA,Cook Inlet,Upper Cook Inlet,AK,60.54,-151.28,NA,Early component within Kenai River. Age classes not broken out into freshwater and ocean ages - not sure how to incorporate into database,
