@@ -30,23 +30,38 @@ df.era.st.2c <- data.frame(Stock = rep(sock.info$Stock, 3),
                            se = summ[, "se_mean"],
                            lower_10 = summ[, "10%"],
                            upper_90 = summ[ , "90%"],
-                           var = stringr::str_extract(rownames(summ), "[a-z]+"),
-                           era = rep(c("early", "middle", "late"), each=56) #hard coding because I don't understand regular expressions
-)
+                           var = stringr::str_extract(rownames(summ), "\\D+"),
+                           varnam = case_when(grepl("^gamma", rownames(summ)) ~ "SST",
+                                              grepl("^kappa", rownames(summ)) ~ "Competitors"),
+                           era = case_when(str_extract(rownames(summ), "\\d") == "1" ~ "Early",
+                                           str_extract(rownames(summ), "\\d") == "2" ~ "Middle",
+                                           str_extract(rownames(summ), "\\d") == "3" ~ "Late",
+                                           .ptype=factor( levels=c("Early", "Middle", "Late")))
+                             )
 
 # Summarized dataframe (regional-level)
-df.era.reg.2c <- dplyr::summarize(df.era.st.2c, 
-                                  reg_mean=mean(mu), 
-                                  lower_10=quantile(mu, 0.1), 
-                                  upper_90=quantile(mu, 0.9), 
-                                  .by=c(Ocean.Region2, var, era))
-df.era.reg.2c$ystart <- rep(c("Early Stuart", "Alastair", "Copper", "Nelson"), 3)
-df.era.reg.2c$yend <- rep(c("Atnarko", "Chilkoot", "Chignik Lake", "Goodnews"), 3)
-
+reg_start <- sock.info$Stock[match(unique(sock.info$Ocean.Region2), sock.info$Ocean.Region2)]
+reg_end <- c(sock.info$Stock[match(unique(sock.info$Ocean.Region2), sock.info$Ocean.Region2)-1], 
+             sock.info$Stock[nrow(sock.info)])
+summ <- rstan::summary(era.2c, pars = c(paste0("mu_gamma", 1:3), paste0("mu_kappa", 1:3)), probs = probs)[[1]]
+df.era.reg.2c <- data.frame(Ocean.Region2 = rep(unique(sock.info$Ocean.Region2), 3),
+                            ystart = rep(reg_start, 3),
+                            yend = rep(reg_end, 3),
+                            reg_mean = summ[, "mean"], 
+                            reg_se = summ[ ,"se_mean"],
+                            lower_10 = summ[ , "10%"],
+                            upper_90 = summ[ , "90%"], 
+                            var = stringr::str_extract(rownames(summ), "\\D+"),
+                            varnam = case_when(grepl("^mu_gamma", rownames(summ)) ~ "SST",
+                                               grepl("^mu_kappa", rownames(summ)) ~ "Competitors"),
+                            era = case_when(str_extract(rownames(summ), "\\d") == "1" ~ "Early",
+                                            str_extract(rownames(summ), "\\d") == "2" ~ "Middle",
+                                            str_extract(rownames(summ), "\\d") == "3" ~ "Late",
+                                            .ptype=factor( levels=c("Early", "Middle", "Late"))))
 
 # Density dataframe 
 post <- rstan::extract(era.2c, pars=c(paste0("gamma", c(1:3)),
-                                       paste0("kappa", c(1:3))))
+                                      paste0("kappa", c(1:3))))
 dens.l <- lapply(post, function(x){
   dens.out <- col_density(x, plot.it=F)
   dens.list <- lapply(dens.out, adply, .margins=c(1,2))
@@ -55,40 +70,50 @@ dens.l <- lapply(post, function(x){
   dens.df <- mutate(dens.df, stock=levels(sock$Stock)[as.numeric(stock)] ) 
   return(dens.df)
 } )
-dens.df.st.2c <- bind_rows(dens.l, .id="par") 
-dens.df.st.2c$era <- case_when(dens.df.st.2c$par %in% c("gamma1", "kappa1") ~ "early",
-                             dens.df.st.2c$par %in% c("gamma2", "kappa2") ~ "middle",
-                             dens.df.st.2c$par %in% c("gamma3", "kappa3") ~ "late") 
-dens.df.st.2c$era <- factor(dens.df.st.2c$era, levels=c("early", "middle", "late"))
-dens.df.st.2c$var <- stringr::str_extract(dens.df.st.2c$par, "[a-z]+")
-dens.df.st.2c <- ocean_region_col(dens.df.st.2c, stock.col = "stock")
+summ.dens <- bind_rows(dens.l, .id="par") 
+dens.df.st.2c <- data.frame(summ.dens,
+                            Ocean.Region2 = sock.info$Ocean.Region2[match(summ.dens$stock, sock.info$Stock)],
+                            era = case_when(
+                              str_extract(summ.dens$par, "\\d") == "1" ~ "Early",
+                              str_extract(summ.dens$par, "\\d") == "2" ~ "Middle",
+                              str_extract(summ.dens$par, "\\d") == "3" ~ "Late",
+                              .ptype=factor( levels=c("Early", "Middle", "Late"))),
+                            var = stringr::str_extract(summ.dens$par, "\\D+"),
+                            varnam = case_when(
+                              str_extract(summ.dens$par, "\\D+") == "gamma" ~ "SST",
+                              str_extract(summ.dens$par, "\\D+") == "kappa" ~ "Competitors"))
 
 # Mean (regional) density dataframe 
 post <- rstan::extract(era.2c, pars=c(paste0("mu_gamma", c(1:3)),
-                                                         paste0("mu_kappa", c(1:3))))
+                                      paste0("mu_kappa", c(1:3))))
 dens.l <- lapply(post, function(x){
   dens.out <- col_density(x, plot.it=F)
   dens.list <- lapply(dens.out, adply, .margins=c(1,2))
   dens.df <- join(dens.list$x, dens.list$y, by=c("X1", "X2"))
   names(dens.df) <- c("n", "region", "x", "dens")
-  dens.df$region <- case_when(dens.df$region == 1 ~ "WC",
+  dens.df$Ocean.Region2 <- case_when(dens.df$region == 1 ~ "WC",
                               dens.df$region == 2 ~ "SEAK",
                               dens.df$region == 3 ~ "GOA",
                               dens.df$region == 4 ~ "BS")
   return(dens.df)
 } )
-dens.df.reg.2c <- bind_rows(dens.l, .id="par") 
-dens.df.reg.2c$era <- case_when(dens.df.reg.2c$par %in% c("mu_gamma1", "mu_kappa1") ~ "early",
-                            dens.df.reg.2c$par %in% c("mu_gamma2", "mu_kappa2") ~ "middle",
-                            dens.df.reg.2c$par %in% c("mu_gamma3", "mu_kappa3") ~ "late") 
-dens.df.reg.2c$era <- factor(dens.df.reg.2c$era, levels=c("early", "middle", "late"))
-dens.df.reg.2c$var <- case_when(dens.df.reg.2c$par %in% c("mu_gamma1", "mu_gamma2","mu_gamma3") ~ "gamma",
-                                dens.df.reg.2c$par %in% c("mu_kappa1", "mu_kappa2",  "mu_kappa3") ~ "kappa")
 
+summ.dens <- bind_rows(dens.l, .id="par") 
+dens.df.reg.2c <- data.frame(summ.dens,
+                             era = case_when(
+                               str_extract(summ.dens$par, "\\d") == "1" ~ "Early",
+                               str_extract(summ.dens$par, "\\d") == "2" ~ "Middle",
+                               str_extract(summ.dens$par, "\\d") == "3" ~ "Late",
+                              .ptype=factor( levels=c("Early", "Middle", "Late"))),
+                             var = stringr::str_extract(summ.dens$par, "\\D+"),
+                             varnam = case_when(
+                               str_extract(summ.dens$par, "\\D+") == "mu_gamma" ~ "SST",
+                               str_extract(summ.dens$par, "\\D+") == "mu_kappa" ~ "Competitors")
+)
 
 ### --- Eras model: Figures
 
-# Caterpillar plot - 2-covar
+# Caterpillar plot (combined) - 2-covar
 g <- ggplot(df.era.st.2c) +
   geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
   geom_point(aes(x = mu, y = Stock, color = interaction(Ocean.Region2, era), shape = Ocean.Region2)) +
@@ -96,7 +121,7 @@ g <- ggplot(df.era.st.2c) +
                                            color = interaction(Ocean.Region2, era)), linewidth = 0.25) +
   geom_rect(data = df.era.reg.2c, aes(xmin = lower_10, xmax = upper_90, ymin = ystart,
                                         ymax = yend, fill = interaction(Ocean.Region2, era)), alpha=0) +
-  facet_wrap(vars(var), ncol=2) +
+  facet_wrap(vars(varnam), ncol=2) +
   scale_color_manual(values = col.eras) +
   scale_shape_manual(values = c(15:18), guide = "legend") +
   scale_fill_manual(values = col.eras, guide="legend") +
@@ -116,14 +141,43 @@ pdf("./figures/dyn/hbm_inf/eras_coef_dot_c2_comb.pdf", width=5, height=8)
 print(g)
 dev.off()
 
+# Caterpillar plot (panel) - 2-covar
+g <- ggplot(df.era.st.2c) +
+  geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
+  geom_point(aes(x = mu, y = Stock, color = Ocean.Region2, shape = Ocean.Region2)) +
+  geom_segment(aes(y = Stock, yend = Stock, x = lower_10, xend = upper_90,
+                   color = Ocean.Region2), linewidth = 0.25) +
+  geom_segment(data = df.era.reg.2c, aes(y = ystart, yend = yend, x = reg_mean, xend=reg_mean,
+                                           color = Ocean.Region2), linewidth = 0.25) +
+  geom_rect(data = df.era.reg.2c, aes(xmin = lower_10, xmax = upper_90, ymin = ystart,
+                                        ymax = yend, fill = Ocean.Region2), alpha=0.2) +
+  facet_grid(cols=vars(era), rows=vars(varnam)) +
+  scale_color_manual(values = col.region) +
+  scale_shape_manual(values = c(15:18), guide = "legend") +
+  scale_fill_manual(values = col.region, guide="legend") +
+  labs(x = "SST Coefficient",
+       y = "",
+       color = "",
+       shape = "") +
+  scale_x_continuous(breaks=c(-0.25,0,0.25))+
+  theme_sleek(base_size = 10) +
+  theme(legend.position = "none", 
+        legend.justification = c(0, 0),
+        legend.key.size = unit(10, "pt"),
+        legend.background = element_blank(),
+        legend.text = element_text(size = 8)
+  )
+pdf("./figures/dyn/hbm_inf/eras_coef_dot_2c_panel.pdf", width=8, height=8)
+print(g)
+dev.off()
 
 # Posterior density plot - 2-covar
 g <- ggplot(dens.df.st.2c) + 
   geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
-  geom_path(aes(x=x, y=dens, group=stock, col=region), alpha=0.2) + 
-  geom_path(data=dens.df.reg.2c, aes(x=x, y=dens, col=region), alpha=0.85, linewidth=1) +
+  geom_path(aes(x=x, y=dens, group=stock, col=Ocean.Region2), alpha=0.2) + 
+  geom_path(data=dens.df.reg.2c, aes(x=x, y=dens, col=Ocean.Region2), alpha=0.85, linewidth=1) +
   scale_colour_manual(values=col.region) +
-  facet_grid(rows=vars(era), cols=vars(var)) + 
+  facet_grid(rows=vars(era), cols=vars(varnam)) + 
   coord_cartesian(xlim=c(-1, 1)) +
   theme_minimal() + labs(x="covariate effect", y="", col="Ocean Region") +
   theme(axis.text.y=element_blank())
@@ -146,22 +200,25 @@ df.dyn.st.2c <- data.frame(Stock = sock$Stock,
                    se = summ[, "se_mean"],
                    lower_10 = summ[, "10%"],
                    upper_90 = summ[ , "90%"],
-                   var = stringr::str_extract(rownames(summ), "[a-z]+")
+                   var = stringr::str_extract(rownames(summ), "[a-z]+"),
+                   varnam = case_when(grepl("^gamma", rownames(summ)) ~ "SST",
+                                      grepl("^kappa", rownames(summ)) ~ "Competitors")
                    )
 
 # Summarized dataframe (regional-level)
+# gamma/kappa are series-specific; no mu output. Summarize stocks instead
 df.dyn.reg.2c <- dplyr::summarize(df.dyn.st.2c, 
                            reg_mean=mean(mu), 
                            lower_10=quantile(mu, 0.1), 
                            upper_90=quantile(mu, 0.9), 
-                           .by=c(Ocean.Region2, BY, var))
+                           .by=c(Ocean.Region2, BY, varnam)) 
 
 ### --- Dynamic model: Figures 
 
 # Stacked gamma timeseries / sparkline: 2-covar
 g <- ggplot(df.dyn.st.2c) + 
   geom_line(aes(x=BY, y=mu, col=Ocean.Region2)) + 
-  facet_grid(rows=vars(Stock), cols=vars(var), switch ="y", scales="free_y", as.table=F) + 
+  facet_grid(rows=vars(Stock), cols=vars(varnam), switch ="y", scales="free_y", as.table=F) + 
   scale_colour_manual(values=col.region) +
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
@@ -181,7 +238,7 @@ g <- ggplot(df.dyn.reg.2c) +
   geom_line(data= df.dyn.st.2c, aes(x=BY, y=mu, group=Stock, col=Ocean.Region2), alpha=0.2) +
   geom_line(aes(x=BY, y=reg_mean, col=Ocean.Region2), linewidth=1) +
   geom_ribbon(aes(x=BY, y=reg_mean, ymin=lower_10, ymax=upper_90, fill=Ocean.Region2), alpha=0.2) +
-  facet_grid(rows=vars(Ocean.Region2), cols=vars(var)) + 
+  facet_grid(rows=vars(Ocean.Region2), cols=vars(varnam)) + 
   ylim(c(-1,1)) + 
   scale_colour_manual(values=col.region, aesthetics=c("colour", "fill")) +
   theme_minimal()
@@ -196,161 +253,123 @@ dev.off()
 
 
 ### ----- Eras model: Data  
-#TODO : make data wrangling below more transparent for me & consistent with dyn models
 
-mcmc.era.sst  <- As.mcmc.list(era.sst, pars = pars_era_1c)
-mcmc.era.comp  <- As.mcmc.list(era.comp, pars = pars_era_1c)
-lst.era <- list(SST  = mcmc.era.sst,
-                 Comp = mcmc.era.comp)
+lst.era <- list(era.sst, era.comp)
+probs <- c(0.025, 0.05, 0.10, 0.50, 0.90, 0.95, 0.975)
 
 
-# Stock-specific dataframe
-dfl.era.st <- lapply(seq_along(lst.era), function(i) {
-    mcmc <- lst.era[[i]]
-    df.wide <- coda_df(mcmc, grep("^gamma", coda::varnames(mcmc),
-                                  value = TRUE))
-    df.long <- reshape2::melt(df.wide, id.vars = c("chain", "iter"),
-                              variable.name = "par")
-    info <- sock.info[ , c("Stock.ID", "Stock", "Ocean.Region2")]
-    info1 <- info; info2 <- info; info3 <- info
-    info1$par <- paste0("gamma1[", 1:nlevels(info$Stock), "]")
-    info2$par <- paste0("gamma2[", 1:nlevels(info$Stock), "]")
-    info3$par <- paste0("gamma3[", 1:nlevels(info$Stock), "]")
-    info1$era <- "early"
-    info2$era <- "middle"
-    info3$era <- "late"
-    info <- rbind(info1, info2, info3)
-    info <- ocean_region_lab(info, var="Ocean.Region2")
-    df <- plyr::join(info, df.long, by = "par")
-    df$var <- names(lst.era)[i]
-    df$era <- factor(df$era, levels=c("early", "middle", "late"))
-    df.summ <- dplyr::summarize(df, gamma_mu=mean(value), 
-                                gamma_10=quantile(value, 0.1), 
-                                gamma_90=quantile(value, 0.9), 
-                                .by=c(Stock, par, ocean_region_lab, era))
-    return(df.summ)
-})
-names(dfl.era.st) <- c("SST", "Comp")
+# Stock-specific dataframes
+dfl.era.st <- lapply(seq_along(lst.era), function(i){
+  summ <- rstan::summary(lst.era[[i]], pars=c(paste0("gamma", 1:3)), probs=probs)[[1]]
+  df <- data.frame(Stock = rep(sock.info$Stock, 3),
+                   Ocean.Region2 = rep(sock.info$Ocean.Region2, 3),
+                   mu = summ[, "mean"],
+                   se = summ[, "se_mean"],
+                   lower_10 = summ[, "10%"],
+                   upper_90 = summ[ , "90%"],
+                   era = case_when(str_extract(rownames(summ), "\\d") == "1" ~ "Early",
+                                   str_extract(rownames(summ), "\\d") == "2" ~ "Middle",
+                                   str_extract(rownames(summ), "\\d") == "3" ~ "Late",
+                                   .ptype=factor( levels=c("Early", "Middle", "Late"))) )
+  return(df) }
+)
+names(dfl.era.st) <- c("SST", "Competitors")
 
 
-# Summarized dataframe (regional-level)
-dfl.era.reg <- lapply(seq_along(lst.era), function(i) {
-  mcmc <- lst.era[[i]]
-  df.wide <- coda_df(mcmc, grep("mu_gamma", coda::varnames(mcmc),
-                                value = TRUE))
-  df.long <- reshape2::melt(df.wide, id.vars = c("chain", "iter"),
-                            variable.name = "par")
-  info <- data.frame(par = as.character(unique(df.long$par)),
-                     ocean_region = factor(rep(c("West Coast", "SEAK", "Gulf of Alaska", "Bering Sea"), 3), 
-                                           levels=c("West Coast", "SEAK", "Gulf of Alaska", "Bering Sea") ), # This hard coding could be problematic 
-                     era = factor( rep(c("early", "middle", "late"), each=4), 
-                                   levels=c("early", "middle", "late") )
-                    )
-  df <- plyr::join(df.long, info, by = "par")
-  df$var <- names(lst.era)[i]
-  df.summ <- dplyr::summarize(df, gamma_mu=mean(value), 
-                              gamma_10=quantile(value, 0.1), 
-                              gamma_90=quantile(value, 0.9), 
-                              .by=c(par, ocean_region, era))
-  df.summ$ystart <- rep(c("Early Stuart", "Alastair", "Copper", "Nelson"), 3)
-  df.summ$yend <- rep(c("Atnarko", "Chilkoot", "Chignik Lake", "Goodnews"), 3)
-  return(df.summ)
-})
-names(dfl.era.reg) <- c("SST", "Comp")
+# Summarized dataframes (regional-level)
+reg_start <- sock.info$Stock[match(unique(sock.info$Ocean.Region2), sock.info$Ocean.Region2)]
+reg_end <- c(sock.info$Stock[match(unique(sock.info$Ocean.Region2), sock.info$Ocean.Region2)-1], 
+             sock.info$Stock[nrow(sock.info)])
+
+dfl.era.reg <- lapply(seq_along(lst.era), function(i){
+  summ <- rstan::summary(lst.era[[i]], pars=c(paste0("mu_gamma", 1:3)), probs=probs)[[1]]
+  df <- data.frame(Ocean.Region2 = rep(unique(sock.info$Ocean.Region2), 3),
+                   ystart = rep(reg_start, 3),
+                   yend = rep(reg_end, 3),
+                   reg_mean = summ[, "mean"],
+                   reg_se = summ[, "se_mean"],
+                   lower_10 = summ[, "10%"],
+                   upper_90 = summ[ , "90%"],
+                   era = case_when(str_extract(rownames(summ), "\\d") == "1" ~ "Early",
+                                   str_extract(rownames(summ), "\\d") == "2" ~ "Middle",
+                                   str_extract(rownames(summ), "\\d") == "3" ~ "Late",
+                                   .ptype=factor( levels=c("Early", "Middle", "Late"))) )
+  return(df) }
+)
+names(dfl.era.reg) <- c("SST", "Competitors")
 
 
-# Density dataframe - sst
-post <- rstan::extract(era.sst, pars=c(paste0("gamma", c(1:3))))
-dens.l <- lapply(post, function(x){
-  dens.out <- col_density(x, plot.it=F)
-  dens.list <- lapply(dens.out, adply, .margins=c(1,2))
-  dens.df.sst <- join(dens.list$x, dens.list$y, by=c("X1", "X2"))
-  names(dens.df.sst) <- c("n", "stock", "gamma.x", "gamma.dens")
-  dens.df.sst <- mutate(dens.df.sst, stock=levels(sock$Stock)[as.numeric(stock)] ) 
-  return(dens.df.sst)
-} )
-dens.df.sst <- bind_rows(dens.l, .id="par") # rename - this is confusing with the above naming
-dens.df.sst$era <- case_when(dens.df.sst$par == "gamma1" ~ "early",
-                              dens.df.sst$par == "gamma2" ~ "middle",
-                              dens.df.sst$par == "gamma3" ~ "late")
-dens.df.sst$era <- factor(dens.df.sst$era, levels=c("early", "middle", "late"))
-dens.df.sst <- ocean_region_col(dens.df.sst, stock.col = "stock")
+# Density dataframe - stock-level
+dens.dfl.st <- list()
+for(i in seq_along(lst.era)) {
+  post <- rstan::extract(lst.era[[i]], pars=c(paste0("gamma", c(1:3))))
+  dens.l <- lapply(post, function(x){
+    dens.out <- col_density(x, plot.it=F)
+    dens.list <- lapply(dens.out, adply, .margins=c(1,2))
+    dens.df.sst <- join(dens.list$x, dens.list$y, by=c("X1", "X2"))
+    names(dens.df.sst) <- c("n", "stock", "gamma.x", "gamma.dens")
+    dens.df.sst <- mutate(dens.df.sst, stock=levels(sock$Stock)[as.numeric(stock)] ) 
+    return(dens.df.sst)
+  } )
+  summ.dens <- bind_rows(dens.l, .id="par")
+  dens.df.st <- data.frame(summ.dens,
+                           Ocean.Region2 = sock.info$Ocean.Region2[
+                             match(summ.dens$stock, sock.info$Stock)],
+                           era = case_when(
+                             str_extract(summ.dens$par, "\\d") == "1" ~ "Early",
+                             str_extract(summ.dens$par, "\\d") == "2" ~ "Middle",
+                             str_extract(summ.dens$par, "\\d") == "3" ~ "Late",
+                             .ptype=factor( levels=c("Early", "Middle", "Late")))
+                            )
+  dens.dfl.st[[i]] <- dens.df.st 
+}
+names(dens.dfl.st) <- c("SST", "Competitors")
 
 # mean (regional) density dataframe 
-post <- rstan::extract(era.sst, pars=c(paste0("mu_gamma", c(1:3))))
-dens.l <- lapply(post, function(x){
-  dens.out <- col_density(x, plot.it=F)
-  dens.list <- lapply(dens.out, adply, .margins=c(1,2))
-  dens.df <- join(dens.list$x, dens.list$y, by=c("X1", "X2"))
-  names(dens.df) <- c("n", "region", "x", "dens")
-  dens.df$region <- case_when(dens.df$region == 1 ~ "WC",
-                              dens.df$region == 2 ~ "SEAK",
-                              dens.df$region == 3 ~ "GOA",
-                              dens.df$region == 4 ~ "BS")
-  return(dens.df)
-} )
-dens.df.reg.sst <- bind_rows(dens.l, .id="par") 
-dens.df.reg.sst$era <- case_when(dens.df.reg.sst$par == "mu_gamma1" ~ "early",
-                                  dens.df.reg.sst$par == "mu_gamma2" ~ "middle",
-                                  dens.df.reg.sst$par == "mu_gamma3" ~ "late") 
-dens.df.reg.sst$era <- factor(dens.df.reg.sst$era, levels=c("early", "middle", "late"))
+dens.dfl.reg <- list()
+for(i in seq_along(lst.era)) {
+  post <- rstan::extract(lst.era[[i]], pars=c(paste0("mu_gamma", c(1:3))))
+  dens.l <- lapply(post, function(x){
+    dens.out <- col_density(x, plot.it=F)
+    dens.list <- lapply(dens.out, adply, .margins=c(1,2))
+    dens.df <- join(dens.list$x, dens.list$y, by=c("X1", "X2"))
+    names(dens.df) <- c("n", "region", "x", "dens")
+    dens.df$Ocean.Region2 <- case_when(dens.df$region == 1 ~ "WC",
+                                dens.df$region == 2 ~ "SEAK",
+                                dens.df$region == 3 ~ "GOA",
+                                dens.df$region == 4 ~ "BS")
+    return(dens.df)
+  } )
+  summ.dens <- bind_rows(dens.l, .id="par")
+  dens.df.reg <- data.frame(summ.dens,
+                           era = case_when(
+                             str_extract(summ.dens$par, "\\d") == "1" ~ "Early",
+                             str_extract(summ.dens$par, "\\d") == "2" ~ "Middle",
+                             str_extract(summ.dens$par, "\\d") == "3" ~ "Late",
+                             .ptype=factor( levels=c("Early", "Middle", "Late")))
+  )
+  dens.dfl.reg[[i]] <- dens.df.reg
+}
+names(dens.dfl.reg) <- c("SST", "Competitors")
 
-
-# Density dataframe - comp
-post <- rstan::extract(era.comp, pars=c(paste0("gamma", c(1:3))))
-dens.l <- lapply(post, function(x){
-  dens.out <- col_density(x, plot.it=F)
-  dens.list <- lapply(dens.out, adply, .margins=c(1,2))
-  dens.df.comp <- join(dens.list$x, dens.list$y, by=c("X1", "X2"))
-  names(dens.df.comp) <- c("n", "stock", "gamma.x", "gamma.dens")
-  dens.df.comp <- mutate(dens.df.comp, stock=levels(sock$Stock)[as.numeric(stock)] ) 
-  return(dens.df.comp)
-} )
-dens.df.comp <- bind_rows(dens.l, .id="par") # rename - this is confusing with the above naming
-dens.df.comp$era <- case_when(dens.df.comp$par == "gamma1" ~ "early",
-                         dens.df.comp$par == "gamma2" ~ "middle",
-                         dens.df.comp$par == "gamma3" ~ "late")
-dens.df.comp$era <- factor(dens.df.comp$era, levels=c("early", "middle", "late"))
-dens.df.comp <- ocean_region_col(dens.df.comp, stock.col = "stock")
-
-# mean (regional) density dataframe - comp
-post <- rstan::extract(era.comp, pars=c(paste0("mu_gamma", c(1:3))))
-dens.l <- lapply(post, function(x){
-  dens.out <- col_density(x, plot.it=F)
-  dens.list <- lapply(dens.out, adply, .margins=c(1,2))
-  dens.df <- join(dens.list$x, dens.list$y, by=c("X1", "X2"))
-  names(dens.df) <- c("n", "region", "x", "dens")
-  dens.df$region <- case_when(dens.df$region == 1 ~ "WC",
-                              dens.df$region == 2 ~ "SEAK",
-                              dens.df$region == 3 ~ "GOA",
-                              dens.df$region == 4 ~ "BS")
-  return(dens.df)
-} )
-dens.df.reg.comp <- bind_rows(dens.l, .id="par") 
-dens.df.reg.comp$era <- case_when(dens.df.reg.comp$par == "mu_gamma1" ~ "early",
-                                dens.df.reg.comp$par == "mu_gamma2" ~ "middle",
-                                dens.df.reg.comp$par == "mu_gamma3" ~ "late") 
-dens.df.reg.comp$era <- factor(dens.df.reg.comp$era, levels=c("early", "middle", "late"))
 
 
 ### --- Eras model : Figures
 
 ## SST 
 
-# Caterpillar plot - sst
+# Caterpillar plot (combined) - sst
 g <- ggplot(dfl.era.st$SST) +
   geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
-  geom_point(aes(x = gamma_mu, y = Stock, color = interaction(ocean_region_lab, era), shape = ocean_region_lab)) +
-  #geom_segment(aes(y = Stock, yend = Stock, x = `2.5%`, xend = `97.5%`,
-  #                 color = ocean_region_lab), linewidth = 0.25) +
-  geom_segment(data = dfl.era.reg$SST, aes(y = ystart, yend = yend, x = gamma_mu, xend=gamma_mu,
-                                 color = interaction(ocean_region, era)), linewidth = 0.25) +
-  geom_rect(data = dfl.era.reg$SST, aes(xmin = gamma_10, xmax = gamma_90, ymin = ystart,
-                         ymax = yend, fill = interaction(ocean_region, era)), alpha=0) +
+  geom_point(aes(x = mu, y = Stock, color = interaction(Ocean.Region2, era), shape = Ocean.Region2)) +
+  geom_segment(data = dfl.era.reg$SST, aes(y = ystart, yend = yend, x = reg_mean, xend=reg_mean,
+                                 color = interaction(Ocean.Region2, era)), linewidth = 0.25) +
+  geom_rect(data = dfl.era.reg$SST, aes(xmin = lower_10, xmax = upper_90, ymin = ystart,
+                         ymax = yend, fill = interaction(Ocean.Region2, era)), alpha=0) +
   scale_color_manual(values = col.eras) +
   scale_shape_manual(values = c(15:18), guide = "legend") +
   scale_fill_manual(values = col.eras, guide="legend") +
-  labs(x = "Coefficient",
+  labs(x = "SST Coefficient",
        y = "",
        color = "",
        shape = "") +
@@ -366,16 +385,45 @@ pdf("./figures/dyn/hbm_inf/eras_coef_dot_sst_comb.pdf", width=5, height=8)
 print(g)
 dev.off()
 
+# Caterpillar plot (panel) - sst
+g <- ggplot(dfl.era.st$SST) +
+  geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
+  geom_point(aes(x = mu, y = Stock, color = Ocean.Region2, shape = Ocean.Region2)) +
+  geom_segment(aes(y = Stock, yend = Stock, x = lower_10, xend = upper_90,
+                   color = Ocean.Region2), linewidth = 0.25) +
+  geom_segment(data = dfl.era.reg$SST, aes(y = ystart, yend = yend, x = reg_mean, xend=reg_mean,
+                                           color = Ocean.Region2), linewidth = 0.25) +
+  geom_rect(data = dfl.era.reg$SST, aes(xmin = lower_10, xmax = upper_90, ymin = ystart,
+                                        ymax = yend, fill = Ocean.Region2), alpha=0.2) +
+  facet_wrap(vars(era), ncol=3) +
+  scale_color_manual(values = col.region) +
+  scale_shape_manual(values = c(15:18), guide = "legend") +
+  scale_fill_manual(values = col.region, guide="legend") +
+  labs(x = "SST Coefficient",
+       y = "",
+       color = "",
+       shape = "") +
+  scale_x_continuous(breaks=c(-0.25,0,0.25))+
+  theme_sleek(base_size = 10) +
+  theme(legend.position = "none", 
+        legend.justification = c(0, 0),
+        legend.key.size = unit(10, "pt"),
+        legend.background = element_blank(),
+        legend.text = element_text(size = 8)
+  )
+pdf("./figures/dyn/hbm_inf/eras_coef_dot_sst_panel.pdf", width=5, height=8)
+print(g)
+dev.off()
 
 # Posterior density plot - sst
-g <- ggplot(dens.df.sst) + 
+g <- ggplot(dens.dfl.st$SST) + 
   geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
-  geom_path(aes(x=gamma.x, y=gamma.dens, group=stock, col=region), alpha=0.2) + 
-  geom_path(data=dens.df.reg.sst, aes(x=x, y=dens, col=region), alpha=0.85, linewidth=1) +
+  geom_path(aes(x=gamma.x, y=gamma.dens, group=stock, col=Ocean.Region2), alpha=0.2) + 
+  geom_path(data=dens.dfl.reg$SST, aes(x=x, y=dens, col=Ocean.Region2), alpha=0.85, linewidth=1) +
   facet_wrap(~era, nrow=3) +
   scale_colour_manual(values=col.region) +
   coord_cartesian(xlim=c(-1, 1)) +
-  theme_minimal() + labs(x="covariate effect", y="", col="Ocean Region") +
+  theme_minimal() + labs(x="SST effect", y="", col="Ocean Region") +
   theme(axis.text.y=element_blank())
 pdf("./figures/dyn/hbm_inf/eras_sst_dens.pdf")
 print(g)
@@ -384,20 +432,20 @@ dev.off()
 
 ## Competitors
 
-# Caterpillar plot - comp
-g <- ggplot(dfl.era.st$Comp) +
+# Caterpillar plot (combined) - comp
+g <- ggplot(dfl.era.st$Competitors) +
   geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
-  geom_point(aes(x = gamma_mu, y = Stock, color = interaction(ocean_region_lab, era), shape = ocean_region_lab)) +
+  geom_point(aes(x = mu, y = Stock, color = interaction(Ocean.Region2, era), shape = Ocean.Region2)) +
   #geom_segment(aes(y = Stock, yend = Stock, x = `2.5%`, xend = `97.5%`,
-  #                 color = ocean_region_lab), linewidth = 0.25) +
-  geom_segment(data = dfl.era.reg$Comp, aes(y = ystart, yend = yend, x = gamma_mu, xend=gamma_mu,
-                                           color = interaction(ocean_region, era)), linewidth = 0.25) +
-  geom_rect(data = dfl.era.reg$Comp, aes(xmin = gamma_10, xmax = gamma_90, ymin = ystart,
-                                        ymax = yend, fill = interaction(ocean_region, era)), alpha=0) +
+  #                 color = Ocean.Region2), linewidth = 0.25) +
+  geom_segment(data = dfl.era.reg$Competitors, aes(y = ystart, yend = yend, x = reg_mean, xend=reg_mean,
+                                           color = interaction(Ocean.Region2, era)), linewidth = 0.25) +
+  geom_rect(data = dfl.era.reg$Competitors, aes(xmin = lower_10, xmax = upper_90, ymin = ystart,
+                                        ymax = yend, fill = interaction(Ocean.Region2, era)), alpha=0) +
   scale_color_manual(values = col.eras) +
   scale_shape_manual(values = c(15:18), guide = "legend") +
   scale_fill_manual(values = col.eras, guide="legend") +
-  labs(x = "Coefficient",
+  labs(x = "Competitors Coefficient",
        y = "",
        color = "",
        shape = "") +
@@ -414,15 +462,46 @@ print(g)
 dev.off()
 
 
-# Posterior density plot - comp
-g <- ggplot(dens.df.comp) + 
+# Caterpillar plot (panel) - Competitors
+g <- ggplot(dfl.era.st$Competitors) +
   geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
-  geom_path(aes(x=gamma.x, y=gamma.dens, group=stock, col=region), alpha=0.2) + 
-  geom_path(data=dens.df.reg.comp, aes(x=x, y=dens, col=region), alpha=0.85, linewidth=1) +
+  geom_point(aes(x = mu, y = Stock, color = Ocean.Region2, shape = Ocean.Region2)) +
+  geom_segment(aes(y = Stock, yend = Stock, x = lower_10, xend = upper_90,
+                   color = Ocean.Region2), linewidth = 0.25) +
+  geom_segment(data = dfl.era.reg$Competitors, aes(y = ystart, yend = yend, x = reg_mean, xend=reg_mean,
+                                           color = Ocean.Region2), linewidth = 0.25) +
+  geom_rect(data = dfl.era.reg$Competitors, aes(xmin = lower_10, xmax = upper_90, ymin = ystart,
+                                        ymax = yend, fill = Ocean.Region2), alpha=0.2) +
+  facet_wrap(vars(era), ncol=3) +
+  scale_color_manual(values = col.region) +
+  scale_shape_manual(values = c(15:18), guide = "legend") +
+  scale_fill_manual(values = col.region, guide="legend") +
+  labs(x = "Competitor Coefficient",
+       y = "",
+       color = "",
+       shape = "") +
+  scale_x_continuous(breaks=c(-0.25,0,0.25))+
+  theme_sleek(base_size = 10) +
+  theme(legend.position = "none", 
+        legend.justification = c(0, 0),
+        legend.key.size = unit(10, "pt"),
+        legend.background = element_blank(),
+        legend.text = element_text(size = 8)
+  )
+pdf("./figures/dyn/hbm_inf/eras_coef_dot_comp_panel.pdf", width=5, height=8)
+print(g)
+dev.off()
+
+
+# Posterior density plot - comp
+g <- ggplot(dens.dfl.st$Competitors) + 
+  geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
+  geom_path(aes(x=gamma.x, y=gamma.dens, group=stock, col=Ocean.Region2), alpha=0.2) + 
+  geom_path(data=dens.dfl.reg$Competitors, aes(x=x, y=dens, col=Ocean.Region2), alpha=0.85, linewidth=1) +
   facet_wrap(~era, nrow=3) +
   scale_colour_manual(values=col.region) +
   coord_cartesian(xlim=c(-1, 1)) +
-  theme_minimal() + labs(x="covariate effect", y="", col="Ocean Region") +
+  theme_minimal() + labs(x="Competitor effect", y="", col="Ocean Region") +
   theme(axis.text.y=element_blank())
 pdf("./figures/dyn/hbm_inf/eras_comp_dens.pdf")
 print(g)
@@ -498,7 +577,8 @@ g <- ggplot(dfl.dyn.reg[["SST"]]) +
   geom_ribbon(aes(x=BY, y=reg_mean_gamma, ymin=gamma_10, ymax=gamma_90, fill=Ocean.Region2), alpha=0.2) +
   facet_wrap(vars(Ocean.Region2), nrow=2) + ylim(c(-1,1)) + 
   scale_colour_manual(values=col.region, aesthetics=c("colour", "fill")) +
-  theme_minimal()
+  theme_minimal() + labs(x= "Brood Year", y="SST effect") +
+  theme(legend.position="none")
 pdf("./figures/dyn/hbm_inf/dyn_sst_grouped.pdf")  
 print(g)
 dev.off()
@@ -531,13 +611,11 @@ g <- ggplot(dfl.dyn.reg[["Comp"]]) +
   geom_ribbon(aes(x=BY, y=reg_mean_gamma, ymin=gamma_10, ymax=gamma_90, fill=Ocean.Region2), alpha=0.2) +
   facet_wrap(vars(Ocean.Region2), nrow=2) + ylim(c(-1,1)) + 
   scale_colour_manual(values=col.region, aesthetics=c("colour", "fill")) +
-  theme_minimal()
+  theme_minimal() + labs(x= "Brood Year", y="Competitor effect") +
+  theme(legend.position="none")
 pdf("./figures/dyn/hbm_inf/dyn_comp_grouped.pdf")  
 print(g)
 dev.off()
-
-
-
 
 
 
