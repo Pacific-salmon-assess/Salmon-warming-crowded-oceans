@@ -203,33 +203,32 @@ rstan::get_elapsed_time(dyn.comp)
 ## SST
 
 pdf("./figures/dyn/hbm_fit/era_sst_diag.pdf", width = 7, height = 5)
-    coda_neff(get_neff(era.sst, pars = pars_era_c1), total_draws(era.sst))
-    coda_rhat(get_rhat(era.sst, pars = pars_era_c1))
-    coda_diag(As.mcmc.list(era.sst, pars = pars_era_c1))
+    coda_neff(get_neff(era.sst, pars = pars_era_1c), total_draws(era.sst))
+    coda_rhat(get_rhat(era.sst, pars = pars_era_1c))
+    coda_diag(As.mcmc.list(era.sst, pars = pars_era_1c))
 dev.off()
 
 
 pdf("./figures/dyn/hbm_fit/dyn_sst_diag.pdf", width = 7, height = 5)
-    coda_neff(get_neff(dyn.sst, pars = pars_dyn_c1), total_draws(dyn.sst))
-    coda_rhat(get_rhat(dyn.sst, pars = pars_dyn_c1))
-    coda_diag(As.mcmc.list(dyn.sst, pars = pars_dyn_c1))
+    coda_neff(get_neff(dyn.sst, pars = pars_dyn_1c), total_draws(dyn.sst))
+    coda_rhat(get_rhat(dyn.sst, pars = pars_dyn_1c))
+    coda_diag(As.mcmc.list(dyn.sst, pars = pars_dyn_1c))
 dev.off()
 
 ## Comp
 
 pdf("./figures/dyn/hbm_fit/era_comp_diag.pdf", width = 7, height = 5)
-coda_neff(get_neff(era.comp, pars = pars_era_c1), total_draws(era.comp))
-coda_rhat(get_rhat(era.comp, pars = pars_era_c1))
-coda_diag(As.mcmc.list(era.comp, pars = pars_era_c1))
+  coda_neff(get_neff(era.comp, pars = pars_era_1c), total_draws(era.comp))
+  coda_rhat(get_rhat(era.comp, pars = pars_era_1c))
+  coda_diag(As.mcmc.list(era.comp, pars = pars_era_1c))
 dev.off()
 
 
 pdf("./figures/dyn/hbm_fit/dyn_comp_diag.pdf", width = 7, height = 5)
-coda_neff(get_neff(dyn.comp, pars = pars_dyn_c1), total_draws(dyn.comp))
-coda_rhat(get_rhat(dyn.comp, pars = pars_dyn_c1))
-coda_diag(As.mcmc.list(dyn.comp, pars = pars_dyn_c1))
+  coda_neff(get_neff(dyn.comp, pars = pars_dyn_1c), total_draws(dyn.comp))
+  coda_rhat(get_rhat(dyn.comp, pars = pars_dyn_1c))
+  coda_diag(As.mcmc.list(dyn.comp, pars = pars_dyn_1c))
 dev.off()
-
 
 
 ## Posterior predictive checks -----------------------------
