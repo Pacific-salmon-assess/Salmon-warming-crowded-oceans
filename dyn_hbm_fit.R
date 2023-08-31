@@ -50,8 +50,8 @@ pars_era_2c <- c("alpha", "beta", "sigma", "phi", "mu_alpha", "sigma_alpha",
                  "kappa1", "kappa2", "kappa3", 
                  "mu_kappa1", "mu_kappa2", "mu_kappa3", "sigma_kappa" )
 pars_dyn_2c <- c("alpha", "beta", "sigma", "phi", "mu_alpha", "sigma_alpha",
-                 "gamma", "sigma_gamma", "signal_noise_gamma",
-                 "kappa", "sigma_kappa", "signal_noise_kappa")
+                 "gamma", "sigma_gamma", "signal_noise_g",
+                 "kappa", "sigma_kappa", "signal_noise_k")
 
 pars.gen.quant <- c("log_lik", "yrep") ## Generated quantities to monitor
 
@@ -154,6 +154,7 @@ dyn.2c <- rstan::stan(file = "./stan/hbm_dyn_2c.stan",
 save(dyn.2c, file = "./output/models/dyn/hbm_dyn_2c.Rdata")
 
 ## Check pathology -----------------------------------------
+# does not include 2-covar models yet
 
 ## NUTS diag
 
