@@ -208,10 +208,12 @@ df.dyn.st.2c <- data.frame(Stock = sock$Stock,
 # Summarized dataframe (regional-level)
 # gamma/kappa are series-specific; no mu output. Summarize stocks instead
 df.dyn.reg.2c <- dplyr::summarize(df.dyn.st.2c, 
-                           reg_mean=mean(mu), 
+                           reg_mean=mean(mu, na.rm=T), 
                            lower_10=quantile(mu, 0.1), 
                            upper_90=quantile(mu, 0.9), 
-                           .by=c(Ocean.Region2, BY, varnam)) 
+                           .by=c(Ocean.Region2, BY, varnam))
+df.dyn.reg.2c[which(df.dyn.reg.2c$Ocean.Region2=="BS" & 
+                      df.dyn.reg.2c$BY<1965), c("reg_mean", "lower_10", "upper_90")] <- NA # manually remove some sparse years
 
 ### --- Dynamic model: Figures 
 
@@ -539,10 +541,12 @@ names(dfl.dyn.st) <- c("SST", "Comp")
 dfl.dyn.reg <- lapply(seq_along(dfl.dyn.st), function(i){
   df <- dfl.dyn.st[[i]]
   reg_df <- dplyr::summarize(df, 
-                   reg_mean_gamma=mean(mu_gamma), 
+                   reg_mean_gamma=mean(mu_gamma, na.rm=T), 
                    gamma_10=quantile(mu_gamma, 0.1), 
                    gamma_90=quantile(mu_gamma, 0.9), 
                    .by=c(Ocean.Region2, BY))
+  reg_df[which(reg_df$Ocean.Region2=="BS" & 
+                        reg_df$BY<1965), c("reg_mean_gamma", "gamma_10", "gamma_90")] <- NA # manually remove some sparse years
   return(reg_df)
                 })
 names(dfl.dyn.reg) <- c("SST", "Comp")
