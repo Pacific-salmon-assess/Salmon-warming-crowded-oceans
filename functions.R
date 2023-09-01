@@ -8,22 +8,22 @@ geographic.order <- function(x) {
   # Returns Stock as an ordered factor appropriate for plotting
       # i.e. 1 is southmost stk on WC, max is northmost in BS, and 
                                 # GOA are ordered E->W 
-  # Currently only accepts 3 Ocean Regions but could be generalized later
-  
+
   wc.ind <- bs.ind <- seak.ind <- which(names(x) %in% c("Stock", "Lat", "lat")) # WC and BS stocks organized by latitude
   goa.ind <- which(names(x) %in% c("Stock", "Lon", "lon")) # GOA stocks organized by longitude
   
   # Get stock names in each region
-  WC_stk <- unique( x[ which (x$Ocean.Region=="WC"), wc.ind  ] )
-  SEAK_stk <- unique( x[ which (x$Ocean.Region=="SEAK"), seak.ind  ] )
-  GOA_stk <- unique( x[ which (x$Ocean.Region=="GOA"), goa.ind ] )
-  BS_stk <- unique( x[ which (x$Ocean.Region=="BS"), bs.ind ] )
+  WC_stk <- unique( x[ which (x$Ocean.Region2=="WC"), wc.ind  ] )
+  SEAK_stk <- unique( x[ which (x$Ocean.Region2=="SEAK"), seak.ind  ] )
+  GOA_stk <- unique( x[ which (x$Ocean.Region2=="GOA"), goa.ind ] )
+  BS_stk <- unique( x[ which (x$Ocean.Region2=="BS"), bs.ind ] )
   
   # Rank by Lat (WC, BS) or Lon (GOA)
   wc.ind <- which(names(WC_stk) %in% c("Lat", "lat"))
   seak.ind <- which(names(SEAK_stk) %in% c("Lat", "lat"))
   goa.ind <- which(names(GOA_stk) %in% c("Lon", "lon"))
   bs.ind <- which(names(BS_stk) %in% c("Lat", "lat"))
+  
   
   WC_stk$geo_id <- data.table::frankv(WC_stk, cols=wc.ind, ties.method = "first")
   SEAK_stk$geo_id <- nrow(SEAK_stk) + data.table::frankv(SEAK_stk, cols=seak.ind, order=-1L, ties.method = "first")
@@ -42,7 +42,7 @@ geographic.order <- function(x) {
 
 
 ## hb05_density_df -----------------------------------------
-hb05_density_df <- function(stanfit, ocean.regions = 3) {
+hb05_density_df <- function(stanfit, ocean.regions = 3, ctrl = FALSE) {
 
   # this function has been modified a lot to fit specific purposes but needs work
   # to make it more generally applicable
@@ -57,7 +57,7 @@ hb05_density_df <- function(stanfit, ocean.regions = 3) {
   else if (ocean.regions == 4) region_col <- sock.info$Ocean.Region2
   
   ## Define region column indices
-  if (fitnam[[n]] == "hb05c"){ #Use 2020 data for control model
+  if (ctrl){ #Use 2020 data for control model
     control_dat <- sock.info[sock.info$Stock %in% c.stk,] 
     ind.wc  <- which(control_dat$Ocean.Region == "WC")
     ind.goa <- which(control_dat$Ocean.Region == "GOA")
