@@ -1,7 +1,7 @@
 ## (7) Fit hierarchical Bayesian models ##
 ## -------------------------------- ##
 
-## A simplified version including only the hb05 model: np pinks + early sst (NO interaction)
+## A simplified version including only the model: np pinks + early sst (NO interaction)
 
 
 if(!dir.exists("./figures/stat/hbm_fit/"))
@@ -11,317 +11,188 @@ if(!dir.exists("./output/models/stat/"))
 if(!dir.exists("./output/diagnostics/"))
   dir.create("./output/diagnostics/")
 
+## Monitor params
+pars.stat <- c("alpha", "beta", "sigma", "phi", "mu_alpha", "sigma_alpha",
+               "gamma", "mu_gamma", "sigma_gamma",
+               "kappa", "mu_kappa", "sigma_kappa")
+save(pars.stat, file = "./output/pars_stat.RData")
 pars.gen.quant <- c("log_lik", "yhat", "yrep", "yresid") ## Generated quantities to monitor
 
 
-## hb05a.pr1 
-## Total pink North Pacific, all years, three ocean regions
-
-## Monitor params
-pars.hb05 <- c("alpha", "beta", "sigma", "phi", "mu_alpha", "sigma_alpha",
-               "gamma", "mu_gamma", "sigma_gamma",
-               "kappa", "mu_kappa", "sigma_kappa")
-save(pars.hb05, file = "./output/pars_hb05.RData")
-
+## stat_a
+## Total pink North Pacific, all years, four ocean regions
 
 ## Run MCMC
-stan.dat.hb05a <- stan_data_stat(sock,
+stan.dat.all <- stan_data_stat(sock,
                             scale.x1 = TRUE,
                             var.x2 = "early_sst_stnd",
-                            var.x3 = "np_pinks_sec_stnd")
-hb05a <- rstan::stan(file = "./stan/hb05_pr1.stan",
-                     data = stan.dat.hb05a,
-                     pars = c(pars.hb05, pars.gen.quant),
+                            var.x3 = "np_pinks_sec_stnd",
+                            var.region = "Ocean.Region2")
+stat_a <- rstan::stan(file = "./stan/hbm_stat_2c.stan",
+                     data = stan.dat.all,
+                     pars = c(pars.stat, pars.gen.quant),
                      warmup = 1000,
                      iter = 4000,
                      cores = 4,
                      chains = 4,
                      thin = 2,
                      seed = 123,
-                     control = list(adapt_delta = 0.90,
+                     control = list(adapt_delta = 0.95,
                                     max_treedepth = 10))
-save(hb05a, file = "./output/models/stat/hb05a.RData")
+save(stat_a, file = "./output/models/stat/stat_a.RData")
 
 ## Diagnostic plots
-pdf("./figures/stat/hbm_fit/hb05a_diag.pdf", width = 7, height = 5)
-    coda_neff(get_neff(hb05a, pars = pars.hb05), total_draws(hb05a))
-    coda_rhat(get_rhat(hb05a, pars = pars.hb05))
-    coda_diag(As.mcmc.list(hb05a, pars = pars.hb05))
+pdf("./figures/stat/hbm_fit/stat_a_diag.pdf", width = 7, height = 5)
+    coda_neff(get_neff(stat_a, pars = pars.stat), total_draws(stat_a))
+    coda_rhat(get_rhat(stat_a, pars = pars.stat))
+    coda_diag(As.mcmc.list(stat_a, pars = pars.stat))
 dev.off()
 
-plot_post_pc(hb05a, stan.dat.hb05a$y, "./figures/stat/hbm_fit/hb05a_yrep.pdf")
+plot_post_pc(stat_a, stan.dat.stat_a$y, "./figures/stat/hbm_fit/stat_a_yrep.pdf")
 
-loo.hb05a <- rstan::loo(hb05a, cores = 4)
-save(loo.hb05a, file = "./output/diagnostics/loo_hb05a.RData")
-waic.hb05a <- loo::waic(loo::extract_log_lik(hb05a, "log_lik"))
-save(waic.hb05a, file = "./output/diagnostics/waic_hb05a.RData")
-pdf("./figures/stat/hbm_fit/hb05a_loo.pdf", width = 7, height = 5)
-    plot(loo.hb05a, label_points = TRUE)
+loo.stat_a <- rstan::loo(stat_a, cores = 4)
+save(loo.stat_a, file = "./output/diagnostics/loo_stat_a.RData")
+waic.stat_a <- loo::waic(loo::extract_log_lik(stat_a, "log_lik"))
+save(waic.stat_a, file = "./output/diagnostics/waic_stat_a.RData")
+pdf("./figures/stat/hbm_fit/stat_a_loo.pdf", width = 7, height = 5)
+    plot(loo.stat_a, label_points = TRUE)
 dev.off()
 
-r2.hb05a <- bayes_R2(sock$lnRS, as.matrix(hb05a, pars = "yhat"))
-save(r2.hb05a, file = "./output/diagnostics/r2_hb05a.RData")
+r2.stat_a <- bayes_R2(sock$lnRS, as.matrix(stat_a, pars = "yhat"))
+save(r2.stat_a, file = "./output/diagnostics/r2_stat_a.RData")
 
-pdf("./figures/stat/hbm_fit/hb05a_resid.pdf", width = 8, height = 8)
-    plot_hbm_resids(hb05a, sock)
+pdf("./figures/stat/hbm_fit/stat_a_resid.pdf", width = 8, height = 8)
+    plot_hbm_resids(stat_a, sock)
 dev.off()
 
 
 
-## hb05r2.pr1 ----------------------------------------------
-## regime: only brood years post 76/77, total pink North Pacific, three ocean regions
-
-## Monitor params
-pars.hb05 <- c("alpha", "beta", "sigma", "phi", "mu_alpha", "sigma_alpha",
-               "gamma", "mu_gamma", "sigma_gamma",
-               "kappa", "mu_kappa", "sigma_kappa"
-               )
-save(pars.hb05, file = "./output/diagnostics/pars_hb05.RData")
+## stat_tr ----------------------------------------------
+## truncated timeseries: only brood years post 76/77, total pink North Pacific, four ocean regions
 
 
 ## Run MCMC
-stan.dat.hb05r2 <- stan_data_stat(sock[sock$BY >= 1975, ],
+stan.dat.tr <- stan_data_stat(sock[sock$BY >= 1975, ],
                              scale.x1 = TRUE,
                              var.x2 = "early_sst_stnd",
-                             var.x3 = "np_pinks_sec_stnd")
-hb05r2 <- rstan::stan(file = "./stan/hb05_pr1.stan",
-                      data = stan.dat.hb05r2,
-                      pars = c(pars.hb05, pars.gen.quant),
+                             var.x3 = "np_pinks_sec_stnd",
+                             var.region = "Ocean.Region2")
+stat_tr <- rstan::stan(file = "./stan/hbm_stat_2c.stan",
+                      data = stan.dat.tr,
+                      pars = c(pars.stat, pars.gen.quant),
                       warmup = 1000,
                       iter = 4000,
                       cores = 4,
                       chains = 4,
                       thin = 2,
                       seed = 123,
-                      control = list(adapt_delta = 0.90,
+                      control = list(adapt_delta = 0.95,
                                      max_treedepth = 10))
-save(hb05r2, file = "./output/models/stat/hb05r2.RData")
+save(stat_tr, file = "./output/models/stat/stat_tr.RData")
 
 ## Diagnostic plots
-pdf("./figures/stat/hbm_fit/hb05r2_diag.pdf", width = 7, height = 5)
-coda_neff(get_neff(hb05r2, pars = pars.hb05), total_draws(hb05r2))
-coda_rhat(get_rhat(hb05r2, pars = pars.hb05))
-coda_diag(As.mcmc.list(hb05r2, pars = pars.hb05))
+pdf("./figures/stat/hbm_fit/stat_tr_diag.pdf", width = 7, height = 5)
+coda_neff(get_neff(stat_tr, pars = pars.stat), total_draws(stat_tr))
+coda_rhat(get_rhat(stat_tr, pars = pars.stat))
+coda_diag(As.mcmc.list(stat_tr, pars = pars.stat))
 dev.off()
 
-plot_post_pc(hb05r2, stan.dat.hb05r2$y, data = sock[sock$BY >= 1975,],
-             pdf.path = "./figures/stat/hbm_fit/hb05r2_yrep.pdf")
+plot_post_pc(stat_tr, stan.dat.stat_tr$y, data = sock[sock$BY >= 1975,],
+             pdf.path = "./figures/stat/hbm_fit/stat_tr_yrep.pdf")
 
-loo.hb05r2 <- rstan::loo(hb05r2, cores = 4)
-save(loo.hb05r2, file = "./output/diagnostics/loo_hb05r2.RData")
-waic.hb05r2 <- loo::waic(loo::extract_log_lik(hb05r2, "log_lik"))
-save(waic.hb05r2, file = "./output/diagnostics/waic_hb05r2.RData")
-pdf("./figures/stat/hbm_fit/hb05r2_loo.pdf", width = 7, height = 5)
-plot(loo.hb05r2, label_points = TRUE)
+loo.stat_tr <- rstan::loo(stat_tr, cores = 4)
+save(loo.stat_tr, file = "./output/diagnostics/loo_stat_tr.RData")
+waic.stat_tr <- loo::waic(loo::extract_log_lik(stat_tr, "log_lik"))
+save(waic.stat_tr, file = "./output/diagnostics/waic_stat_tr.RData")
+pdf("./figures/stat/hbm_fit/stat_tr_loo.pdf", width = 7, height = 5)
+plot(loo.stat_tr, label_points = TRUE)
 dev.off()
 
-r2.hb05r2 <- bayes_R2(sock$lnRS[sock$BY >= 1975], as.matrix(hb05r2, pars = "yhat"))
-save(r2.hb05r2, file = "./output/diagnostics/r2_hb05r2.RData")
+r2.stat_tr <- bayes_R2(sock$lnRS[sock$BY >= 1975], as.matrix(stat_tr, pars = "yhat"))
+save(r2.stat_tr, file = "./output/diagnostics/r2_stat_tr.RData")
 
-pdf("./figures/stat/hbm_fit/hb05r2_resid.pdf", width = 8, height = 8)
-plot_hbm_resids(hb05r2, sock[sock$BY >= 1975,])
+pdf("./figures/stat/hbm_fit/stat_tr_resid.pdf", width = 8, height = 8)
+plot_hbm_resids(stat_tr, sock[sock$BY >= 1975,])
 dev.off()
 
 
-## hb05c.pr1 ----------------------------------------------
-## 'control': only brood years post 76/77, total pink North Pacific, three ocean regions, only years & stocks in 2020 analysis 
+## stat_ctrl ----------------------------------------------
+## 'control': only brood years post 76/77, total pink North Pacific, THREE ocean regions, only years & stocks in 2020 analysis 
 
-## Monitor params
-pars.hb05 <- c("alpha", "beta", "sigma", "phi", "mu_alpha", "sigma_alpha",
-               "gamma", "mu_gamma", "sigma_gamma",
-               "kappa", "mu_kappa", "sigma_kappa")
-save(pars.hb05, file = "./output/pars_hb05.RData")
 
 dat_2020 <- read.csv("./data/master_brood_table_2020.csv", header=T)
 c.by <- unique(dat_2020$BY)
 c.stk <- unique(dat_2020$Stock)
 
 ## Run MCMC
-stan.dat.hb05c <- stan_data_stat(sock[sock$BY %in% c.by & sock$Stock %in% c.stk, ],
+stan.dat.ctrl <- stan_data_stat(sock[sock$BY %in% c.by & sock$Stock %in% c.stk, ],
                             scale.x1 = TRUE,
                             var.x2 = "early_sst_stnd",
-                            var.x3 = "np_pinks_sec_stnd")
-hb05c <- rstan::stan(file = "./stan/hb05_pr1.stan",
-                     data = stan.dat.hb05c,
-                     pars = c(pars.hb05, pars.gen.quant),
+                            var.x3 = "np_pinks_sec_stnd",
+                            var.region = "Ocean.Region")
+stat_ctrl <- rstan::stan(file = "./stan/hbm_stat_2c.stan",
+                     data = stan.dat.ctrl,
+                     pars = c(pars.stat, pars.gen.quant),
                      warmup = 1000,
                      iter = 4000,
                      cores = 4,
                      chains = 4,
                      thin = 2,
                      seed = 123,
-                     control = list(adapt_delta = 0.90,
+                     control = list(adapt_delta = 0.95,
                                     max_treedepth = 10))
-save(hb05c, file = "./output/models/stat/hb05c.RData")
+save(stat_ctrl, file = "./output/models/stat/stat_ctrl.RData")
 
 ## Diagnostic plots 
-pdf("./figures/stat/hbm_fit/hb05c_diag.pdf", width = 7, height = 5)
-coda_neff(get_neff(hb05c, pars = pars.hb05), total_draws(hb05c))
-coda_rhat(get_rhat(hb05c, pars = pars.hb05))
-coda_diag(As.mcmc.list(hb05c, pars = pars.hb05))
+pdf("./figures/stat/hbm_fit/stat_ctrl_diag.pdf", width = 7, height = 5)
+coda_neff(get_neff(stat_ctrl, pars = pars.stat), total_draws(stat_ctrl))
+coda_rhat(get_rhat(stat_ctrl, pars = pars.stat))
+coda_diag(As.mcmc.list(stat_ctrl, pars = pars.stat))
 dev.off()
 
-plot_post_pc(hb05c, stan.dat.hb05c$y, data = sock[sock$BY %in% c.by & sock$Stock %in% c.stk, ],
-             pdf.path = "./figures/stat/hbm_fit/hb05c_yrep.pdf")
+plot_post_pc(stat_ctrl, stan.dat.stat_ctrl$y, data = sock[sock$BY %in% c.by & sock$Stock %in% c.stk, ],
+             pdf.path = "./figures/stat/hbm_fit/stat_ctrl_yrep.pdf")
 
-loo.hb05c <- rstan::loo(hb05c, cores = 4)
-save(loo.hb05c, file = "./output/diagnostics/loo_hb05c.RData")
-waic.hb05c <- loo::waic(loo::extract_log_lik(hb05c, "log_lik"))
-save(waic.hb05c, file = "./output/diagnostics/waic_hb05c.RData")
-pdf("./figures/stat/hbm_fit/hb05c_loo.pdf", width = 7, height = 5)
-plot(loo.hb05c, label_points = TRUE)
+loo.stat_ctrl <- rstan::loo(stat_ctrl, cores = 4)
+save(loo.stat_ctrl, file = "./output/diagnostics/loo_stat_ctrl.RData")
+waic.stat_ctrl <- loo::waic(loo::extract_log_lik(stat_ctrl, "log_lik"))
+save(waic.stat_ctrl, file = "./output/diagnostics/waic_stat_ctrl.RData")
+pdf("./figures/stat/hbm_fit/stat_ctrl_loo.pdf", width = 7, height = 5)
+plot(loo.stat_ctrl, label_points = TRUE)
 dev.off()
 
-# r2.hb05c <- bayes_R2(sock$lnRS[sock$BY %in% c.by & sock$Stock %in% c.stk, ], as.matrix(hb05c, pars = "yhat")) # BC: not working, incorrect dimensions error
+# r2.stat_ctrl <- bayes_R2(sock$lnRS[sock$BY %in% c.by & sock$Stock %in% c.stk, ], as.matrix(stat_ctrl, pars = "yhat")) # BC: not working, incorrect dimensions error
 
-#save(r2.hb05c, file = "./output/diagnostics/r2_hb05c.RData")
+#save(r2.stat_ctrl, file = "./output/diagnostics/r2_stat_ctrl.RData")
 
-pdf("./figures/stat/hbm_fit/hb05c_resid.pdf", width = 8, height = 8)
-plot_hbm_resids(hb05c, sock[sock$BY %in% c.by & sock$Stock %in% c.stk, ])
+pdf("./figures/stat/hbm_fit/stat_ctrl_resid.pdf", width = 8, height = 8)
+plot_hbm_resids(stat_ctrl, sock[sock$BY %in% c.by & sock$Stock %in% c.stk, ])
 dev.off()
 
-
-## hb05oc.pr1 ----------------------------------------------
-## Total pink North Pacific, all years, four ocean regions
-
-pars.hb05 <- c("alpha", "beta", "sigma", "phi", "mu_alpha", "sigma_alpha",
-               "gamma", "mu_gamma", "sigma_gamma",
-               "kappa", "mu_kappa", "sigma_kappa")
-save(pars.hb05, file = "./output/pars_hb05.RData")
-
-## Run MCMC
-stan.dat.hb05oc <- stan_data_stat(sock,
-                             scale.x1 = TRUE,
-                             var.region = "Ocean.Region2",
-                             var.x2 = "early_sst_stnd",
-                             var.x3 = "np_pinks_sec_stnd")
-hb05oc <- rstan::stan(file = "./stan/hb05_pr1.stan",
-                      data = stan.dat.hb05oc,
-                      pars = c(pars.hb05, pars.gen.quant),
-                      warmup = 1000,
-                      iter = 4000,
-                      cores = 4,
-                      chains = 4,
-                      thin = 2,
-                      seed = 123,
-                      control = list(adapt_delta = 0.90,
-                                     max_treedepth = 10))
-save(hb05oc, file = "./output/models/stat/hb05oc.RData")
-
-## Diagnostic plots
-pdf("./figures/stat/hbm_fit/hb05oc_diag.pdf", width = 7, height = 5)
-coda_neff(get_neff(hb05oc, pars = pars.hb05), total_draws(hb05oc))
-coda_rhat(get_rhat(hb05oc, pars = pars.hb05))
-coda_diag(As.mcmc.list(hb05oc, pars = pars.hb05))
-dev.off()
-
-plot_post_pc(hb05oc, stan.dat.hb05oc$y, data = sock,
-             pdf.path = "./figures/stat/hbm_fit/hb05oc_yrep.pdf")
-
-loo.hb05oc <- rstan::loo(hb05oc, cores = 4)
-save(loo.hb05oc, file = "./output/diagnostics/loo_hb05oc.RData")
-waic.hb05oc <- loo::waic(loo::extract_log_lik(hb05oc, "log_lik"))
-save(waic.hb05oc, file = "./output/diagnostics/waic_hb05oc.RData")
-pdf("./figures/stat/hbm_fit/hb05oc_loo.pdf", width = 7, height = 5)
-plot(loo.hb05oc, label_points = TRUE)
-dev.off()
-
-r2.hb05oc <- bayes_R2(sock$lnRS, as.matrix(hb05oc, pars = "yhat"))
-save(r2.hb05oc, file = "./output/diagnostics/r2_hb05oc.RData")
-
-pdf("./figures/stat/hbm_fit/hb05oc_resid.pdf", width = 8, height = 8)
-plot_hbm_resids(hb05oc, sock)
-dev.off()
-
-## hb05ocr2.pr1 ----------------------------------------------
-## Total pink North Pacific, only brood years post 76/77, four ocean regions
-
-## Monitor params
-pars.hb05 <- c("alpha", "beta", "sigma", "phi", "mu_alpha", "sigma_alpha",
-               "gamma", "mu_gamma", "sigma_gamma",
-               "kappa", "mu_kappa", "sigma_kappa")
-save(pars.hb05, file = "./output/pars_hb05.RData")
-
-
-## Run MCMC
-stan.dat.hb05ocr2 <- stan_data_stat(sock[sock$BY >= 1975, ],
-                             scale.x1 = TRUE,
-                             var.region = "Ocean.Region2",
-                             var.x2 = "early_sst_stnd",
-                             var.x3 = "np_pinks_sec_stnd")
-hb05ocr2 <- rstan::stan(file = "./stan/hb05_pr1.stan",
-                      data = stan.dat.hb05ocr2,
-                      pars = c(pars.hb05, pars.gen.quant),
-                      warmup = 1000,
-                      iter = 4000,
-                      cores = 4,
-                      chains = 4,
-                      thin = 2,
-                      seed = 123,
-                      control = list(adapt_delta = 0.90,
-                                     max_treedepth = 10))
-save(hb05ocr2, file = "./output/models/stat/hb05ocr2.RData")
-
-## Diagnostic plots
-pdf("./figures/stat/hbm_fit/hb05ocr2_diag.pdf", width = 7, height = 5)
-coda_neff(get_neff(hb05ocr2, pars = pars.hb05), total_draws(hb05ocr2))
-coda_rhat(get_rhat(hb05ocr2, pars = pars.hb05))
-coda_diag(As.mcmc.list(hb05ocr2, pars = pars.hb05))
-dev.off()
-
-plot_post_pc(hb05ocr2, stan.dat.hb05ocr2$y, data = sock[sock$BY >= 1975,],
-             pdf.path = "./figures/stat/hbm_fit/hb05ocr2_yrep.pdf")
-
-loo.hb05ocr2 <- rstan::loo(hb05ocr2, cores = 4)
-save(loo.hb05ocr2, file = "./output/diagnostics/loo_hb05ocr2.RData")
-waic.hb05ocr2 <- loo::waic(loo::extract_log_lik(hb05ocr2, "log_lik"))
-save(waic.hb05ocr2, file = "./output/diagnostics/waic_hb05ocr2.RData")
-pdf("./figures/stat/hbm_fit/hb05ocr2_loo.pdf", width = 7, height = 5)
-plot(loo.hb05ocr2, label_points = TRUE)
-dev.off()
-
-r2.hb05ocr2 <- bayes_R2(sock$lnRS[sock$BY >= 1975], as.matrix(hb05ocr2, pars = "yhat"))
-save(r2.hb05ocr2, file = "./output/diagnostics/r2_hb05ocr2.RData")
-
-pdf("./figures/stat/hbm_fit/hb05ocr2_resid.pdf", width = 8, height = 8)
-plot_hbm_resids(hb05ocr2, sock[sock$BY >= 1975,])
-dev.off()
 
 
 ## Check pathology ----------------------------------------- 
-rstan::check_hmc_diagnostics(hb05a)
-rstan::check_hmc_diagnostics(hb05r2)
-rstan::check_hmc_diagnostics(hb05c)
-rstan::check_hmc_diagnostics(hb05oc)
-rstan::check_hmc_diagnostics(hb05ocr2)
+rstan::check_hmc_diagnostics(stat_a)
+rstan::check_hmc_diagnostics(stat_tr)
+rstan::check_hmc_diagnostics(stat_ctrl)
 
-rstan::get_elapsed_time(hb05a)
-rstan::get_elapsed_time(hb05r2)
-rstan::get_elapsed_time(hb05c)
-rstan::get_elapsed_time(hb05oc)
-rstan::get_elapsed_time(hb05ocr2)
+rstan::get_elapsed_time(stat_a)
+rstan::get_elapsed_time(stat_tr)
+rstan::get_elapsed_time(stat_ctrl)
 
-summary(hb05a, pars = pars.hb05)
-summary(hb05r2, pars = pars.hb05)
-summary(hb05c, pars = pars.hb05)
-summary(hb05oc, pars = pars.hb05)
-summary(hb05ocr2, pars = pars.hb05)
+summary(stat_a, pars = pars.stat)
+summary(stat_tr, pars = pars.stat)
+summary(stat_ctrl, pars = pars.stat)
 
-neff_lowest(hb05a, pars = pars.hb05)
-neff_lowest(hb05r2, pars = pars.hb05)
-neff_lowest(hb05c, pars = pars.hb05)
-neff_lowest(hb05oc, pars = pars.hb05)
-neff_lowest(hb05ocr2, pars = pars.hb05)
+neff_lowest(stat_a, pars = pars.stat)
+neff_lowest(stat_tr, pars = pars.stat)
+neff_lowest(stat_ctrl, pars = pars.stat)
 
-rhat_highest(hb05a, pars = pars.hb05)
-rhat_highest(hb05r2, pars = pars.hb05)
-rhat_highest(hb05c, pars = pars.hb05)
-rhat_highest(hb05oc, pars = pars.hb05)
-rhat_highest(hb05ocr2, pars = pars.hb05)
+rhat_highest(stat_a, pars = pars.stat)
+rhat_highest(stat_tr, pars = pars.stat)
+rhat_highest(stat_ctrl, pars = pars.stat)
 
-pairs_lowest(hb05a, pars = pars.hb05) # can ignore 'warning: not a graphical parameter'
-pairs_lowest(hb05r2, pars = pars.hb05)
-pairs_lowest(hb05c, pars = pars.hb05)
-pairs_lowest(hb05oc, pars = pars.hb05)
-pairs_lowest(hb05ocr2, pars = pars.hb05)
+pairs_lowest(stat_a, pars = pars.stat) # can ignore 'warning: not a graphical parameter'
+pairs_lowest(stat_tr, pars = pars.stat)
+pairs_lowest(stat_ctrl, pars = pars.stat)
 
