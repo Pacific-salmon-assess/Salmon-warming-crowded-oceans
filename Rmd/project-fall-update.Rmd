@@ -87,6 +87,8 @@ FIGURE: Multi-panel plots for each covariate (columns covariates, rows regions, 
 ```{r setup, include=FALSE}
 # libraries and global settings ----
 library(tidyverse)
+source("../functions.R")
+source("../load.R")
 
 knitr::opts_chunk$set(echo = FALSE, message=FALSE, cache=FALSE, include=TRUE, dpi=300)
 options(scipen=1, digits=4)
