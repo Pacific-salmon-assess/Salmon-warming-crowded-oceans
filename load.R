@@ -52,11 +52,11 @@ if(!dir.exists("./output/"))
 
 
 ## Data
-sock <- read.csv("./data/master_brood_table_covar.csv",
+sock <- read.csv("../data/master_brood_table_covar.csv",
                  stringsAsFactors = FALSE)
 sock$Stock <- factor(sock$Stock, levels = unique(sock$Stock))
 
-sock.info <- read.csv("./data/master_stock_info.csv",
+sock.info <- read.csv("../data/master_stock_info.csv",
                       stringsAsFactors = FALSE)
 sock.info$Stock <- factor(sock.info$Stock, levels = unique(sock.info$Stock))
 
