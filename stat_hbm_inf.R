@@ -635,6 +635,3 @@ rect(xleft = -165, ybottom = 47, xright = -120, ytop = 61,
 
 
 dev.off()
-
-
-
