@@ -95,6 +95,9 @@ options(scipen=1, digits=4)
 
 # read in data and models ----
 
+load_rdata(path = "../output/models/stat/", verbose = FALSE) # load static model fits
+
+
 ```
 
 ## Stationary models
