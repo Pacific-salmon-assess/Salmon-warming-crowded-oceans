@@ -40,6 +40,37 @@ h3 { /* Header 3 */
 }
 </style>
 ```
+```{r setup, include=FALSE}
+# libraries and global settings ----
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, cache=FALSE, include=TRUE, dpi=300)
+options(scipen=1, digits=4)
+
+library(tidyverse)
+library(parallel)
+library(coda)
+library(rjags)
+library(codatools) # see: https://github.com/MichaelMalick/r-codatools/
+library(loo)
+library(rstan)
+library(bayesplot)
+library(ggplot2)
+library(plyr)
+
+source("../functions.R")
+bayesplot::bayesplot_theme_set(new = theme_sleek())
+
+# read in data 
+
+sock <- read.csv("../data/master_brood_table_covar.csv",
+                 stringsAsFactors = FALSE)
+sock$Stock <- factor(sock$Stock, levels = unique(sock$Stock))
+
+sock.info <- read.csv("../data/master_stock_info.csv",
+                      stringsAsFactors = FALSE)
+sock.info$Stock <- factor(sock.info$Stock, levels = unique(sock.info$Stock))
+
+```
+
 # Purpose
 
 This document summarizes preliminary results of analyses that seek to quantifying the extent to which salmon productivity is correlated with (a) ocean conditions during early marine life and (b) potential salmon competitors later in marine life, and the degree to which these relationships vary over time and space. More details on motivation for project can be found [here](https://docs.google.com/document/d/10S7fLbRe9TfdlgTrm0hEvXyFVNHW8M8M/edit) and all code to reproduce the analyses in this document is [here](https://github.com/Pacific-salmon-assess/Salmon-warming-crowded-oceans). All findings are preliminary and subject to change.
@@ -62,7 +93,7 @@ Details on model formulation are provided below. These models are fit in a Bayes
 
 ### Spawner-recruitment
 
-FIGURE: multi-panel plots of ln(R/S) timeseries
+FIGURE: sparkline/"lie detector" plot of ln(R/S) timeseries
 
 ### Covariates
 
@@ -84,31 +115,71 @@ FIGURE: Multi-panel plots for each covariate (columns covariates, rows regions, 
 
 # Results
 
-```{r setup, include=FALSE}
-# libraries and global settings ----
-library(tidyverse)
-source("../functions.R")
-source("../load.R")
-
-knitr::opts_chunk$set(echo = FALSE, message=FALSE, cache=FALSE, include=TRUE, dpi=300)
-options(scipen=1, digits=4)
-
-# read in data and models ----
-
-load_rdata(path = "../output/models/stat/", verbose = FALSE) # load static model fits
-
-
-```
-
 ## Stationary models
 
-FIGURE: Regional covariate coefficient posterior distributions (with faint lines for stock specific posteriors) panel for each covariate
+```{r stationary models, caption = "Blah"}
+# code to generate figures...
+
+load("../output/models/stat/stat_a.Rdata")
+
+col.region <- chroma::qpal(7, luminance = 40)[c(1, 3, 5, 7)]
+
+## Fig: Posterior percent change density ------------------- 
+lst <- hb05_density_df(stat_a, ocean.regions = 4)
+s.df <- lst$stock
+m.df <- lst$region
+m.df$region <- factor(m.df$region, levels = c("West Coast", "Gulf of Alaska", "Southeast Alaska", "Bering Sea"))
+
+## Covariate labels
+vars <- data.frame(var = levels(m.df$var))
+vars$lab <- paste0("(", letters[1:nrow(vars)], ") ", vars$var)
+vars$var <- factor(vars$var, levels = c("SST", "Comp", "SST + Comp"))
+
+ggplot(m.df) +
+  geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
+  geom_path(data = s.df[s.df$region == "West Coast", ],
+            aes(x = x, y = y, group = stock), color = col.region[1], alpha=0.3,
+            na.rm = TRUE) +
+  geom_path(data = s.df[s.df$region == "Gulf of Alaska", ],
+            aes(x = x, y = y, group = stock), color = col.region[2], alpha=0.3,
+            na.rm = TRUE) +
+  geom_path(data = s.df[s.df$region == "Southeast Alaska", ],
+            aes(x = x, y = y, group = stock), color = col.region[3], alpha=0.3,
+            na.rm = TRUE) +
+  geom_path(data = s.df[s.df$region == "Bering Sea", ],
+            aes(x = x, y = y, group = stock), color = col.region[4], alpha=0.3,
+            na.rm = TRUE) +
+  geom_path(aes(x = x, y = y, color = region), linewidth = 1, alpha=1, 
+            na.rm = TRUE) +
+  scale_color_manual(values = col.region) +
+  labs(x = "Percent change in R/S",
+       y = "Posterior density",
+       color = "") +
+  scale_x_continuous(limits = c(-50, 50), expand = c(0, 0)) +
+  scale_y_continuous(breaks=NULL) +
+  geom_text(data = vars,
+            aes(x = -48.1,
+                y = max(m.df$y) - 0.008,
+                label = lab),
+            hjust = 0,
+            size = 2.7,
+            color = "grey30") +
+  facet_wrap( ~ var, ncol = 1) +
+  theme_sleek(base_size = 9) +
+  theme(legend.justification = c(0, 0),
+        legend.position = c(0.7, 0.85),
+        legend.key.size = unit(10, "pt"),
+        legend.background = element_blank(),
+        legend.text = element_text(size = 8),
+        panel.spacing.y = unit(-0.5, "pt"),
+        strip.background = element_blank(),
+        strip.text.x = element_blank())
+
+```
+**Figure 3**. Posterior probability distributions of the predicted effect of (a) SST, (b) competitors, and (c) the combined effect from all covariate terms, on sockeye salmon survival. Overall hyperdistribution of the covariate effects are in bold lines, with individual stock-specific distributions illustrated by
+the light lines. Covariate effects are standardized (i.e., per standard deviation unit increase in each covariate),
 
 FIGURE: Caterpillar plot (stock specific and regional posteriors by covariate, stocks as rows)
-
-```{r stationary models, include=FALSE}
-# code to generate figures...
-```
 
 ## A-priori models
 
