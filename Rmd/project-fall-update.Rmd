@@ -117,7 +117,7 @@ FIGURE: Multi-panel plots for each covariate (columns covariates, rows regions, 
 
 ## Stationary models
 
-```{r stationary models, caption = "Blah"}
+```{r stationary models: posterior probability dist.}
 # code to generate figures...
 
 load("../output/models/stat/stat_a.Rdata")
