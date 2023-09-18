@@ -1,7 +1,7 @@
 ##
 ## Single Stock HMM Fitting ## 
 ## -------------------------------
-
+if(!dir.exists("./output/models/")) dir.create("./output/models/")
 if(!dir.exists("./output/models/hmm-ss/")) dir.create("./output/models/hmm-ss/")
 if(!dir.exists("./figures/hmm-ss/")) dir.create("./figures/hmm-ss/")
 
