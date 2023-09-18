@@ -62,7 +62,7 @@ transformed parameters {
   
   // Murphy (2012) p. 609 eq. 17.48
   // belief state + transition prob + local evidence at t
-  accumulator1[i] = logalpha[t-1, i] + log(A[i, j]) + normal_lpdf(R_S[t] |mu[t][i], sigmaAR);
+  accumulator1[i] = logalpha[t-1, i] + log(A[i, j]) + normal_lpdf(R_S[t] |mu[t][j], sigmaAR);
   }
   logalpha[t, j] = log_sum_exp(accumulator1);
   }
