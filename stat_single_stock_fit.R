@@ -30,8 +30,11 @@ ss.all.yrs <- single.stock.fit(mod.list,
                                years = seq(min(sock$BY), max(sock$BY)),
                                plot.path = "./figures/stat/single-stock/")
 
+# Create directories
+if(!dir.exists("./output/models/stat/")) dir.create("./output/models/stat/")
 if(!dir.exists("./output/models/stat/single-stock/")) dir.create("./output/models/stat/single-stock/")
 
+# Save
 save(ss.all.yrs, file = "./output/models/stat/single-stock/single_stock_lms.Rdata")
 
 

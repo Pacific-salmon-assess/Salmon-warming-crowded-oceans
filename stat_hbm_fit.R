@@ -48,7 +48,7 @@ pdf("./figures/stat/hbm_fit/stat_a_diag.pdf", width = 7, height = 5)
     coda_diag(As.mcmc.list(stat_a, pars = pars.stat))
 dev.off()
 
-plot_post_pc(stat_a, stan.dat.stat_a$y, "./figures/stat/hbm_fit/stat_a_yrep.pdf")
+#plot_post_pc(stat_a, stan.dat.all$y, "./figures/stat/hbm_fit/stat_a_yrep.pdf") # Bugging
 
 loo.stat_a <- rstan::loo(stat_a, cores = 4)
 save(loo.stat_a, file = "./output/diagnostics/loo_stat_a.RData")
@@ -97,8 +97,9 @@ coda_rhat(get_rhat(stat_tr, pars = pars.stat))
 coda_diag(As.mcmc.list(stat_tr, pars = pars.stat))
 dev.off()
 
-plot_post_pc(stat_tr, stan.dat.stat_tr$y, data = sock[sock$BY >= 1975,],
-             pdf.path = "./figures/stat/hbm_fit/stat_tr_yrep.pdf")
+#plot_post_pc(stat_tr, stan.dat.tr$y, data = sock[sock$BY >= 1975,],
+         #    pdf.path = "./figures/stat/hbm_fit/stat_tr_yrep.pdf")
+# Bugging 
 
 loo.stat_tr <- rstan::loo(stat_tr, cores = 4)
 save(loo.stat_tr, file = "./output/diagnostics/loo_stat_tr.RData")
@@ -120,12 +121,17 @@ dev.off()
 ## 'control': only brood years post 76/77, total pink North Pacific, THREE ocean regions, only years & stocks in 2020 analysis 
 
 
-dat_2020 <- read.csv("./data/master_brood_table_2020.csv", header=T)
-c.by <- unique(dat_2020$BY)
-c.stk <- unique(dat_2020$Stock)
+info_2020 <- read.csv("./data/master_stock_info_2020.csv", header=T)
+ctrl_dat <- dplyr::filter(sock, Stock %in% info_2020$Stock)
+ctrl_dat <- ddply(ctrl_dat, .(Stock), function(x) {
+     df <- dplyr::filter(x, 
+                         BY >= info_2020$yr_start[info_2020$Stock == unique(x$Stock)],
+                         BY <= info_2020$yr_end[info_2020$Stock == unique(x$Stock)])
+            return(df)
+            } )
 
 ## Run MCMC
-stan.dat.ctrl <- stan_data_stat(sock[sock$BY %in% c.by & sock$Stock %in% c.stk, ],
+stan.dat.ctrl <- stan_data_stat(ctrl_dat,
                             scale.x1 = TRUE,
                             var.x2 = "early_sst_stnd",
                             var.x3 = "np_pinks_sec_stnd",
@@ -150,8 +156,9 @@ coda_rhat(get_rhat(stat_ctrl, pars = pars.stat))
 coda_diag(As.mcmc.list(stat_ctrl, pars = pars.stat))
 dev.off()
 
-plot_post_pc(stat_ctrl, stan.dat.stat_ctrl$y, data = sock[sock$BY %in% c.by & sock$Stock %in% c.stk, ],
-             pdf.path = "./figures/stat/hbm_fit/stat_ctrl_yrep.pdf")
+#plot_post_pc(stat_ctrl, stan.dat.ctrl$y, data = sock[sock$BY %in% c.by & sock$Stock %in% c.stk, ],
+ #            pdf.path = "./figures/stat/hbm_fit/stat_ctrl_yrep.pdf")
+# BUgging
 
 loo.stat_ctrl <- rstan::loo(stat_ctrl, cores = 4)
 save(loo.stat_ctrl, file = "./output/diagnostics/loo_stat_ctrl.RData")
@@ -166,7 +173,7 @@ dev.off()
 #save(r2.stat_ctrl, file = "./output/diagnostics/r2_stat_ctrl.RData")
 
 pdf("./figures/stat/hbm_fit/stat_ctrl_resid.pdf", width = 8, height = 8)
-plot_hbm_resids(stat_ctrl, sock[sock$BY %in% c.by & sock$Stock %in% c.stk, ])
+plot_hbm_resids(stat_ctrl, ctrl_dat)
 dev.off()
 
 
@@ -180,9 +187,9 @@ rstan::get_elapsed_time(stat_a)
 rstan::get_elapsed_time(stat_tr)
 rstan::get_elapsed_time(stat_ctrl)
 
-summary(stat_a, pars = pars.stat)
-summary(stat_tr, pars = pars.stat)
-summary(stat_ctrl, pars = pars.stat)
+summary(stat_a, pars = pars.stat)$summary
+summary(stat_tr, pars = pars.stat)$summary
+summary(stat_ctrl, pars = pars.stat)$summary
 
 neff_lowest(stat_a, pars = pars.stat)
 neff_lowest(stat_tr, pars = pars.stat)

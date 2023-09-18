@@ -7,9 +7,11 @@ if(!dir.exists("./figures/stat/pub/")) dir.create("./figures/stat/pub/")
 ## Model fits with 3 Ocean Regions
 # ---------------------------------------------------------------------
 
-# Load fits
-for(i in list.files(path = "./output/models/stat/", pattern = "*.RData$")) {
-  load(paste("./output/models/stat/", i, sep = ""), verbose=T)
+# Load fits if not just run
+if(!exists("stat_a")){
+  for(i in list.files(path = "./output/models/stat/", pattern = "*.RData$")) {
+            load(paste("./output/models/stat/", i, sep = ""), verbose=T)
+        }
 }
 load("./output/models/stat/single-stock/single_stock_lms.Rdata", verbose=T)
 
@@ -17,15 +19,17 @@ fit.list <- list(stat_a, stat_tr, stat_ctrl)
 fitnam <- list("stat_a", "stat_tr", "stat_ctrl")
 
 ## Define colors
-col.region <- chroma::qpal(7, luminance = 40)[c(1, 3, 5, 7)]
+col.region <- chroma::qpal(7, luminance = 40)[c(7, 5, 3, 1)]
+names(col.region) <- unique(sock.info$ocean_label2)
+col.scale.reg <- scale_colour_manual(name = "Ocean Region", values=col.region)
 col.region.3 <- chroma::qpal(7, luminance = 40)[c(1, 4, 6)]
 
 for (n in 1:length(fit.list)){
   
   ## Table: coefficients ----
   
-  gamma <- summary(fit.list[[n]], pars = "mu_gamma")$summary
-  kappa <- summary(fit.list[[n]], pars = "mu_kappa")$summary
+  gamma <- rstan::summary(fit.list[[n]], pars = "mu_gamma")$summary
+  kappa <- rstan::summary(fit.list[[n]], pars = "mu_kappa")$summary
   reg   <- if(fitnam[[n]] == "stat_ctrl") c("West Coast", "Gulf of Alaska", "Bering Sea") else
     c("West Coast", "Southeast Alaska", "Gulf of Alaska", "Bering Sea")
   
@@ -66,20 +70,20 @@ vars$var <- factor(vars$var, levels = c("SST", "Comp", "SST + Comp"))
 g <- ggplot(m.df) +
   geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
   geom_path(data = s.df[s.df$region == "West Coast", ],
-            aes(x = x, y = y, group = stock), color = col.region[1], alpha=0.3,
+            aes(x = x, y = y, group = stock), color = col.region[["West Coast"]], alpha=0.3,
             na.rm = TRUE) +
   geom_path(data = s.df[s.df$region == "Gulf of Alaska", ],
-            aes(x = x, y = y, group = stock), color = col.region[2], alpha=0.3,
+            aes(x = x, y = y, group = stock), color = col.region[["Gulf of Alaska"]], alpha=0.3,
             na.rm = TRUE) +
   geom_path(data = s.df[s.df$region == "Southeast Alaska", ],
-            aes(x = x, y = y, group = stock), color = col.region[3], alpha=0.3,
+            aes(x = x, y = y, group = stock), color = col.region[["Southeast Alaska"]], alpha=0.3,
             na.rm = TRUE) +
   geom_path(data = s.df[s.df$region == "Bering Sea", ],
-            aes(x = x, y = y, group = stock), color = col.region[4], alpha=0.3,
+            aes(x = x, y = y, group = stock), color = col.region[["Bering Sea"]], alpha=0.3,
             na.rm = TRUE) +
   geom_path(aes(x = x, y = y, color = region), linewidth = 1, alpha=1, 
             na.rm = TRUE) +
-  scale_color_manual(values = col.region) +
+  col.scale.reg +
   labs(x = "Percent change in R/S",
        y = "Posterior density",
        color = "") +
@@ -134,7 +138,7 @@ g <- ggplot(df.dot) +
   geom_rect(data = df.mu, aes(xmin = mu_2.5, xmax = mu_97.5, ymin = ystart,
                               ymax = yend, fill = ocean_region_lab),
             alpha = 0.2) +
-  scale_color_manual(values = col.region) +
+  col.scale.reg +
   scale_shape_manual(values = c(15, 16, 17, 18)) +
   scale_fill_manual(values = col.region, guide="none") +
   labs(x = "Coefficient",
@@ -159,22 +163,22 @@ dev.off()
 ss.dat <- ss.all.yrs$coef$model4a %>% 
   dplyr::filter(variable %in% c("early_sst_stnd", "np_pinks_sec_stnd")) %>% 
   dplyr::mutate(var = ifelse(variable == "early_sst_stnd", "SST", "Comp"))
-ss.dat$Stock <- factor(ss.dat$Stock, levels=levels(sock.info$Stock))
+ss.dat$Stock <- factor(ss.dat$Stock, levels=levels(sock$Stock), ordered = T)
+ss.dat$var <- factor(ss.dat$var, levels=c("SST", "Comp"))
 df.dot.ss <- dplyr::left_join(df.dot, ss.dat, by=c("Stock", "var"))
-df.dot.ss$var <- factor(df.dot.ss$var, levels=c("SST", "Comp"))
 
 g <- ggplot(df.dot.ss) +
   geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
-  geom_point(aes(x = mean, y = Stock, color = region, shape = region, fill=region)) +
+  geom_point(aes(x = mean, y = Stock, color = ocean_region_lab, shape = ocean_region_lab, fill=ocean_region_lab)) +
   geom_segment(aes(y = Stock, yend = Stock, x = `2.5%`, xend = `97.5%`,
-                   color = region), linewidth = 0.25) +
+                   color = ocean_region_lab), linewidth = 0.25) +
   geom_segment(data = df.mu, aes(y = ystart, yend = yend, x = mu_mean, xend = mu_mean,
-                                 color = region), linewidth = 0.25) +
+                                 color = ocean_region_lab), linewidth = 0.25) +
   geom_rect(data = df.mu, aes(xmin = mu_2.5, xmax = mu_97.5, ymin = ystart,
-                              ymax = yend, fill = region),
+                              ymax = yend, fill = ocean_region_lab),
             alpha = 0.2) +
-  geom_point(aes(x=value, y=Stock, colour=region, shape=region), fill="transparent") +
-  scale_color_manual(values = col.region) +
+  geom_point(aes(x=value, y=Stock, colour=ocean_region_lab, shape=ocean_region_lab), fill="transparent") +
+  col.scale.reg +
   scale_shape_manual(values = c(22, 21, 24, 23), guide = "legend") +
   scale_fill_manual(values = col.region, guide="none") +
   guides(shape = guide_legend(override.aes = list(shape=c(15, 16, 17, 18)))) +
@@ -213,20 +217,20 @@ vars$var <- factor(vars$var, levels = c("SST", "Comp", "SST + Comp"))
 g <- ggplot(m.df) +
   geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
   geom_path(data = s.df[s.df$region == "West Coast", ],
-            aes(x = x, y = y, group = stock), color = col.region[1], alpha=0.3,
+            aes(x = x, y = y, group = stock), color = col.region["West Coast"], alpha=0.3,
             na.rm = TRUE) +
   geom_path(data = s.df[s.df$region == "Gulf of Alaska", ],
-            aes(x = x, y = y, group = stock), color = col.region[2], alpha=0.3,
+            aes(x = x, y = y, group = stock), color = col.region["Gulf of Alaska"], alpha=0.3,
             na.rm = TRUE) +
   geom_path(data = s.df[s.df$region == "Southeast Alaska", ],
-            aes(x = x, y = y, group = stock), color = col.region[3], alpha=0.3,
+            aes(x = x, y = y, group = stock), color = col.region["Southeast Alaska"], alpha=0.3,
             na.rm = TRUE) +
   geom_path(data = s.df[s.df$region == "Bering Sea", ],
-            aes(x = x, y = y, group = stock), color = col.region[4], alpha=0.3,
+            aes(x = x, y = y, group = stock), color = col.region["Bering Sea"], alpha=0.3,
             na.rm = TRUE) +
   geom_path(aes(x = x, y = y, color = region), linewidth = 1, alpha=1, 
             na.rm = TRUE) +
-  scale_color_manual(values = col.region) +
+  col.scale.reg +
   labs(x = "Percent change in R/S",
        y = "Posterior density",
        color = "") +
@@ -281,7 +285,7 @@ g <- ggplot(df.dot) +
   geom_rect(data = df.mu, aes(xmin = mu_2.5, xmax = mu_97.5, ymin = ystart,
                               ymax = yend, fill = ocean_region_lab),
             alpha = 0.2) +
-  scale_color_manual(values = col.region) +
+  col.scale.reg +
   scale_shape_manual(values = c(15, 16, 17, 18)) +
   scale_fill_manual(values = col.region, guide="none") +
   labs(x = "Coefficient",
@@ -309,7 +313,7 @@ dev.off()
 ## stat_ctrl -----------------------------------------------------
 
 ## Fig: Posterior percent change density ------------------- 
-lst <- hb05_density_df(stat_ctrl, ocean.regions = 3, ctrl=TRUE)
+lst <- hb05_density_df(stat_ctrl, ocean.regions = 3)
 s.df <- lst$stock
 m.df <- lst$region
 m.df$region <- factor(m.df$region, levels = c("West Coast", "Gulf of Alaska", "Bering Sea"))
@@ -363,11 +367,11 @@ dev.off()
 
 
 ## Fig: dot + density main --------------------------------- 
-gamma.stock <- hb_param_df(stat_ctrl, "gamma", "Ocean.Region", "SST", info = sock.info[sock.info$Stock %in% c.stk,])
-kappa.stock <- hb_param_df(stat_ctrl, "kappa", "Ocean.Region", "Comp", info = sock.info[sock.info$Stock %in% c.stk,])
+gamma.stock <- hb_param_df(stat_ctrl, "gamma", "Ocean.Region", "SST", info = sock.info[sock.info$Stock %in% ctrl_dat$Stock,])
+kappa.stock <- hb_param_df(stat_ctrl, "kappa", "Ocean.Region", "Comp", info = sock.info[sock.info$Stock %in% ctrl_dat$Stock,])
 df.dot <- rbind(gamma.stock, kappa.stock ) # , chi.stock)
 df.dot <- ocean_region_lab(df.dot, "region", FALSE)
-df.dot$Stock <- factor(df.dot$Stock, levels = c.stk)
+df.dot$Stock <- factor(df.dot$Stock, levels = unique(ctrl_dat$Stock))
 df.dot$var <- factor(df.dot$var, levels = c("SST", "Comp" )) # ,"SST x Comp"))
 df.mu <- plyr::ddply(df.dot, .(region, var), summarize,
                      mu_mean = unique(mu_mean),
@@ -598,9 +602,9 @@ for(k in 1:2 ) {  ## loop over covars
         mean <- mean(x[ , "np_pinks_sec"] / scale[k], na.rm = TRUE)
         data.frame(min = min, max = max, mean = mean)
       })
-      lines(ph$BY, ph$mean, col = col.dk[i], lwd = 2, lty = 2)
+      lines(ph$BY, ph$mean, col = col.dk[i], lwd = 1, lty = 2)
     }
-    lines(mm$BY, mm$mean, col = col.dk[i], lwd = 2)
+    lines(mm$BY, mm$mean, col = col.dk[i], lwd = 1)
     ind <- ind + 1
     f.ind <- f.ind + 1
   }
@@ -635,3 +639,7 @@ rect(xleft = -165, ybottom = 47, xright = -120, ytop = 61,
 
 
 dev.off()
+
+
+## --- Remove large model fits (saved in stat_hbm_fit)
+rm(list = c("stat_a", "stat_tr", "stat_ctrl"))

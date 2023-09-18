@@ -1,5 +1,4 @@
-## Source this file to reproduce the (simplified) project ##
-## Fits only one model to 2 covariates ##
+## Source this file to reproduce the project ##
 ## ----------------------------------- ##
 
 ##These scripts are modified from: https://github.com/brendanmichaelconnors/sockeye-climate-competition 
@@ -13,19 +12,19 @@ rm(list = ls())
 time.start <- proc.time()
 
 source ("functions.R")
-source("load.R") #(1)
+suppressWarnings(source("load.R")) #(1)
 # source("data_download.R")  ## ONLY if climate data have changed - very long run time
 source("sock_data_clean.R") #(2)
 source("sst_import_process.R") #(3)
 source("sst_explore.R") #(4)
-source("sock_covariates.R") #(5)
-source("sock_explore.R") #(6)
-source("stat_single_stock_fit.R") # (7)
-source("stat_hbm_fit.R") #(8)
-source("stat_hbm_inf.R") #(9)
+source("sock_covariates.R") #(5) 
+source("sock_explore.R") #(6) 
+source("stat_single_stock_fit.R") # (7) 
+source("stat_hbm_fit.R") #(8) 
+source("stat_hbm_inf.R") #(9) 
 source("dyn_hbm_fit.R") #(10)
 source("dyn_hbm_inf.R") #(11)
-source("hmm_single_stock_fit.R") #(12)
+source("hmm_single_stock_fit.R") #(12) 
 source("hmm_single_stock_inf.R") #(13)
 
 
