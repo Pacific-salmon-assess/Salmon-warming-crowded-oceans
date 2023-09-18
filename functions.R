@@ -11,7 +11,7 @@ geographic.order <- function(x) {
 
   wc.ind <- bs.ind <- seak.ind <- which(names(x) %in% c("Stock", "Lat", "lat")) # WC and BS stocks organized by latitude
   goa.ind <- which(names(x) %in% c("Stock", "Lon", "lon")) # GOA stocks organized by longitude
-  
+
   # Get stock names in each region
   WC_stk <- unique( x[ which (x$Ocean.Region2=="WC"), wc.ind  ] )
   SEAK_stk <- unique( x[ which (x$Ocean.Region2=="SEAK"), seak.ind  ] )
@@ -26,7 +26,7 @@ geographic.order <- function(x) {
   
   
   WC_stk$geo_id <- data.table::frankv(WC_stk, cols=wc.ind, ties.method = "first")
-  SEAK_stk$geo_id <- nrow(SEAK_stk) + data.table::frankv(SEAK_stk, cols=seak.ind, order=-1L, ties.method = "first")
+  SEAK_stk$geo_id <- nrow(WC_stk) + data.table::frankv(SEAK_stk, cols=seak.ind, order=-1L, ties.method = "first")
   GOA_stk$geo_id <- nrow(WC_stk) + nrow(SEAK_stk) + data.table::frankv(GOA_stk, cols=goa.ind, order=-1L, ties.method = "first")
   BS_stk$geo_id <- nrow(WC_stk) + nrow(SEAK_stk) + nrow(GOA_stk) + data.table::frankv(BS_stk, cols=bs.ind, ties.method="first")
   
@@ -42,10 +42,13 @@ geographic.order <- function(x) {
 
 
 ## hb05_density_df -----------------------------------------
-hb05_density_df <- function(stanfit, ocean.regions = 3, ctrl = FALSE) {
+hb05_density_df <- function(stanfit, ocean.regions = 3) {
 
   # this function has been modified a lot to fit specific purposes but needs work
   # to make it more generally applicable
+  
+  # Get stanfit name 
+  fitnam <- deparse(substitute(stanfit))
   
   ## Get posterior matrices
   lst.f <- hb.posterior.list(stanfit)
@@ -57,11 +60,19 @@ hb05_density_df <- function(stanfit, ocean.regions = 3, ctrl = FALSE) {
   else if (ocean.regions == 4) region_col <- sock.info$Ocean.Region2
   
   ## Define region column indices
-  if (ctrl){ #Use 2020 data for control model
-    control_dat <- sock.info[sock.info$Stock %in% c.stk,] 
+  if (fitnam == "stat_ctrl"){ #Use 2020 data for control model
+    control_dat <- distinct(ctrl_dat[,c("Stock", "Ocean.Region")])
     ind.wc  <- which(control_dat$Ocean.Region == "WC")
     ind.goa <- which(control_dat$Ocean.Region == "GOA")
     ind.bs  <- which(control_dat$Ocean.Region == "BS")
+    
+  } else if( fitnam == "stat_tr"){
+    ind.wc  <- match(sock.info$Stock[which(region_col == "WC" & sock.info$yr_end >= 1975)], levels(sock$Stock) ) 
+    ind.goa <- match(sock.info$Stock[which(region_col == "GOA" & sock.info$yr_end >= 1975)], levels(sock$Stock) )
+    ind.bs  <- match(sock.info$Stock[which(region_col == "BS" & sock.info$yr_end >= 1975)], levels(sock$Stock) )
+    ind.seak <- match(sock.info$Stock[which(region_col == "SEAK" & sock.info$yr_end >= 1975)], levels(sock$Stock))
+    ind.reg <- list(ind.bs, ind.goa, ind.wc, ind.seak)
+    
   } else {
     ind.wc  <- match(sock.info$Stock[which(region_col == "WC")], levels(sock$Stock) ) 
     ind.goa <- match(sock.info$Stock[which(region_col == "GOA")], levels(sock$Stock) )
@@ -95,7 +106,7 @@ hb05_density_df <- function(stanfit, ocean.regions = 3, ctrl = FALSE) {
   pc.s.joint <- (exp(s.gamma + s.kappa ) - 1) * 100
   pc.m.joint <- (exp(m.gamma + m.kappa ) - 1) * 100
   
-  
+
   ## Calculate kernel densities
   s.den.wc.gamma  <- col_density(pc.s.gamma[ , ind.wc], plot.it = FALSE, adjust = adjust)
   s.den.goa.gamma <- col_density(pc.s.gamma[ , ind.goa], plot.it = FALSE, adjust = adjust)
@@ -112,6 +123,7 @@ hb05_density_df <- function(stanfit, ocean.regions = 3, ctrl = FALSE) {
   s.den.wc.joint  <- col_density(pc.s.joint[ , ind.wc], plot.it = FALSE, adjust = adjust)
   s.den.goa.joint <- col_density(pc.s.joint[ , ind.goa], plot.it = FALSE, adjust = adjust)
   s.den.bs.joint  <- col_density(pc.s.joint[ , ind.bs], plot.it = FALSE, adjust = adjust)
+  
   if(ocean.regions == 4)  s.den.seak.joint  <- col_density(pc.s.joint[ , ind.seak], plot.it = FALSE, adjust = adjust)
   
   m.den.gamma <- col_density(pc.m.gamma, plot.it = FALSE, adjust = adjust)
@@ -233,7 +245,7 @@ hb05_density_df <- function(stanfit, ocean.regions = 3, ctrl = FALSE) {
     })
     s.seak.df <- do.call(rbind, s.seak.lst.df)
   }
- #browser()
+
   ## Combine region stock-specific data frames
   if(ocean.regions == 3) s.df <- rbind(s.wc.df, s.goa.df, s.bs.df) else
   if(ocean.regions == 4) s.df <- rbind(s.wc.df, s.goa.df, s.bs.df, s.seak.df)
@@ -423,7 +435,7 @@ ocean_region_lab <- function(data, var = "Ocean.Region2", factor = TRUE) {
     lab <- ifelse(data[[var]] == "WC", "West Coast", lab)
     lab <- ifelse(data[[var]] == "GOA", "Gulf of Alaska", lab)
     lab <- ifelse(data[[var]] == "BS", "Bering Sea", lab)
-    lab <- ifelse(data[[var]] == "SEAK", "SEAK", lab)
+    lab <- ifelse(data[[var]] == "SEAK", "Southeast Alaska", lab)
     if(factor)
         lab <- factor(lab, levels = unique(lab))
     data[["ocean_region_lab"]] <- lab
@@ -1891,7 +1903,7 @@ fill.time.series <- function(data) {
     df <- do.call("rbind", c(lst, make.row.names = FALSE))
 
     ## Don't want NA in these columns
-    out <- plyr::ddply(df, .(Stock.ID), transform,
+    out <- plyr::ddply(df, .(Stock), transform,
                        Region = unique(na.omit(Region)),
                        Sub.Region = unique(na.omit(Sub.Region)),
                        Ocean.Region2 = unique(na.omit(Ocean.Region2)),

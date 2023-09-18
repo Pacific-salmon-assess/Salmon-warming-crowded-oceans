@@ -7,7 +7,7 @@
 ##   Load necessary data
 
 ## Master brood table
-bt.raw <- read.csv("data/master_brood_table.csv", header=T)
+bt.raw <- read.csv("./data/master_brood_table.csv", header=T)
 bt.complete <- bt.raw[complete.cases(bt.raw),]
 head(bt.complete)
 tail(bt.complete)
@@ -43,9 +43,10 @@ np.pink.sec <- pink.wgt.avg(brood.table = bt.complete,
 
 
 ## Merge datasets 
-master <- merge(bt.complete, early.sst, by=c("BY","Stock.ID"),all.x=T)
-master <- merge(master, np.pink.sec, by=c("BY","Stock.ID"),all.x=T)
-master.bt_w_cov1 <- master[order(master$Stock.ID),]
+master <- dplyr::left_join(bt.complete, early.sst, by=c("BY","Stock.ID"))
+master <- dplyr::left_join(master, np.pink.sec, by=c("BY","Stock.ID"))
+master.bt_w_cov1 <- master
+master.bt_w_cov1$Stock <- geographic.order(master.bt_w_cov1) # Ordered factor
 head(master.bt_w_cov1)
 tail(master.bt_w_cov1)
 summary(master.bt_w_cov1)
@@ -54,7 +55,7 @@ unique(master.bt_w_cov1$Stock.ID)
 
 
 ## Add derived columns
-master.bt_w_cov2 <- ddply(master.bt_w_cov1, .(Stock.ID), transform,
+master.bt_w_cov2 <- ddply(master.bt_w_cov1, .(Stock), transform,
                                 RS = R/S,
                                 RS_stnd = scale(R/S)[ , 1],
                                 lnRS = log(R/S),
@@ -66,12 +67,7 @@ master.bt_w_cov2 <- ddply(master.bt_w_cov1, .(Stock.ID), transform,
 ## Fill in missing years that fall w/in min and max BY for each stock
 master.bt_w_cov3 <- fill.time.series(master.bt_w_cov2)
 
-## Export to output
-master.bt_w_cov <- master.bt_w_cov3
-write.csv(master.bt_w_cov, "data/master_brood_table_covar.csv", row.names=FALSE)
-
-
-sock <- master.bt_w_cov
-sock$Stock <- geographic.order(sock) # make Stock an ordered factor for plotting
-sock.info$Stock <- geographic.order(sock.info)
+# Export to output
+sock <- master.bt_w_cov3
+write.csv(sock, "data/master_brood_table_covar.csv", row.names=FALSE)
 

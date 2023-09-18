@@ -7,7 +7,7 @@
 
 
 ## Read in downloaded data
-s.brood <- read.table("./data-downloaded/raw_brood_table_2023_06_18.csv",
+s.brood <- read.table("./data-downloaded/raw_brood_table_2023_07_19.csv",
                       sep = ",",skip = 0,
                       na.string = c("NA", "ND", "Canadians:  Please check the G-R ages.  "),
                       stringsAsFactors = FALSE, header = TRUE)
@@ -28,13 +28,6 @@ s.brood[ , r.cols][is.na(s.brood[ , r.cols])] <- 0
 head(s.brood)
 tail(s.brood)
 sapply(s.brood, class)
-
-## Don't use Nushagak prior to 1985
-s.brood[s.brood$Stock == "Nushagak", ]
-s.brood$UseFlag[s.brood$Stock == "Nushagak" & s.brood$BroodYear < 1985] <- 0
-
-## Don't use L. Washington
-s.brood$UseFlag[s.brood$Stock == "Washington"] <- 0
 
 ## Subset usable data points
 s.brood.use <- s.brood[s.brood$UseFlag == 1, ]
@@ -110,12 +103,13 @@ r2 <- grep("^R[[:digit:]]\\.[[:digit:]]", names(bt), value = TRUE)
 all.equal(sort(r1), sort(r2))
 
 bt.out.1 <- bt[complete.cases(bt),]                # drop years with missing data
-bt.out.2 <- subset(bt.out.1, Stock != "Osoyoos") # drop Osoyooos for now, do not have ocean entry coordinates
-bt.out.2 <- subset(bt.out.2, Stock != "Frazer") # drop Frazer, hatchery influence
+bt.out.2 <- subset(bt.out.1, !(Stock %in% c("Osoyoos", "Frazer", "Washington"))) # post hoc removal of stocks:
+    # Frazer -hatchery influence, Oosoyoos -unk ocean entry coords, Washington - ?
+bt.out.2 <- subset(bt.out.2, !(Stock == "Nushagak" & BY < 1985)) # Nushagak unreliable <1985
 bt.out.3 <- subset(bt.out.2,BY <= 2015) # currently have pink-NP data up to 2021 (+6 yr)
 bt.out.4 <- subset(bt.out.3,BY > 1949)        # do this because pre 1950 data is very sparse
 
-## Add alternate ocean.region grouping
+## Add alternate (now MAIN) ocean.region grouping
 bt.out.4$Ocean.Region2 <- bt.out.4$Ocean.Region
 bt.out.4$Ocean.Region2 <- ifelse(bt.out.4$Region %in% c("SEAK", "BC North"), "SEAK", bt.out.4$Ocean.Region2)
 
@@ -133,8 +127,12 @@ bt.out.6 <- ddply(bt.out.5, .(Stock.ID), function(i) {
                         return(i[i$BY %in% ind, ])
                        })
 
+## Order stocks geographically to make plotting easier
+bt.out.6$Stock <- geographic.order(bt.out.6)
+bt.out.7 <- dplyr::arrange(bt.out.6, factor(Stock, levels=levels(bt.out.6$Stock)))
 
-bt.out <- bt.out.6
+# Summary
+bt.out <- bt.out.7
 head(bt.out)
 tail(bt.out)
 sapply(bt.out, class)
@@ -167,8 +165,12 @@ s.info.brood$ocean_label2 <- case_when(s.info.brood$Ocean.Region2 == "WC" ~ "Wes
                                        s.info.brood$Ocean.Region2 == "BS" ~ "Bering Sea",
                                        s.info.brood$Ocean.Region2 == "SEAK" ~ "Southeast Alaska")
 
+## Order stocks geographically to make comparison easier
+s.info.brood$Stock <- geographic.order(s.info.brood)
+s.info.brood <- dplyr::arrange(s.info.brood, factor(Stock, levels=levels(s.info.brood$Stock)))
+
+
 write.csv(s.info.brood, "./data/master_stock_info.csv", row.names = FALSE)
 
 sock.info <- s.info.brood
-sock.info$Stock <- factor(sock.info$Stock, levels = unique(sock.info$Stock))
 
