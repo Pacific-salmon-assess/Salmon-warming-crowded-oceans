@@ -22,42 +22,11 @@ col.eras <- c("#4db8ff", "#b3a100", "#ff80d7", "#00b39e",
 ### --- Eras model: Data
 
 # Stock-specific dataframe
-probs <- c(0.025, 0.05, 0.10, 0.50, 0.90, 0.95, 0.975)
-summ <- rstan::summary(era.2c, pars = c(paste0("gamma", 1:3), paste0("kappa", 1:3)), probs = probs)[[1]]
-df.era.st.2c <- data.frame(Stock = rep(sock.info$Stock, 3), 
-                           Ocean.Region2 = rep(sock.info$Ocean.Region2, 3),
-                           mu = summ[, "mean"],
-                           se = summ[, "se_mean"],
-                           lower_10 = summ[, "10%"],
-                           upper_90 = summ[ , "90%"],
-                           var = stringr::str_extract(rownames(summ), "\\D+"),
-                           varnam = case_when(grepl("^gamma", rownames(summ)) ~ "SST",
-                                              grepl("^kappa", rownames(summ)) ~ "Competitors"),
-                           era = case_when(str_extract(rownames(summ), "\\d") == "1" ~ "Early",
-                                           str_extract(rownames(summ), "\\d") == "2" ~ "Middle",
-                                           str_extract(rownames(summ), "\\d") == "3" ~ "Late",
-                                           .ptype=factor( levels=c("Early", "Middle", "Late")))
-                             )
+df.era.st.2c <- era_hb_param_df(era.2c, par=c("gamma", "kappa")) # seems to work
+
 
 # Summarized dataframe (regional-level)
-reg_start <- sock.info$Stock[match(unique(sock.info$Ocean.Region2), sock.info$Ocean.Region2)]
-reg_end <- c(sock.info$Stock[match(unique(sock.info$Ocean.Region2), sock.info$Ocean.Region2)-1], 
-             sock.info$Stock[nrow(sock.info)])
-summ <- rstan::summary(era.2c, pars = c(paste0("mu_gamma", 1:3), paste0("mu_kappa", 1:3)), probs = probs)[[1]]
-df.era.reg.2c <- data.frame(Ocean.Region2 = rep(unique(sock.info$Ocean.Region2), 3),
-                            ystart = rep(reg_start, 3),
-                            yend = rep(reg_end, 3),
-                            reg_mean = summ[, "mean"], 
-                            reg_se = summ[ ,"se_mean"],
-                            lower_10 = summ[ , "10%"],
-                            upper_90 = summ[ , "90%"], 
-                            var = stringr::str_extract(rownames(summ), "\\D+"),
-                            varnam = case_when(grepl("^mu_gamma", rownames(summ)) ~ "SST",
-                                               grepl("^mu_kappa", rownames(summ)) ~ "Competitors"),
-                            era = case_when(str_extract(rownames(summ), "\\d") == "1" ~ "Early",
-                                            str_extract(rownames(summ), "\\d") == "2" ~ "Middle",
-                                            str_extract(rownames(summ), "\\d") == "3" ~ "Late",
-                                            .ptype=factor( levels=c("Early", "Middle", "Late"))))
+df.era.reg.2c <- era_hb_param_df(era.2c, par=c("gamma", "kappa"), mu = TRUE) # seems to work
 
 # Density dataframe 
 post <- rstan::extract(era.2c, pars=c(paste0("gamma", c(1:3)),
@@ -78,7 +47,7 @@ dens.df.st.2c <- data.frame(summ.dens,
                               str_extract(summ.dens$par, "\\d") == "2" ~ "Middle",
                               str_extract(summ.dens$par, "\\d") == "3" ~ "Late",
                               .ptype=factor( levels=c("Early", "Middle", "Late"))),
-                            var = stringr::str_extract(summ.dens$par, "\\D+"),
+                            var = str_extract(summ.dens$par, "\\D+"),
                             varnam = case_when(
                               str_extract(summ.dens$par, "\\D+") == "gamma" ~ "SST",
                               str_extract(summ.dens$par, "\\D+") == "kappa" ~ "Competitors"))
@@ -105,7 +74,7 @@ dens.df.reg.2c <- data.frame(summ.dens,
                                str_extract(summ.dens$par, "\\d") == "2" ~ "Middle",
                                str_extract(summ.dens$par, "\\d") == "3" ~ "Late",
                               .ptype=factor( levels=c("Early", "Middle", "Late"))),
-                             var = stringr::str_extract(summ.dens$par, "\\D+"),
+                             var = str_extract(summ.dens$par, "\\D+"),
                              varnam = case_when(
                                str_extract(summ.dens$par, "\\D+") == "mu_gamma" ~ "SST",
                                str_extract(summ.dens$par, "\\D+") == "mu_kappa" ~ "Competitors")
@@ -200,7 +169,7 @@ df.dyn.st.2c <- data.frame(Stock = sock$Stock,
                    se = summ[, "se_mean"],
                    lower_10 = summ[, "10%"],
                    upper_90 = summ[ , "90%"],
-                   var = stringr::str_extract(rownames(summ), "[a-z]+"),
+                   var = str_extract(rownames(summ), "[a-z]+"),
                    varnam = case_when(grepl("^gamma", rownames(summ)) ~ "SST",
                                       grepl("^kappa", rownames(summ)) ~ "Competitors")
                    )

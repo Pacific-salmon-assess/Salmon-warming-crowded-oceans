@@ -264,165 +264,6 @@ hb05_density_df <- function(stanfit, ocean.regions = 3) {
 
 
 
-## hb07_density_df -----------------------------------------
-hb07_density_df <- function(stanfit) {
-
-    ## Get posterior matrices
-    lst.f <- hb.posterior.list(stanfit)
-
-    ## Density smoothness
-    adjust <- 1.5
-
-    ## Define region column indices
-      ind.wc  <- match(sock.info$Stock[which(sock.info$Ocean.Region == "WC")], levels(sock$Stock) ) 
-      ind.goa <- match(sock.info$Stock[which(sock.info$Ocean.Region == "GOA")], levels(sock$Stock) )#last(ind.wc) + 1: sum(sock.info$Ocean.Region == "GOA") 
-      ind.bs  <- match(sock.info$Stock[which(sock.info$Ocean.Region == "BS")], levels(sock$Stock) )# which(sock.info$Ocean.Region == "BS") #last(ind.goa) +1: sum(sock.info$Ocean.Region == "BS") 
-    ind.reg <- list(ind.bs, ind.goa, ind.wc)
-    
-
-    ## Extract stock-specific param matrices
-    s.alpha <- lst.f[["alpha"]]
-    s.sigma <- lst.f[["sigma"]]
-    s.gamma <- lst.f[["gamma"]]
-    s.kappa <- lst.f[["kappa"]]
-    s.chi   <- lst.f[["chi"]]
-
-    ## Extract regional-level param matrices
-    m.gamma <- lst.f[["mu_gamma"]]
-    m.kappa <- lst.f[["mu_kappa"]]
-    m.chi   <- lst.f[["mu_chi"]]
-
-    ## Get percent change values
-    pc.s.gamma <- (exp(s.gamma) - 1) * 100
-    pc.s.kappa <- (exp(s.kappa) - 1) * 100
-    pc.s.chi   <- (exp(s.chi) - 1) * 100
-
-    pc.m.gamma <- (exp(m.gamma) - 1) * 100
-    pc.m.kappa <- (exp(m.kappa) - 1) * 100
-    pc.m.chi   <- (exp(m.chi) - 1) * 100
-
-    pc.s.joint <- (exp(s.gamma + s.kappa + s.chi) - 1) * 100
-    pc.m.joint <- (exp(m.gamma + m.kappa + m.chi) - 1) * 100
-
-
-    ## Calculate kernel densities
-    s.den.wc.gamma  <- col_density(pc.s.gamma[ , ind.wc], plot.it = FALSE, adjust = adjust)
-    s.den.goa.gamma <- col_density(pc.s.gamma[ , ind.goa], plot.it = FALSE, adjust = adjust)
-    s.den.bs.gamma  <- col_density(pc.s.gamma[ , ind.bs], plot.it = FALSE, adjust = adjust)
-    s.den.wc.kappa  <- col_density(pc.s.kappa[ , ind.wc], plot.it = FALSE, adjust = adjust)
-    s.den.goa.kappa <- col_density(pc.s.kappa[ , ind.goa], plot.it = FALSE, adjust = adjust)
-    s.den.bs.kappa  <- col_density(pc.s.kappa[ , ind.bs], plot.it = FALSE, adjust = adjust)
-    s.den.wc.chi    <- col_density(pc.s.chi[ , ind.wc], plot.it = FALSE, adjust = adjust)
-    s.den.goa.chi   <- col_density(pc.s.chi[ , ind.goa], plot.it = FALSE, adjust = adjust)
-    s.den.bs.chi    <- col_density(pc.s.chi[ , ind.bs], plot.it = FALSE, adjust = adjust)
-
-    s.den.wc.joint  <- col_density(pc.s.joint[ , ind.wc], plot.it = FALSE, adjust = adjust)
-    s.den.goa.joint <- col_density(pc.s.joint[ , ind.goa], plot.it = FALSE, adjust = adjust)
-    s.den.bs.joint  <- col_density(pc.s.joint[ , ind.bs], plot.it = FALSE, adjust = adjust)
-
-    m.den.gamma <- col_density(pc.m.gamma, plot.it = FALSE, adjust = adjust)
-    m.den.kappa <- col_density(pc.m.kappa, plot.it = FALSE, adjust = adjust)
-    m.den.chi   <- col_density(pc.m.chi, plot.it = FALSE, adjust = adjust)
-    m.den.joint <- col_density(pc.m.joint, plot.it = FALSE, adjust = adjust)
-
-    ## Density data frame for mu
-    m.lst <- list(m.den.gamma,
-                m.den.kappa,
-                m.den.chi,
-                m.den.joint)
-    m.lst.df <- lapply(seq_along(m.lst), function(i) {
-        x <- m.lst[[i]]
-        x.df <- reshape2::melt(x$x, varnames = c("n", "region"), value.name = "x")
-        y.df <- reshape2::melt(x$y, varnames = c("n", "region"), value.name = "y")
-        x.df$region <- ifelse(x.df$region == 1, "West Coast", x.df$region)
-        x.df$region <- ifelse(x.df$region == 2, "Gulf of Alaska", x.df$region)
-        x.df$region <- ifelse(x.df$region == 3, "Bering Sea", x.df$region)
-        y.df$region <- x.df$region
-        var  <- ifelse(i == 1, "SST", NA)
-        var  <- ifelse(i == 2, "Comp", var)
-        var  <- ifelse(i == 3, "SST x Comp", var)
-        var  <- ifelse(i == 4, "SST + Comp + SST x Comp", var)
-        x.df$var <- var
-        y.df$var <- var
-        merge(x.df, y.df, by = c("n", "region", "var"), sort = FALSE)
-    })
-    m.df <- do.call(rbind, m.lst.df)
-
-
-    ## Density data frame for mu
-    s.wc.lst <- list(s.den.wc.gamma,
-                    s.den.wc.kappa,
-                    s.den.wc.chi,
-                    s.den.wc.joint)
-    s.wc.lst.df <- lapply(seq_along(s.wc.lst), function(i) {
-        x <- s.wc.lst[[i]]
-        x.df <- reshape2::melt(x$x, varnames = c("n", "stock"), value.name = "x")
-        y.df <- reshape2::melt(x$y, varnames = c("n", "stock"), value.name = "y")
-        x.df$region <- "West Coast"
-        y.df$region <- "West Coast"
-        var  <- ifelse(i == 1, "SST", NA)
-        var  <- ifelse(i == 2, "Comp", var)
-        var  <- ifelse(i == 3, "SST x Comp", var)
-        var  <- ifelse(i == 4, "SST + Comp + SST x Comp", var)
-        x.df$var <- var
-        y.df$var <- var
-        merge(x.df, y.df, by = c("n", "stock", "region", "var"), sort = FALSE)
-    })
-    s.wc.df <- do.call(rbind, s.wc.lst.df)
-
-    s.goa.lst <- list(s.den.goa.gamma,
-                    s.den.goa.kappa,
-                    s.den.goa.chi,
-                    s.den.goa.joint)
-    s.goa.lst.df <- lapply(seq_along(s.goa.lst), function(i) {
-        x <- s.goa.lst[[i]]
-        x.df <- reshape2::melt(x$x, varnames = c("n", "stock"), value.name = "x")
-        y.df <- reshape2::melt(x$y, varnames = c("n", "stock"), value.name = "y")
-        x.df$region <- "Gulf of Alaska"
-        y.df$region <- "Gulf of Alaska"
-        var  <- ifelse(i == 1, "SST", NA)
-        var  <- ifelse(i == 2, "Comp", var)
-        var  <- ifelse(i == 3, "SST x Comp", var)
-        var  <- ifelse(i == 4, "SST + Comp + SST x Comp", var)
-        x.df$var <- var
-        y.df$var <- var
-        merge(x.df, y.df, by = c("n", "stock", "region", "var"), sort = FALSE)
-    })
-    s.goa.df <- do.call(rbind, s.goa.lst.df)
-
-    s.bs.lst <- list(s.den.bs.gamma,
-                    s.den.bs.kappa,
-                    s.den.bs.chi,
-                    s.den.bs.joint)
-    s.bs.lst.df <- lapply(seq_along(s.bs.lst), function(i) {
-        x <- s.bs.lst[[i]]
-        x.df <- reshape2::melt(x$x, varnames = c("n", "stock"), value.name = "x")
-        y.df <- reshape2::melt(x$y, varnames = c("n", "stock"), value.name = "y")
-        x.df$region <- "Bering Sea"
-        y.df$region <- "Bering Sea"
-        var  <- ifelse(i == 1, "SST", NA)
-        var  <- ifelse(i == 2, "Comp", var)
-        var  <- ifelse(i == 3, "SST x Comp", var)
-        var  <- ifelse(i == 4, "SST + Comp + SST x Comp", var)
-        x.df$var <- var
-        y.df$var <- var
-        merge(x.df, y.df, by = c("n", "stock", "region", "var"), sort = FALSE)
-    })
-    s.bs.df <- do.call(rbind, s.bs.lst.df)
-
-
-    ## Combine region stock-specific data frames
-    s.df <- rbind(s.wc.df, s.goa.df, s.bs.df)
-
-    ## Set factor levels
-    s.df$var <- factor(s.df$var, levels = c("SST", "Comp", "SST x Comp", "SST + Comp + SST x Comp"))
-    m.df$var <- factor(m.df$var, levels = c("SST", "Comp", "SST x Comp", "SST + Comp + SST x Comp"))
-
-    out <- list(stock = s.df,
-                region = m.df)
-    return(out)
-}
-
 
 
 ## ocean_region_lab ----------------------------------------
@@ -808,6 +649,62 @@ hb_param_df <- function(stanfit, par, region.var, var = NULL, info = sock.info) 
     s.out$var <- var
     return(s.out)
 }
+
+
+era_hb_param_df <- function(stanfit, par, mu = FALSE, region.var = "Ocean.Region2", neras = 3, info = sock.info){
+  
+  ## Parameter posteriors from Eras models, wrangle into dataframe
+  
+  if(mu){
+    
+    ## Regional summary dataframe (mu_gamma/ mu_kappa)
+    probs <- c(0.025, 0.05, 0.10, 0.50, 0.90, 0.95, 0.975)
+    reg_start <- info$Stock[match(unique(info[[region.var]]), info[[region.var]])]
+    reg_end <- c(info$Stock[match(unique(info[[region.var]]), info[[region.var]])-1], 
+                 info$Stock[nrow(info)])
+    mu.parsxera <- paste0(rep(paste0("mu_", par), each=neras), 1:neras)
+    summ <- rstan::summary(stanfit, pars = mu.parsxera, probs = probs)[[1]]
+    df.era.reg.2c <- data.frame(Ocean.Region2 = rep(unique(info[[region.var]]), neras),
+                                ystart = rep(reg_start, neras),
+                                yend = rep(reg_end, neras),
+                                reg_mean = summ[, "mean"], 
+                                reg_se = summ[ ,"se_mean"],
+                                lower_10 = summ[ , "10%"],
+                                upper_90 = summ[ , "90%"], 
+                                var = str_extract(rownames(summ), "\\D+"),
+                                varnam = case_when(grepl("^mu_gamma", rownames(summ)) ~ "SST",
+                                                   grepl("^mu_kappa", rownames(summ)) ~ "Competitors"),
+                                era = case_when(str_extract(rownames(summ), "\\d") == "1" ~ "Early",
+                                                str_extract(rownames(summ), "\\d") == "2" ~ "Middle",
+                                                str_extract(rownames(summ), "\\d") == "3" ~ "Late",
+                                                .ptype=factor( levels=c("Early", "Middle", "Late"))))
+    return(df.era.reg.2c)
+    
+    
+  } else {
+    
+  ## Stock lvl dataframe 
+  probs <- c(0.025, 0.05, 0.10, 0.50, 0.90, 0.95, 0.975)
+  parxera <- paste0(rep(par, each=neras), 1:neras)
+  summ <- rstan::summary(stanfit, pars = parxera, probs = probs)[[1]]
+  df.era.st.2c <- data.frame(Stock = rep(info$Stock, neras), 
+                             Ocean.Region2 = rep(info[[region.var]], neras),
+                             mu = summ[, "mean"],
+                             se = summ[, "se_mean"],
+                             lower_10 = summ[, "10%"],
+                             upper_90 = summ[ , "90%"],
+                             var = str_extract(rownames(summ), "\\D+"),
+                             varnam = case_when(grepl("^gamma", rownames(summ)) ~ "SST",
+                                                grepl("^kappa", rownames(summ)) ~ "Competitors"),
+                             era = case_when(str_extract(rownames(summ), "\\d") == "1" ~ "Early",
+                                             str_extract(rownames(summ), "\\d") == "2" ~ "Middle",
+                                             str_extract(rownames(summ), "\\d") == "3" ~ "Late",
+                                             .ptype=factor( levels=c("Early", "Middle", "Late"))))
+  return(df.era.st.2c)
+
+  }
+}
+  
 
 
 
