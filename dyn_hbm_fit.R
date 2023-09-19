@@ -1,6 +1,9 @@
 ## Fit Nonstationary hierarchical Bayesian models ("Era" and Random walk)
 # This is adapted from: https://github.com/michaelmalick/sockeye-nonstationary
 
+if(!dir.exists("./figures/dyn/"))
+  dir.create("./figures/dyn/")
+
 if(!dir.exists("./figures/dyn/hbm_fit/"))
     dir.create("./figures/dyn/hbm_fit/")
 
@@ -166,20 +169,20 @@ rstan::check_hmc_diagnostics(dyn.comp)
 
 ## Neff
 
-neff_lowest(era.sst, pars = pars_era_c1)
-neff_lowest(dyn.sst, pars = pars_dyn_c1)
+neff_lowest(era.sst, pars = pars_era_1c)
+neff_lowest(dyn.sst, pars = pars_dyn_1c)
 
 
-neff_lowest(era.comp, pars = pars_era_c1)
-neff_lowest(dyn.comp, pars = pars_dyn_c1)
+neff_lowest(era.comp, pars = pars_era_1c)
+neff_lowest(dyn.comp, pars = pars_dyn_1c)
 
 ## Rhat
 
-rhat_highest(era.sst, pars = pars_era_c1)
-rhat_highest(dyn.sst, pars = pars_dyn_c1)
+rhat_highest(era.sst, pars = pars_era_1c)
+rhat_highest(dyn.sst, pars = pars_dyn_1c)
 
-rhat_highest(era.comp, pars = pars_era_c1)
-rhat_highest(dyn.comp, pars = pars_dyn_c1)
+rhat_highest(era.comp, pars = pars_era_1c)
+rhat_highest(dyn.comp, pars = pars_dyn_1c)
 
 
 ## Pairs

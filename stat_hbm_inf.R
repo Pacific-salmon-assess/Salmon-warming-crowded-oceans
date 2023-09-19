@@ -19,7 +19,7 @@ fit.list <- list(stat_a, stat_tr, stat_ctrl)
 fitnam <- list("stat_a", "stat_tr", "stat_ctrl")
 
 ## Define colors
-col.region <- chroma::qpal(7, luminance = 40)[c(7, 5, 3, 1)]
+col.region <- rev(chroma::qpal(7, luminance = 40)[c(1, 3, 5, 7)])
 names(col.region) <- unique(sock.info$ocean_label2)
 col.scale.reg <- scale_colour_manual(name = "Ocean Region", values=col.region)
 col.region.3 <- chroma::qpal(7, luminance = 40)[c(1, 4, 6)]

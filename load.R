@@ -27,6 +27,7 @@ library(loo)
 library(rstan)
 library(bayesplot)
 library(ggplot2)
+library(stringr)
 
 
 ## Install packages from github
