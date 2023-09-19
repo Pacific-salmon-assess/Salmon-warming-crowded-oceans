@@ -3,9 +3,7 @@
 ## -------------------------------
 if(!dir.exists("./output/models/")) dir.create("./output/models/")
 if(!dir.exists("./output/models/hmm-ss/")) dir.create("./output/models/hmm-ss/")
-if(!dir.exists("./figures/hmm-ss/")) dir.create("./figures/hmm-ss/")
 
-#TODO change naming to match model naming
 
 ## single-covariate HMMs
 ## ------------------------------------------------------------ ##
@@ -22,7 +20,6 @@ hmm_ac_out_sst <- list()  # Master list to store outputs
 for(i in 1:nlevels(sock$Stock)){
   
   hmm.dat <- dplyr::filter(sock, Stock == levels(sock$Stock)[i]) # extract data for 1 stock
-  
   
   hmm.stan.dat <- list( #Get stan data
     N = nrow(hmm.dat),
@@ -47,11 +44,9 @@ for(i in 1:nlevels(sock$Stock)){
   
   
   ## Extract parameters of interest
-  
   hmm_ac_out_sst[[i]] <- rstan::summary(hmm_ac, pars = params_out, probs=c(0.025, 0.2, 0.5, 0.8, 0.975))$summary
-  
 }
-
+save(hmm_ac_out_sst, file="./output/hmm_ac_out_sst.Rdata")
 
 
 ## Comp ---
@@ -100,7 +95,7 @@ for(i in 1:nlevels(sock$Stock)){
 
 params_out <- c("beta1", "beta2", "gamma", "alpha", "beta", "log_lik")
 nlvl = 2 # 2 state model
-hmm_ac_out_c2 <- list() # Master list to store outputs
+hmm_ac_out_2c <- list() # Master list to store outputs
 
 for(i in 1:nlevels(sock$Stock)) {
   
@@ -115,7 +110,7 @@ hmm.stan.dat <- list(
   X2 =  hmm.dat$np_pinks_sec_stnd, # covariate 2 = Comp
   alpha_dirichlet = matrix(c(2,1,1,2), nrow=2) )
 
-hmm_ac_c2 <- rstan::stan(file = "./stan/ss_hmm_2c.stan",
+hmm_ac_2c <- rstan::stan(file = "./stan/ss_hmm_2c.stan",
                       data = hmm.stan.dat,
                       warmup = 1000,
                       iter = 4000,
@@ -124,9 +119,9 @@ hmm_ac_c2 <- rstan::stan(file = "./stan/ss_hmm_2c.stan",
                       seed = 123,
                       control = list(adapt_delta = 0.95,
                                      max_treedepth = 10))
-save(hmm_ac_c2, file = paste0("./output/models/hmm-ss/hmm_ac_c2_", levels(sock$Stock)[i], ".Rdata"))
+save(hmm_ac_2c, file = paste0("./output/models/hmm-ss/hmm_ac_2c_", levels(sock$Stock)[i], ".Rdata"))
 
-hmm_ac_out_c2[[i]] <- rstan::summary(hmm_ac_c2, pars = params_out, probs=c(0.025, 0.2, 0.5, 0.8, 0.975))$summary
+hmm_ac_out_2c[[i]] <- rstan::summary(hmm_ac_2c, pars = params_out, probs=c(0.025, 0.2, 0.5, 0.8, 0.975))$summary
 
 print(paste(i, "of", nlevels(sock$Stock)))
 

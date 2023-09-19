@@ -1,6 +1,7 @@
 ## Inference from Single-stock HMM models ##
 ## ----------------------------------------------------------------------------
 
+if(!dir.exists("./figures/hmm/")) dir.create("./figures/hmm/")
 if(!dir.exists("./figures/hmm/single-stock/")) dir.create("./figures/hmm/single-stock/")
 
 
@@ -14,6 +15,17 @@ col.dk <- chroma::qpal(7, luminance = 30)[c(1, 3, 5, 7)]
 ## HMM with Autocorrelation : SST
 ## ------------------------------------------------------------ ##
 
+# Load fits 
+if(!exists("hmm_ac_out_sst")){
+  hmm_ac_out_sst <- list() 
+  params_out <- c("beta1", "gamma", "alpha", "beta", "log_lik", "rho") # Parameters of interest
+    for(i in 1:nlevels(sock$Stock)){
+      load(file=paste0("./output/models/hmm-ss/hmm_ac_sst_", levels(sock$Stock)[i], ".Rdata"))
+      hmm_ac_out_sst[[i]] <- rstan::summary(hmm_ac, pars = params_out, probs=c(0.025, 0.2, 0.5, 0.8, 0.975))$summary
+      print(i)
+    }
+  save(hmm_ac_out_sst, file="./output/hmm_ac_out_sst.Rdata")
+}
 
 ## Data ------------------------------
 # Wrangle output list into a dataframe
@@ -31,8 +43,8 @@ post.df <- plyr::ldply(hmm_ac_out_sst, .id = "stock", .fun=function(x) {
              row.names=NULL) } )
 post.df <- plyr::ddply(post.df, .variables="stock", 
                           .fun=function(x){
-                            BY <- rep(sock$BY[sock$Stock == x$stock[1]], each=2)
-                            region <- rep(sock$Ocean.Region2[sock$Stock == x$stock[1]], each=2)
+                            BY <- rep(sock$BY[factor(sock$Stock, ordered=F) == x$stock[1]], each=2)
+                            region <- rep(sock$Ocean.Region2[factor(sock$Stock, ordered=F) == x$stock[1]], each=2)
                             cbind(x, BY, region)})
 
 # Make stock lvl summary dataframe
@@ -159,6 +171,18 @@ dev.off()
 ## HMM with autocorrelation: Competitors --------------------
 ## ---------------------------------------------------------
 
+# Load fits 
+if(!exists("hmm_ac_out_comp")){
+  hmm_ac_out_comp <- list() 
+  params_out <- c("beta1", "gamma", "alpha", "beta", "log_lik", "rho") # Parameters of interest
+  for(i in 1:nlevels(sock$Stock)){
+    load(file=paste0("./output/models/hmm-ss/hmm_ac_comp_", levels(sock$Stock)[i], ".Rdata"))
+    hmm_ac_out_comp[[i]] <- rstan::summary(hmm_ac, pars = params_out, probs=c(0.025, 0.2, 0.5, 0.8, 0.975))$summary
+    print(i)
+  }
+  save(hmm_ac_out_comp, file="./output/hmm_ac_out_comp.Rdata")
+}
+
 ## Data ------------------------------
 # Wrangle output list into a dataframe
 names(hmm_ac_out_comp) <- levels(sock$Stock)
@@ -175,8 +199,8 @@ post.df <- plyr::ldply(hmm_ac_out_comp, .id = "stock", .fun=function(x) {
              row.names=NULL) } )
 post.df <- plyr::ddply(post.df, .variables="stock", 
                        .fun=function(x){
-                         BY <- rep(sock$BY[sock$Stock == x$stock[1]], each=2)
-                         region <- rep(sock$Ocean.Region2[sock$Stock == x$stock[1]], each=2)
+                         BY <- rep(sock$BY[factor(sock$Stock, ordered=F) == x$stock[1]], each=2)
+                         region <- rep(sock$Ocean.Region2[factor(sock$Stock, ordered=F) == x$stock[1]], each=2)
                          cbind(x, BY, region)})
 
 # Make stock lvl summary dataframe
@@ -304,9 +328,21 @@ dev.off()
 ## 2-covariate HMM --------------------------------
 ## ------------------------------------------------  
 
+# Load fits 
+if(!exists("hmm_ac_out_2c")){
+  hmm_ac_out_2c <- list() 
+  params_out <- c("beta1", "beta2", "gamma", "alpha", "beta", "log_lik")
+  for(i in 1:nlevels(sock$Stock)){
+    load(file=paste0("./output/models/hmm-ss/hmm_ac_2c_", levels(sock$Stock)[i], ".Rdata"))
+    hmm_ac_out_2c[[i]] <- rstan::summary(hmm_ac_2c, pars = params_out, probs=c(0.025, 0.2, 0.5, 0.8, 0.975))$summary
+  }
+  save(hmm_ac_out_2c, file="./output/hmm_ac_out_2c.Rdata")
+}
+
+
 # Data -----------------------------------
-names(hmm_ac_out_c2) <- levels(sock$Stock)
-post.df <- plyr::ldply(hmm_ac_out_c2, .id = "stock", .fun=function(x) { 
+names(hmm_ac_out_2c) <- levels(sock$Stock)
+post.df <- plyr::ldply(hmm_ac_out_2c, .id = "stock", .fun=function(x) { 
   data.frame(beta1_mu = x[grep('^beta1', rownames(x)), "mean"],
              beta1_2.5 = x[grep('^beta1', rownames(x)), "2.5%"],
              beta1_20 = x[grep('^beta1', rownames(x)), "20%"],
@@ -324,8 +360,8 @@ post.df <- plyr::ldply(hmm_ac_out_c2, .id = "stock", .fun=function(x) {
              row.names=NULL) } )
 post.df <- plyr::ddply(post.df, .variables="stock", 
                        .fun=function(x){
-                         BY <- rep(sock$BY[sock$Stock == x$stock[1]], each=2)
-                         region <- rep(sock$Ocean.Region2[sock$Stock == x$stock[1]], each=2)
+                         BY <- rep(sock$BY[factor(sock$Stock, ordered=F) == x$stock[1]], each=2)
+                         region <- rep(sock$Ocean.Region2[factor(sock$Stock, ordered=F) == x$stock[1]], each=2)
                          cbind(x, BY, region)})
 
 # Make stock lvl summary dataframe
@@ -354,7 +390,7 @@ reg.summ.df <- stk.summ.df %>% dplyr::summarize(realb1_reg_mu = mean(realb1_mu, 
                                                 .by=c("BY", "region"))
 # Get posterior density data 
 for(i in 1:nlevels(sock$Stock)){
-  load(paste0("./output/models/hmm-ss/hmm_ac_c2_", levels(sock$Stock)[i], ".Rdata"))
+  load(paste0("./output/models/hmm-ss/hmm_ac_2c_", levels(sock$Stock)[i], ".Rdata"))
   post <- rstan::extract(hmm_ac_c2)
   post_beta1 <- lapply(col_density(post$beta1, plot.it=F), plyr::adply, .margins=c(1,2))
   post_beta2 <- lapply(col_density(post$beta2, plot.it=F), plyr::adply, .margins=c(1,2))
@@ -375,7 +411,7 @@ beta_df_master$Stock <- factor(beta_df_master$Stock, levels=levels(sock$Stock))
 ## Figures --------------------------------------
 
 ## (1) Plot gamma1 (state 1 probability) by stock
-pdf("./figures/hmm/single-stock/hmm_ac_c2_gamma.pdf")
+pdf("./figures/hmm/single-stock/hmm_ac_2c_gamma.pdf")
 for(i in 1:nlevels(sock$Stock)){
   g <- post.df %>% filter(state == 1, stock==levels(sock$Stock)[i]) %>%
     ggplot() +
@@ -410,7 +446,7 @@ g_b2 <- ggplot(reg.summ.df) +
   ylim(c(min(stk.summ.df$realb2_mu)-0.025, max(stk.summ.df$realb2_mu)+0.025)) + 
   labs(x="Brood Year", y="Comp coefficient")
 g <- cowplot::plot_grid(g_b1, g_b2, nrow=2)
-pdf("figures/hmm/single-stock/hmm_ac_c2_grouped.pdf")
+pdf("figures/hmm/single-stock/hmm_ac_2c_grouped.pdf")
 print(g)
 dev.off()
 
@@ -442,7 +478,7 @@ g_b2 <- ggplot(stk.summ.df) +
         legend.position = "none") +
   labs(y="", x="Brood Year")
 g <- cowplot::plot_grid(g_b1, g_b2, nrow=1, rel_widths = c(1.25, 1))
-pdf("./figures/hmm/single-stock/hmm_ac_c2_stack.pdf", width=8, height=10)
+pdf("./figures/hmm/single-stock/hmm_ac_2c_stack.pdf", width=8, height=10)
 print(g)
 dev.off()
 
@@ -465,7 +501,7 @@ g_b2 <- ggplot(unique(select(.data=post.df, stock, region, contains("beta")))) +
   labs(x="Comp Coefficient", col="Ocean Region", y="") # + coord_cartesian(xlim=c(-1.5, 1.5)) # option to zoom in
 
 g <- cowplot::plot_grid(g_b1, g_b2, nrow=1, rel_widths = c(1.25, 1))
-pdf("./figures/hmm/single-stock/hmm_ac_c2_statedot.pdf", width=8, height=10) 
+pdf("./figures/hmm/single-stock/hmm_ac_2c_statedot.pdf", width=8, height=10) 
 print(g)
 dev.off()
 
@@ -500,7 +536,7 @@ g_b2 <- ggplot(beta_df_master) +
 
 g <- cowplot::plot_grid(g_b1, g_b2, nrow=1, rel_widths = c(1.25, 1))
 
-pdf("./figures/hmm/single-stock/hmm_ac_c2_statedens.pdf", width=8, height=10)
+pdf("./figures/hmm/single-stock/hmm_ac_2c_statedens.pdf", width=8, height=10)
 print(g)
 dev.off()
 
