@@ -69,11 +69,20 @@ sock.info <- read.csv("../data/master_stock_info.csv",
                       stringsAsFactors = FALSE)
 sock.info$Stock <- factor(sock.info$Stock, levels = unique(sock.info$Stock))
 
-# Colours for plotting
+## Colour/ shape scales for plotting
 col.region <- rev(chroma::qpal(7, luminance = 40)[c(1, 3, 5, 7)])
-names(col.region) <- unique(sock.info$ocean_label2)
-col.scale.reg <- scale_colour_manual(name = "Ocean Region", values=col.region)
+col.dk <- rev(chroma::qpal(7, luminance = 20)[c(1, 3, 5, 7)])
 
+names(col.region) <- names(col.dk) <- unique(sock.info$ocean_label2)
+
+
+col.eras <- c("#00b39e", "#b3a100", "#ff80d7", "#4db8ff",
+              "#008070", "#6D6200FF", "#BC007FFF", "#0070BDFF",
+              "#00332d", "#4d4500", "#4d0034", "#002e4d")
+names(col.eras) <- paste0(rep(names(col.region), 3), ".", rep(c("Early", "Middle", "Late"), each=4))
+
+shp.reg <- c(18, 16, 17, 15)
+names(shp.reg) <- unique(sock.info$ocean_label2)
 ```
 
 # Purpose
@@ -96,9 +105,30 @@ Details on model formulation are provided below. These models are fit in a Bayes
 
 ## Data
 
+
+
 ### Spawner-recruitment
 
-FIGURE: sparkline/"lie detector" plot of ln(R/S) timeseries
+```{r productivity timeseries}
+prod_dat <- ocean_region_lab(sock)
+ggplot(prod_dat) + 
+  geom_line(aes(x=BY, y=RS_stnd, col=ocean_region_lab)) + 
+  facet_grid(rows=vars(Stock), switch ="y", scales="free_y", as.table=F) + 
+  scale_colour_manual(values=col.region) +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        strip.text.y.left = element_text(angle=0),
+        strip.background = element_rect(fill="transparent", colour="transparent"),
+        strip.text = element_text(size=7, ),
+        panel.spacing.y = unit(0, unit="cm"),
+        panel.background = element_rect(fill="white"),
+        legend.position = "none") +
+  labs(y="", x="Brood Year")
+
+#Need to specify dimensions and resolution of output
+
+```
+
 
 ### Covariates
 
@@ -108,13 +138,50 @@ Our analysis is focused on two covariates:
 
 2.  The abundance of sockeye, chum, and pink salmon across the North Pacific in the second and/or third years of marine life as an index of potential direct or indirect competition for food. This approach is consistent with research that has suggested some salmon species primarily exhibit responses to competition with other salmon during their second and/or third growing seasons at sea ([Connors et al. 2020](https://cdnsciencepub.com/doi/full/10.1139/cjfas-2019-0422); [Ruggerone and Connors 2015](https://cdnsciencepub.com/doi/full/10.1139/cjfas-2014-0134)).
 
-FIGURE: Multi-panel plots for each covariate (columns covariates, rows regions, faint lines individual stocks, thick line median)
+
+```{r map w/ covariates}
+# Downlad map and convert to sp
+cl <- rnaturalearth::ne_states(country = c("United States of America", "Canada"))
+na_map <- sf::st_as_sf(cl)
+
+axes <- list( xlims=c(-165.5, -121), 
+              ylims=c(44.5, 64.5),
+              xbreaks=seq(-160,-120,10), 
+              xlabels=as.character(seq(-160,-120,10)),
+              seq(45, 65, 5), 
+              ylabels=as.character(seq(45,65,5)))
+  
+map <- ggplot() + 
+      geom_sf(data=na_map, color="grey50", fill="white", linewidth=0.1) + 
+      ggspatial::geom_spatial_point(data = sock.info,
+                         aes(x=lon, y=lat, col=ocean_label2, shape=ocean_label2, fill=ocean_label2), 
+                         crs=4326, size=3, stroke=1.75) +
+      coord_sf(xlim=axes$xlims, ylim=axes$ylims) +
+      scale_x_continuous(breaks=axes$xbreaks, labels=axes$xlabels) +
+      scale_y_continuous(breaks=axes$ybreaks, labels=axes$ylabels) +
+      scale_colour_manual(values=col.region) + 
+      scale_fill_manual(values=col.dk) + 
+      scale_shape_manual(values=c(23, 21, 24, 22)) +
+      labs(x="Longitude (°E)", y="Latitude (°N)") +
+      theme_bw() + 
+      theme(panel.grid = element_blank(),
+             plot.title = element_text(hjust=0.5),
+             legend.position = "none"
+             )
+
+## Make dataframe of covariate info
+covar.dat <- sock %>% select(Stock, Ocean.Region2, early_sst_stnd, np_pinks_sec_stnd) %>% pivot_longer(cols=c(early_sst_stnd, np_pinks_sec_stnd), names_to = "covar") %>% mutate(covar_nam = ifelse(covar=="early_sst_stnd", "SST", "Comp"))
+
+```
+
+
+FIGURE: Multi-panel plots for each covariate (columns covariates, rows regions, faint lines individual stocks, thick line median) 
 
 ## Stationary models
 
 ## A-priori models
 
-## Randaom walk models
+## Random walk models
 
 ## Hidden Markov models
 
@@ -154,7 +221,7 @@ ggplot(m.df) +
             na.rm = TRUE) +
   geom_path(aes(x = x, y = y, color = region), linewidth = 1, alpha=1, 
             na.rm = TRUE) +
-  col.scale.reg +
+  scale_colour_manual(name = "Ocean Region", values=col.region, guide="legend") +
   labs(x = "Percent change in R/S",
        y = "Posterior density",
        color = "") +
@@ -207,8 +274,8 @@ ggplot(df.dot) +
   geom_rect(data = df.mu, aes(xmin = mu_2.5, xmax = mu_97.5, ymin = ystart,
                               ymax = yend, fill = ocean_region_lab),
             alpha = 0.2) +
-  col.scale.reg +
-  scale_shape_manual(values = c(15, 16, 17, 18)) +
+  scale_colour_manual(name = "Ocean Region", values=col.region, guide="legend") +
+  scale_shape_manual(name = "Ocean Region", values = shp.reg, guide="legend") +
   scale_fill_manual(values = col.region, guide="none") +
   labs(x = "Coefficient",
        y = "",
@@ -218,7 +285,7 @@ ggplot(df.dot) +
   scale_x_continuous(breaks=c(-0.25,0,0.25))+
   theme_sleek(base_size = 10) +
   theme(legend.justification = c(0, 0),
-        legend.position = c(0.01, 0.87),
+        legend.position = c(0.01, 0.78),
         legend.key.size = unit(10, "pt"),
         legend.background = element_blank(),
         legend.text = element_text(size = 8),
@@ -233,26 +300,60 @@ FIGURE: Caterpillar plot (stock specific and regional posteriors by covariate, s
 
 FIGURE: Time period covariate coefficient regional posteriors grouped by covariate
 
+```{r Apriori models: density plot}
+
+## Load era model fit
+load("../output/models/dyn/hbm_era_2c.Rdata")
+
+## Data
+# Density dataframe - by stock
+dens.df.st.2c <- era_density_df(era.2c, par=c("gamma", "kappa"), percent.change = T)
+dens.df.st.2c <- ocean_region_lab(dens.df.st.2c)
+# Density dataframe (regional lvl)
+dens.df.reg.2c <- era_density_df(era.2c, par=c("gamma", "kappa"), mu=T, percent.change=T)
+dens.df.reg.2c <- ocean_region_lab(dens.df.reg.2c)
+
+
+## Figures
+ggplot(dens.df.st.2c) + 
+  geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
+  geom_path(aes(x=x, y=dens, group=stock, col=ocean_region_lab), alpha=0.2) + 
+  geom_path(data=dens.df.reg.2c, aes(x=x, y=dens, col=ocean_region_lab), alpha=0.85, linewidth=1) +
+  scale_colour_manual(values=col.region) +
+  facet_grid(rows=vars(era), cols=vars(factor(varnam, levels=c("SST", "Competitors")))) + 
+  coord_cartesian(xlim=c(-50,50)) +
+  theme_sleek() + labs(x="Covariate effect", y="", col="Ocean Region") +
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(), 
+        legend.position="none")
+
+## Notes: Include years with early/middle/late
+## match x axis with stationary model: % change in ln R/S
+```
+
+
+
 FIGURE: Time period covariate coefficient posteriors grouped by region and covariate, stacked by stock
 
 ```{r Apriori models: caterpillar plot}
-load("../output/models/dyn/hbm_era_2c.Rdata")
 
 # wrangle dataframes
 df.era.st.2c <- era_hb_param_df(era.2c, par=c("gamma", "kappa"))
+df.era.st.2c <- ocean_region_lab(df.era.st.2c)
 df.era.reg.2c <- era_hb_param_df(era.2c, par=c("gamma", "kappa"), mu = TRUE)
+df.era.reg.2c <- ocean_region_lab(df.era.reg.2c)
 
 ggplot(df.era.st.2c) +
   geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
-  geom_point(aes(x = mu, y = Stock, color = interaction(Ocean.Region2, era), shape = Ocean.Region2)) +
+  geom_point(aes(x = mu, y = Stock, color = interaction(ocean_region_lab, era), shape = ocean_region_lab), size=1.2) +
   geom_segment(data = df.era.reg.2c, aes(y = ystart, yend = yend, x = reg_mean, xend=reg_mean,
-                                           color = interaction(Ocean.Region2, era)), linewidth = 0.25) +
+                                           color = interaction(ocean_region_lab, era)), linewidth = 0.25) +
   geom_rect(data = df.era.reg.2c, aes(xmin = lower_10, xmax = upper_90, ymin = ystart,
-                                        ymax = yend, fill = interaction(Ocean.Region2, era)), alpha=0) +
-  facet_wrap(vars(varnam), ncol=2) +
-  scale_color_manual(values = col.eras) +
-  scale_shape_manual(values = c(15:18), guide = "legend") +
-  scale_fill_manual(values = col.eras, guide="legend") +
+                                        ymax = yend, fill = interaction(ocean_region_lab, era)), alpha=0.15) +
+  facet_wrap(vars(factor(varnam, levels=c("SST", "Competitors"))), ncol=2, scales="free_x") +
+  scale_colour_manual(name = "Ocean Region", values=col.eras) +
+  scale_shape_manual(name = "Ocean Region", values=shp.reg, guide="legend") +
+  scale_fill_manual(values=col.eras) +
   labs(x = "Coefficient",
        y = "",
        color = "",
@@ -266,6 +367,9 @@ ggplot(df.era.st.2c) +
         legend.text = element_text(size = 8)
   )
 
+
+## Notes: make a legend, abbreviated stock names?
+# Can I get it to generate in higher definition so the points aren't all weird?
 ```
 
 ## Random walk models
@@ -273,9 +377,52 @@ ggplot(df.era.st.2c) +
 FIGURE: Time series of covariate coefficient posteriors (mean across stocks in bold, faint lines for individual stocks) grouped by region and covariate
 
 FIGURE: "sparkline plots" (like above but with time series of posteriors, stocks as rows)
+ -- Decided not to include sparkline plots -- 
 
-```{r random walk models, include=FALSE}
-# code to generate figures...
+```{r random walk models: figures}
+#Data
+# Stock specific dataframe
+probs <- c(0.025, 0.05, 0.10, 0.50, 0.90, 0.95, 0.975)
+summ <- rstan::summary(dyn.2c, pars = c("gamma", "kappa"), probs = probs)[[1]]
+df.dyn.st.2c <- data.frame(Stock = sock$Stock,
+                   Ocean.Region2 = sock$Ocean.Region2,
+                   BY = sock$BY,
+                   mu = summ[, "mean"],
+                   se = summ[, "se_mean"],
+                   lower_10 = summ[, "10%"],
+                   upper_90 = summ[ , "90%"],
+                   var = str_extract(rownames(summ), "[a-z]+"),
+                   varnam = case_when(grepl("^gamma", rownames(summ)) ~ "SST",
+                                      grepl("^kappa", rownames(summ)) ~ "Competitors")
+                   )
+df.dyn.st.2c <- ocean_region_lab(df.dyn.st.2c)
+
+# Summarize at regional lvl
+df.dyn.reg.2c <- dplyr::summarize(df.dyn.st.2c, 
+                           reg_mean=mean(mu, na.rm=T), 
+                           n_stk=n_distinct(Stock),
+                           lower_10=quantile(mu, 0.1), 
+                           upper_90=quantile(mu, 0.9), 
+                           .by=c(Ocean.Region2, BY, varnam))
+df.dyn.reg.2c <- ddply(df.dyn.reg.2c, .(Ocean.Region2), dplyr::filter, n_stk >= max(n_stk)*0.1)
+df.dyn.reg.2c <- ocean_region_lab(df.dyn.reg.2c)
+
+
+# Figures
+ggplot(df.dyn.reg.2c) +
+  geom_hline(yintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +  
+  geom_line(data= df.dyn.st.2c, aes(x=BY, y=mu, group=Stock, col=ocean_region_lab), alpha=0.2) +
+  geom_line(aes(x=BY, y=reg_mean, col=ocean_region_lab), linewidth=1) +
+  geom_ribbon(aes(x=BY, y=reg_mean, ymin=lower_10, ymax=upper_90, fill=ocean_region_lab), alpha=0.2) +
+  facet_grid(cols=vars(ocean_region_lab), rows=vars(varnam), scales="free_y") + 
+  ylim(c(-1,1)) + 
+  scale_colour_manual(values=col.region, aesthetics=c("colour", "fill")) +
+  theme_sleek() + theme(legend.position="none")
+
+
+## try moving average to smooth
+
+
 ```
 
 ## Hidden Markov models

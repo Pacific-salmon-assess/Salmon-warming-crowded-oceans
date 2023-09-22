@@ -263,6 +263,75 @@ hb05_density_df <- function(stanfit, ocean.regions = 3) {
 }
 
 
+## era_density_df -----------------------------------------
+era_density_df <- function(stanfit, par, region.var="Ocean.Region2", mu = FALSE, percent.change=FALSE, neras=3, info=sock.info){
+  
+  if(mu){ ## regional mean df
+    mu.parxera <- paste0(rep(paste0("mu_", par), each=neras), 1:neras)
+    
+    post <- rstan::extract(stanfit, pars=c(mu.parxera))
+    
+    dens.l <- lapply(post, function(x){
+      if(percent.change) {
+        x<- (exp(x)- 1) * 100
+      }
+      dens.out <- col_density(x, plot.it=F)
+      dens.list <- lapply(dens.out, adply, .margins=c(1,2))
+      dens.df <- join(dens.list$x, dens.list$y, by=c("X1", "X2"))
+      names(dens.df) <- c("n", "region", "x", "dens")
+      dens.df$Ocean.Region2 <- case_when(dens.df$region == 1 ~ "WC",
+                                         dens.df$region == 2 ~ "SEAK",
+                                         dens.df$region == 3 ~ "GOA",
+                                         dens.df$region == 4 ~ "BS")
+      return(dens.df)
+    } )
+    
+    summ.dens <- bind_rows(dens.l, .id="par") 
+    dens.df.reg.2c <- data.frame(summ.dens,
+                                 era = case_when(
+                                   str_extract(summ.dens$par, "\\d") == "1" ~ "Early",
+                                   str_extract(summ.dens$par, "\\d") == "2" ~ "Middle",
+                                   str_extract(summ.dens$par, "\\d") == "3" ~ "Late",
+                                   .ptype=factor( levels=c("Early", "Middle", "Late"))),
+                                 var = str_extract(summ.dens$par, "\\D+"),
+                                 varnam = case_when(
+                                   str_extract(summ.dens$par, "\\D+") == "mu_gamma" ~ "SST",
+                                   str_extract(summ.dens$par, "\\D+") == "mu_kappa" ~ "Competitors",
+                                   .default = NA)
+    )
+    
+    
+    
+  } else { ## Stock specific df
+    parxera <- paste0(rep(par, each=neras), 1:neras)
+    post <- rstan::extract(stanfit, pars=parxera)
+  dens.l <- lapply(post, function(x){
+    if(percent.change) {
+      x<- (exp(x) - 1) * 100
+    }
+    dens.out <- col_density(x, plot.it=F)
+    dens.list <- lapply(dens.out, adply, .margins=c(1,2))
+    dens.df <- join(dens.list$x, dens.list$y, by=c("X1", "X2"))
+    names(dens.df) <- c("n", "stock", "x", "dens")
+    dens.df <- mutate(dens.df, stock=levels(info$Stock)[as.numeric(stock)] ) 
+    return(dens.df)
+  } )
+  summ.dens <- bind_rows(dens.l, .id="par") 
+  dens.df.st.2c <- data.frame(summ.dens,
+                              Ocean.Region2 = info[[region.var]][match(summ.dens$stock, info$Stock)],
+                              era = case_when(
+                                str_extract(summ.dens$par, "\\d") == "1" ~ "Early",
+                                str_extract(summ.dens$par, "\\d") == "2" ~ "Middle",
+                                str_extract(summ.dens$par, "\\d") == "3" ~ "Late",
+                                .ptype=factor( levels=c("Early", "Middle", "Late"))),
+                              var = str_extract(summ.dens$par, "\\D+"),
+                              varnam = case_when(
+                                str_extract(summ.dens$par, "\\D+") == "gamma" ~ "SST",
+                                str_extract(summ.dens$par, "\\D+") == "kappa" ~ "Competitors",
+                                .default = NA))
+  
+  }
+}
 
 
 
