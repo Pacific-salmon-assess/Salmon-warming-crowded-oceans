@@ -129,6 +129,12 @@ ggplot(prod_dat) +
 
 ```
 
+We have been working to update and add to a large collection of time series of spawner (escapement) and total recruitment (catch plus escapement) for all five species of Pacific salmon. Details on the specific timeseries are avaialble [here](https://docs.google.com/spreadsheets/d/1W6bxaIkzlPkQ4PpN7_SKRWMkLrMlfqWK-FywexUstKs/edit#gid=314988634). The spatial and temporal extent of those populations and species that we have fit models to so far are detailed below.
+
+FIGURE: map of sockeye salmon ocean-entry locations.
+
+FIGURE: sparkline/"lie detector" plot of ln(R/S) timeseries
+
 
 ### Covariates
 
@@ -179,11 +185,48 @@ FIGURE: Multi-panel plots for each covariate (columns covariates, rows regions, 
 
 ## Stationary models
 
-## A-priori models
+In the simplest stationary model we model salmon productivity hierarchically as a function of spawner abundance, early marine ocean conditions, and competitor abundance:
+
 
 ## Random walk models
+=======
+\begin{equation}
+$$ln(R_{i,t}/S_{i,t}) = \alpha_{i} - \beta S_{i,t} + \gamma_{k,i,r} X_{k,i,t} + \varepsilon_{i,t}$$ 
+\end{equation}
+
+
+where $R$ is the total recruitment from population $i$ and spawners $S$ in brood year $t$,  $\alpha$ is productivity (intrinsic rate of growth), $\beta$ is the magnitude of within brood-year density-dependent effects on survival, $\gamma$ is the effect of covariate $k$, $X$ is the specific covariate standardized to mean 0 and standard deviation of 1, and $\epsilon$ is inter-annual variation in survival from egg to adulthood which was assumed to follow a first-order autocorrelated process:
+
+\begin{equation}
+$$\varepsilon_{i,t}=\phi \varepsilon_{i,t-1} + \sqrt{1-\phi^2 }\delta_{i,t}  \\ \delta_{i,t}\sim N(0,\sigma_{i}^2)$$
+\end{equation}
+
+where $\phi$ is the autocorrelation coefficient, and $\delta$ represents uncorrelated, white noise, interannual variation in survival.
+
+The population-specific parameters $\gamma_{k,i,r}$ were modelled hierarchically by assuming they arise from common hyper-distributions:
+\begin{equation}
+$$\gamma_{k,i,r}\sim N(\mu_{\gamma,k,r},\sigma_{\gamma,k,r}^2)$$
+\end{equation}
+
+where $r$ is one of four broad ocean regions within which salmon populations have previously been shown to exhibit similar responses to ocean climate and ecosystem variation and $\mu$ is the region level average effect. 
+
+For Fraser River sockeye stocks (No. X-Y in Fig. X), spawner abundances were in units of effective female spawners (i.e., female spawner abundance adjusted for unspawned eggs), whereas for all other stocks spawner abundances were total male and female spawners. Thus, $\alpha_{i}$ parameters were split into two groups (one group that included Fraser River stocks and another group that included all non-Fraser River stocks) that were exchangeable within each group but not between the two groups. 
+
+
+## Era models
+The first class of non-stationary model we considered allowed the $\gamma_{k,i,r,e}$ parameters to change at predefined points in time which corresponded with well documented Northeast Pacific regime shifts in 1976/77 and 1989/99 ([Hare and Mantua, 2000](https://www.sciencedirect.com/science/article/pii/S0079661100000331)) resulting in three eras ($e$). As with the stationary models we assumed the era specific climate and ecosystem parameters were exchangeable among populations within the same ocean ecosystem and era thereby estimating both population specific and ocean ecosystem level effects by era.
+
+## Random walk models
+The second class of non-stationary models we considered allowed the climate and ecosystem parameters to evolve over time according to a random walk:
+\begin{equation}
+$$\gamma_{k,i,t}=\gamma_{k,i,t-1}+w_{k,t}\\ w_{k,t}\sim N(0,\sigma_{w_{k}}^2)$$
+\end{equation}
+where $w$ is process variation and $\sigma_{w}^2$ determines the degree if temporal variability in the $\gamma$ series. For these models the covariate effects were not modelled independently instead of being exchangeable among populations within regions(i.e., hierarchically). 
+
 
 ## Hidden Markov models
+The last class of non-statioanry models we considered were the most flexible and...
+## Model fitting
 
 # Results
 
@@ -246,8 +289,8 @@ ggplot(m.df) +
         strip.text.x = element_blank())
 
 ```
-**Figure 3**. Posterior probability distributions of the predicted effect of (a) SST, (b) competitors, and (c) the combined effect from all covariate terms, on sockeye salmon survival. Overall hyperdistribution of the covariate effects are in bold lines, with individual stock-specific distributions illustrated by
-the light lines. Covariate effects are standardized (i.e., per standard deviation unit increase in each covariate),
+
+**Figure 3**. Posterior probability distributions of the predicted effect of (a) SST, (b) competitors, and (c) the combined effect from all covariate terms, on sockeye salmon survival. Overall hyperdistribution of the covariate effects are in bold lines, with individual stock-specific distributions illustrated by the light lines. Covariate effects are standardized (i.e., per standard deviation unit increase in each covariate),
 
 ```{r stationary models: caterpillar plot}
 gamma.stock <- hb_param_df(stat_a, "gamma", "Ocean.Region2", "SST")
@@ -293,8 +336,7 @@ ggplot(df.dot) +
 
 ```
 
-**Figure 4** -- figure caption -- 
-FIGURE: Caterpillar plot (stock specific and regional posteriors by covariate, stocks as rows)
+**Figure 4** -- figure caption -- FIGURE: Caterpillar plot (stock specific and regional posteriors by covariate, stocks as rows)
 
 ## A-priori models
 
@@ -342,6 +384,10 @@ df.era.st.2c <- era_hb_param_df(era.2c, par=c("gamma", "kappa"))
 df.era.st.2c <- ocean_region_lab(df.era.st.2c)
 df.era.reg.2c <- era_hb_param_df(era.2c, par=c("gamma", "kappa"), mu = TRUE)
 df.era.reg.2c <- ocean_region_lab(df.era.reg.2c)
+
+col.eras <- c("#4db8ff", "#b3a100", "#ff80d7", "#00b39e", 
+              "#0070BDFF", "#6D6200FF", "#BC007FFF", "#008070",
+              "#002e4d", "#4d4500", "#4d0034",  "#00332d")
 
 ggplot(df.era.st.2c) +
   geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +

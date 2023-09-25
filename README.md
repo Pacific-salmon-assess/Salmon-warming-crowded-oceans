@@ -3,6 +3,8 @@ Work in progress repository with code and data to undertake a comparative analys
 This repository currently just has models fit to sockeye spawner-recruitment data, and largely mirrors the analyses origionally described in [Connors et al. 2020](https://cdnsciencepub.com/doi/10.1139/cjfas-2019-0422#:~:text=In%20the%20south%2C%20a%20warm,effects%20of%20competition%20at%20sea.).
 These analyses will be expanded to include additional species and models that allow relationships to vary over time and space and across species and life histories (e.g., as in [Malick 2020](https://onlinelibrary.wiley.com/doi/abs/10.1111/fog.12469)).
 
+A work in progress summary of methods and results to date is [here](https://pacific-salmon-assess.github.io/Salmon-warming-crowded-oceans/Rmd/project-fall-update.html)
+
 ## Files
 - `make.R`: source this file to reproduce the project.
 
