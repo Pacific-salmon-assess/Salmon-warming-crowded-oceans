@@ -23,6 +23,10 @@ col.region <- rev(chroma::qpal(7, luminance = 40)[c(1, 3, 5, 7)])
 names(col.region) <- unique(sock.info$ocean_label2)
 col.scale.reg <- scale_colour_manual(name = "Ocean Region", values=col.region)
 col.region.3 <- chroma::qpal(7, luminance = 40)[c(1, 4, 6)]
+# Define shape
+shp.reg <- c(18, 16, 17, 15)
+names(shp.reg) <- unique(sock.info$ocean_label2)
+
 
 for (n in 1:length(fit.list)){
   
@@ -139,7 +143,7 @@ g <- ggplot(df.dot) +
                               ymax = yend, fill = ocean_region_lab),
             alpha = 0.2) +
   col.scale.reg +
-  scale_shape_manual(values = c(15, 16, 17, 18)) +
+  scale_shape_manual(values = shp.reg) +
   scale_fill_manual(values = col.region, guide="none") +
   labs(x = "Coefficient",
        y = "",
@@ -179,7 +183,7 @@ g <- ggplot(df.dot.ss) +
             alpha = 0.2) +
   geom_point(aes(x=value, y=Stock, colour=ocean_region_lab, shape=ocean_region_lab), fill="transparent") +
   col.scale.reg +
-  scale_shape_manual(values = c(22, 21, 24, 23), guide = "legend") +
+  scale_shape_manual(values = shp.reg, guide = "legend") +
   scale_fill_manual(values = col.region, guide="none") +
   guides(shape = guide_legend(override.aes = list(shape=c(15, 16, 17, 18)))) +
   labs(x = "Coefficient",
@@ -286,7 +290,7 @@ g <- ggplot(df.dot) +
                               ymax = yend, fill = ocean_region_lab),
             alpha = 0.2) +
   col.scale.reg +
-  scale_shape_manual(values = c(15, 16, 17, 18)) +
+  scale_shape_manual(values = shp.reg) +
   scale_fill_manual(values = col.region, guide="none") +
   labs(x = "Coefficient",
        y = "",
@@ -392,7 +396,7 @@ g <- ggplot(df.dot) +
                               ymax = yend, fill = ocean_region_lab),
             alpha = 0.2) +
   scale_color_manual(values = col.region.3) +
-  scale_shape_manual(values = c(15, 16, 17, 18)) +
+  scale_shape_manual(values = shp.reg) +
   scale_fill_manual(values = col.region.3, guide="none") +
   labs(x = "Coefficient",
        y = "",

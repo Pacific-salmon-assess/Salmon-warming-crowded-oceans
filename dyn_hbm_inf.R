@@ -10,11 +10,16 @@ for(i in list.files(path = "./output/models/dyn/", pattern = "*.RData$")) {
 
 
 # Set colours 
-col.region <- chroma::qpal(7, luminance = 40)[c(1, 3, 5, 7)]
-col.eras <- c("#4db8ff", "#b3a100", "#ff80d7", "#00b39e", 
-              "#0070BDFF", "#6D6200FF", "#BC007FFF", "#008070",
-              "#002e4d", "#4d4500", "#4d0034",  "#00332d")
+col.region <- rev(chroma::qpal(7, luminance = 40)[c(1, 3, 5, 7)])
+names(col.region) <- unique(sock.info$ocean_label2)
 
+col.eras <- c("#00b39e", "#b3a100", "#ff80d7", "#4db8ff",
+              "#008070", "#6D6200FF", "#BC007FFF",  "#0070BDFF",
+              "#00332d", "#4d4500", "#4d0034", "#002e4d")
+names(col.eras) <- paste0(rep(names(col.region), 3), ".", rep(c("Early", "Middle", "Late"), each=4))
+
+shp.reg <- c(18, 16, 17, 15)
+names(shp.reg) <- unique(sock.info$ocean_label2)
 
 
 ## Two-covariate models ---------------------------------------------------
@@ -28,57 +33,14 @@ df.era.st.2c <- era_hb_param_df(era.2c, par=c("gamma", "kappa")) # seems to work
 # Summarized dataframe (regional-level)
 df.era.reg.2c <- era_hb_param_df(era.2c, par=c("gamma", "kappa"), mu = TRUE) # seems to work
 
-# Density dataframe 
-post <- rstan::extract(era.2c, pars=c(paste0("gamma", c(1:3)),
-                                      paste0("kappa", c(1:3))))
-dens.l <- lapply(post, function(x){
-  dens.out <- col_density(x, plot.it=F)
-  dens.list <- lapply(dens.out, adply, .margins=c(1,2))
-  dens.df <- join(dens.list$x, dens.list$y, by=c("X1", "X2"))
-  names(dens.df) <- c("n", "stock", "x", "dens")
-  dens.df <- mutate(dens.df, stock=levels(sock$Stock)[as.numeric(stock)] ) 
-  return(dens.df)
-} )
-summ.dens <- bind_rows(dens.l, .id="par") 
-dens.df.st.2c <- data.frame(summ.dens,
-                            Ocean.Region2 = sock.info$Ocean.Region2[match(summ.dens$stock, sock.info$Stock)],
-                            era = case_when(
-                              str_extract(summ.dens$par, "\\d") == "1" ~ "Early",
-                              str_extract(summ.dens$par, "\\d") == "2" ~ "Middle",
-                              str_extract(summ.dens$par, "\\d") == "3" ~ "Late",
-                              .ptype=factor( levels=c("Early", "Middle", "Late"))),
-                            var = str_extract(summ.dens$par, "\\D+"),
-                            varnam = case_when(
-                              str_extract(summ.dens$par, "\\D+") == "gamma" ~ "SST",
-                              str_extract(summ.dens$par, "\\D+") == "kappa" ~ "Competitors"))
 
-# Mean (regional) density dataframe 
-post <- rstan::extract(era.2c, pars=c(paste0("mu_gamma", c(1:3)),
-                                      paste0("mu_kappa", c(1:3))))
-dens.l <- lapply(post, function(x){
-  dens.out <- col_density(x, plot.it=F)
-  dens.list <- lapply(dens.out, adply, .margins=c(1,2))
-  dens.df <- join(dens.list$x, dens.list$y, by=c("X1", "X2"))
-  names(dens.df) <- c("n", "region", "x", "dens")
-  dens.df$Ocean.Region2 <- case_when(dens.df$region == 1 ~ "WC",
-                              dens.df$region == 2 ~ "SEAK",
-                              dens.df$region == 3 ~ "GOA",
-                              dens.df$region == 4 ~ "BS")
-  return(dens.df)
-} )
+# Density dataframe - by stock
+dens.df.st.2c <- era_density_df(era.2c, par=c("gamma", "kappa"))
+dens.df.st.2c <- ocean_region_lab(dens.df.st.2c)
+# Density dataframe (regional lvl)
+dens.df.reg.2c <- era_density_df(era.2c, par=c("gamma", "kappa"), mu=T)
+dens.df.reg.2c <- ocean_region_lab(dens.df.reg.2c)
 
-summ.dens <- bind_rows(dens.l, .id="par") 
-dens.df.reg.2c <- data.frame(summ.dens,
-                             era = case_when(
-                               str_extract(summ.dens$par, "\\d") == "1" ~ "Early",
-                               str_extract(summ.dens$par, "\\d") == "2" ~ "Middle",
-                               str_extract(summ.dens$par, "\\d") == "3" ~ "Late",
-                              .ptype=factor( levels=c("Early", "Middle", "Late"))),
-                             var = str_extract(summ.dens$par, "\\D+"),
-                             varnam = case_when(
-                               str_extract(summ.dens$par, "\\D+") == "mu_gamma" ~ "SST",
-                               str_extract(summ.dens$par, "\\D+") == "mu_kappa" ~ "Competitors")
-)
 
 ### --- Eras model: Figures
 
@@ -106,7 +68,7 @@ g <- ggplot(df.era.st.2c) +
         legend.background = element_blank(),
         legend.text = element_text(size = 8)
   )
-pdf("./figures/dyn/hbm_inf/eras_coef_dot_c2_comb.pdf", width=5, height=8)
+pdf("./figures/dyn/hbm_inf/eras_coef_dot_2c_comb.pdf", width=5, height=8)
 print(g)
 dev.off()
 
@@ -156,6 +118,8 @@ dev.off()
 
 
 
+## NEW scatterplot by eras
+
 
 ### --- Dynamic model: Data
 
@@ -177,12 +141,13 @@ df.dyn.st.2c <- data.frame(Stock = sock$Stock,
 # Summarized dataframe (regional-level)
 # gamma/kappa are series-specific; no mu output. Summarize stocks instead
 df.dyn.reg.2c <- dplyr::summarize(df.dyn.st.2c, 
-                           reg_mean=mean(mu, na.rm=T), 
-                           lower_10=quantile(mu, 0.1), 
-                           upper_90=quantile(mu, 0.9), 
-                           .by=c(Ocean.Region2, BY, varnam))
-df.dyn.reg.2c[which(df.dyn.reg.2c$Ocean.Region2=="BS" & 
-                      df.dyn.reg.2c$BY<1965), c("reg_mean", "lower_10", "upper_90")] <- NA # manually remove some sparse years
+                                  reg_mean=mean(mu, na.rm=T), 
+                                  n_stk=n_distinct(Stock),
+                                  lower_10=quantile(mu, 0.1), 
+                                  upper_90=quantile(mu, 0.9), 
+                                  .by=c(Ocean.Region2, BY, varnam))
+df.dyn.reg.2c <- ddply(df.dyn.reg.2c, .(Ocean.Region2), dplyr::filter, n_stk >= max(n_stk)*0.1) # remove years with less than 10% of stocks observed
+
 
 ### --- Dynamic model: Figures 
 

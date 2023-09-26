@@ -121,12 +121,13 @@ hmm_ac_2c <- rstan::stan(file = "./stan/ss_hmm_2c.stan",
                                      max_treedepth = 10))
 save(hmm_ac_2c, file = paste0("./output/models/hmm-ss/hmm_ac_2c_", levels(sock$Stock)[i], ".Rdata"))
 
-hmm_ac_out_2c[[i]] <- rstan::summary(hmm_ac_2c, pars = params_out, probs=c(0.025, 0.2, 0.5, 0.8, 0.975))$summary
+hmm_ac_out_2c[[i]] <- rstan::summary(hmm_ac_2c, pars = params_out, probs=c(0.025, 0.1, 0.5, 0.9, 0.975))$summary
 
 print(paste(i, "of", nlevels(sock$Stock)))
 
 }
 
+save(hmm_ac_out_2c, file="./output/hmm_ac_out_2c.Rdata")
 
 ## Input-output HMM (IOHMM) : time-varying transition matrix
 ## ------------------------------------------------------------ ##

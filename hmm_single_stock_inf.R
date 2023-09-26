@@ -334,10 +334,13 @@ if(!exists("hmm_ac_out_2c")){
   params_out <- c("beta1", "beta2", "gamma", "alpha", "beta", "log_lik")
   for(i in 1:nlevels(sock$Stock)){
     load(file=paste0("./output/models/hmm-ss/hmm_ac_2c_", levels(sock$Stock)[i], ".Rdata"))
-    hmm_ac_out_2c[[i]] <- rstan::summary(hmm_ac_2c, pars = params_out, probs=c(0.025, 0.2, 0.5, 0.8, 0.975))$summary
+    hmm_ac_out_2c[[i]] <- rstan::summary(hmm_ac_c2, pars = params_out, probs=c(0.025, 0.1, 0.5, 0.9, 0.975))$summary
   }
   save(hmm_ac_out_2c, file="./output/hmm_ac_out_2c.Rdata")
 }
+
+## Data
+post.df <- hmm_param_df(hmm_ac_out_2c, summary="none")
 
 
 # Data -----------------------------------
@@ -345,13 +348,13 @@ names(hmm_ac_out_2c) <- levels(sock$Stock)
 post.df <- plyr::ldply(hmm_ac_out_2c, .id = "stock", .fun=function(x) { 
   data.frame(beta1_mu = x[grep('^beta1', rownames(x)), "mean"],
              beta1_2.5 = x[grep('^beta1', rownames(x)), "2.5%"],
-             beta1_20 = x[grep('^beta1', rownames(x)), "20%"],
-             beta1_80 = x[grep('^beta1', rownames(x)), "80%"],
+             beta1_20 = x[grep('^beta1', rownames(x)), "10%"],
+             beta1_80 = x[grep('^beta1', rownames(x)), "90%"],
              beta1_97.5 = x[grep('^beta1', rownames(x)), "97.5%"],
              beta2_mu = x[grep('^beta2', rownames(x)), "mean"],
              beta2_2.5 = x[grep('^beta2', rownames(x)), "2.5%"],
-             beta2_20 = x[grep('^beta2', rownames(x)), "20%"],
-             beta2_80 = x[grep('^beta2', rownames(x)), "80%"],
+             beta2_20 = x[grep('^beta2', rownames(x)), "10%"],
+             beta2_80 = x[grep('^beta2', rownames(x)), "90%"],
              beta2_97.5 = x[grep('^beta2', rownames(x)), "97.5%"],
              gamma_mu = x[grep('^gamma', rownames(x)), "mean"],
              gamma_2.5 = x[grep('^gamma', rownames(x)), "2.5%"],
@@ -365,7 +368,8 @@ post.df <- plyr::ddply(post.df, .variables="stock",
                          cbind(x, BY, region)})
 
 # Make stock lvl summary dataframe
-stk.summ.df <- post.df %>% mutate(prod1_mu = beta1_mu*gamma_mu,
+stk.summ.df <- post.df %>% 
+  mutate(prod1_mu = beta1_mu*gamma_mu,
                                   prod1_2.5 = beta1_2.5*gamma_2.5,
                                   prod1_97.5 = beta1_97.5*gamma_97.5,
                                   prod2_mu = beta2_mu*gamma_mu,
