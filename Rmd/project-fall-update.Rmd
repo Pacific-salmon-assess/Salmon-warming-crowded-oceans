@@ -191,21 +191,21 @@ In the simplest stationary model we model salmon productivity hierarchically as 
 ## Random walk models
 =======
 \begin{equation}
-$$ln(R_{i,t}/S_{i,t}) = \alpha_{i} - \beta S_{i,t} + \gamma_{k,i,r} X_{k,i,t} + \varepsilon_{i,t}$$ 
+ln(R_{i,t}/S_{i,t}) = \alpha_{i} - \beta S_{i,t} + \gamma_{k,i,r} X_{k,i,t} + \varepsilon_{i,t}
 \end{equation}
 
 
 where $R$ is the total recruitment from population $i$ and spawners $S$ in brood year $t$,  $\alpha$ is productivity (intrinsic rate of growth), $\beta$ is the magnitude of within brood-year density-dependent effects on survival, $\gamma$ is the effect of covariate $k$, $X$ is the specific covariate standardized to mean 0 and standard deviation of 1, and $\epsilon$ is inter-annual variation in survival from egg to adulthood which was assumed to follow a first-order autocorrelated process:
 
 \begin{equation}
-$$\varepsilon_{i,t}=\phi \varepsilon_{i,t-1} + \sqrt{1-\phi^2 }\delta_{i,t}  \\ \delta_{i,t}\sim N(0,\sigma_{i}^2)$$
+\varepsilon_{i,t}=\phi \varepsilon_{i,t-1} + \sqrt{1-\phi^2 }\delta_{i,t}  \\ \delta_{i,t}\sim N(0,\sigma_{i}^2)
 \end{equation}
 
 where $\phi$ is the autocorrelation coefficient, and $\delta$ represents uncorrelated, white noise, interannual variation in survival.
 
 The population-specific parameters $\gamma_{k,i,r}$ were modelled hierarchically by assuming they arise from common hyper-distributions:
 \begin{equation}
-$$\gamma_{k,i,r}\sim N(\mu_{\gamma,k,r},\sigma_{\gamma,k,r}^2)$$
+\gamma_{k,i,r}\sim N(\mu_{\gamma,k,r},\sigma_{\gamma,k,r}^2)
 \end{equation}
 
 where $r$ is one of four broad ocean regions within which salmon populations have previously been shown to exhibit similar responses to ocean climate and ecosystem variation and $\mu$ is the region level average effect. 
@@ -219,13 +219,14 @@ The first class of non-stationary model we considered allowed the $\gamma_{k,i,r
 ## Random walk models
 The second class of non-stationary models we considered allowed the climate and ecosystem parameters to evolve over time according to a random walk:
 \begin{equation}
-$$\gamma_{k,i,t}=\gamma_{k,i,t-1}+w_{k,t}\\ w_{k,t}\sim N(0,\sigma_{w_{k}}^2)$$
+\gamma_{k,i,t}=\gamma_{k,i,t-1}+w_{k,t}\\ w_{k,t}\sim N(0,\sigma_{w_{k}}^2)
 \end{equation}
 where $w$ is process variation and $\sigma_{w}^2$ determines the degree if temporal variability in the $\gamma$ series. For these models the covariate effects were not modelled independently instead of being exchangeable among populations within regions(i.e., hierarchically). 
 
 
 ## Hidden Markov models
 The last class of non-statioanry models we considered were the most flexible and...
+
 ## Model fitting
 
 # Results
