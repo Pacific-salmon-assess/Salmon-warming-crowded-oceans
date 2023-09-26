@@ -109,11 +109,13 @@ Details on model formulation are provided below. These models are fit in a Bayes
 
 ### Spawner-recruitment
 
-```{r productivity timeseries}
+```{r productivity timeseries, fig.width=4, fig.height=8}
 prod_dat <- ocean_region_lab(sock)
+prod_dat <- stock.plot.lab(prod_dat)
+
 ggplot(prod_dat) + 
   geom_line(aes(x=BY, y=RS_stnd, col=ocean_region_lab)) + 
-  facet_grid(rows=vars(Stock), switch ="y", scales="free_y", as.table=F) + 
+  facet_grid(rows=vars(stock_lab), switch ="y", scales="free_y", as.table=F) + 
   scale_colour_manual(values=col.region) +
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
@@ -126,8 +128,11 @@ ggplot(prod_dat) +
   labs(y="", x="Brood Year")
 
 #Need to specify dimensions and resolution of output
-
+# Can i get names to align right?
+# Add Region legend?
 ```
+**Figure 1**. Productivity (R/S) time series of all Sockeye stocks included in analyses.
+
 
 We have been working to update and add to a large collection of time series of spawner (escapement) and total recruitment (catch plus escapement) for all five species of Pacific salmon. Details on the specific timeseries are avaialble [here](https://docs.google.com/spreadsheets/d/1W6bxaIkzlPkQ4PpN7_SKRWMkLrMlfqWK-FywexUstKs/edit#gid=314988634). The spatial and temporal extent of those populations and species that we have fit models to so far are detailed below.
 
@@ -145,17 +150,19 @@ Our analysis is focused on two covariates:
 2.  The abundance of sockeye, chum, and pink salmon across the North Pacific in the second and/or third years of marine life as an index of potential direct or indirect competition for food. This approach is consistent with research that has suggested some salmon species primarily exhibit responses to competition with other salmon during their second and/or third growing seasons at sea ([Connors et al. 2020](https://cdnsciencepub.com/doi/full/10.1139/cjfas-2019-0422); [Ruggerone and Connors 2015](https://cdnsciencepub.com/doi/full/10.1139/cjfas-2014-0134)).
 
 
-```{r map w/ covariates}
+```{r map w/ covariates, fig.width=6, fig.height=7}
+
 # Downlad map and convert to sp
 cl <- rnaturalearth::ne_states(country = c("United States of America", "Canada"))
 na_map <- sf::st_as_sf(cl)
 
 axes <- list( xlims=c(-165.5, -121), 
-              ylims=c(44.5, 64.5),
+              ylims=c(47, 61),
               xbreaks=seq(-160,-120,10), 
               xlabels=as.character(seq(-160,-120,10)),
               seq(45, 65, 5), 
-              ylabels=as.character(seq(45,65,5)))
+              ybreaks=seq(50, 60, 5),
+              ylabels=as.character(seq(50,60,5)))
   
 map <- ggplot() + 
       geom_sf(data=na_map, color="grey50", fill="white", linewidth=0.1) + 
@@ -165,21 +172,34 @@ map <- ggplot() +
       coord_sf(xlim=axes$xlims, ylim=axes$ylims) +
       scale_x_continuous(breaks=axes$xbreaks, labels=axes$xlabels) +
       scale_y_continuous(breaks=axes$ybreaks, labels=axes$ylabels) +
-      scale_colour_manual(values=col.region) + 
-      scale_fill_manual(values=col.dk) + 
-      scale_shape_manual(values=c(23, 21, 24, 22)) +
+      scale_colour_manual(values=col.region, name="Ocean Region Grouping") + 
+      scale_fill_manual(values=col.dk, name="Ocean Region Grouping") + 
+      scale_shape_manual(values=c(23, 21, 24, 22), name="Ocean Region Grouping") +
       labs(x="Longitude (°E)", y="Latitude (°N)") +
       theme_bw() + 
       theme(panel.grid = element_blank(),
-             plot.title = element_text(hjust=0.5),
-             legend.position = "none"
-             )
+            plot.title = element_text(hjust=0.5),
+            legend.position = c(0.25,0.25)
+            )
 
 ## Make dataframe of covariate info
-covar.dat <- sock %>% select(Stock, Ocean.Region2, early_sst_stnd, np_pinks_sec_stnd) %>% pivot_longer(cols=c(early_sst_stnd, np_pinks_sec_stnd), names_to = "covar") %>% mutate(covar_nam = ifelse(covar=="early_sst_stnd", "SST", "Comp"))
+covar.dat.st <- sock %>% select(Stock, BY, Ocean.Region2, early_sst_stnd, np_pinks_sec_stnd) %>% pivot_longer(cols=c(early_sst_stnd, np_pinks_sec_stnd), names_to = "covar") %>% mutate(covar_nam = ifelse(covar=="early_sst_stnd", "SST", "Comp"))
+covar.dat.st <- ocean_region_lab(covar.dat.st)
+covar.dat.reg <- dplyr::summarize(.data=covar.dat.st, mean_covar = mean(value), .by = c("BY", "ocean_region_lab", "covar_nam"))
+
+covar <- ggplot(covar.dat.st) + geom_line(aes(x=BY, y=value, group=Stock, colour=ocean_region_lab), linewidth=0.5, alpha=0.4) +
+  geom_line(data=covar.dat.reg, aes(x=BY, y=mean_covar, col=ocean_region_lab), linewidth=1) +
+  facet_grid(rows=vars(covar_nam), cols=vars(ocean_region_lab)) +
+   scale_colour_manual(values=col.region) +
+   theme_sleek() + theme(legend.position="none")
+
+cowplot::plot_grid(map, covar, nrow=2, rel_heights=c(3,2))
+
+ # Change y scales to be actual temperature in degrees, competitor abundance?
+ # Get facet labels on the other side
 
 ```
-
+***Figure 2***. Sockeye ocean entry locations and associated climate and competitor covariate time series. (a) ....
 
 FIGURE: Multi-panel plots for each covariate (columns covariates, rows regions, faint lines individual stocks, thick line median) 
 
@@ -385,9 +405,6 @@ df.era.st.2c <- ocean_region_lab(df.era.st.2c)
 df.era.reg.2c <- era_hb_param_df(era.2c, par=c("gamma", "kappa"), mu = TRUE)
 df.era.reg.2c <- ocean_region_lab(df.era.reg.2c)
 
-col.eras <- c("#4db8ff", "#b3a100", "#ff80d7", "#00b39e", 
-              "#0070BDFF", "#6D6200FF", "#BC007FFF", "#008070",
-              "#002e4d", "#4d4500", "#4d0034",  "#00332d")
 
 ggplot(df.era.st.2c) +
   geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
@@ -480,7 +497,10 @@ FIGURE: Realized coefficients and state coefficients (both as caterpillar-ish pl
 FIGURE: 2 state plots - add measure of uncertainty (density hist or box and whiskers)
 
 ```{r hidden markov models, include=FALSE}
-# code to generate figures...
+# Load fit summary
+load("../output/hmm_ac_out_2c.Rdata")
+hmm_ac_out_2c
+#
 ```
 
 # Next steps
