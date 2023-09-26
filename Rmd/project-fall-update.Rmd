@@ -301,7 +301,7 @@ ggplot(m.df) +
   facet_wrap( ~ var, ncol = 1) +
   theme_sleek(base_size = 9) +
   theme(legend.justification = c(0, 0),
-        legend.position = c(0.7, 0.85),
+        legend.position = c(0.83, 0.4),
         legend.key.size = unit(10, "pt"),
         legend.background = element_blank(),
         legend.text = element_text(size = 8),
@@ -387,8 +387,14 @@ ggplot(dens.df.st.2c) +
   coord_cartesian(xlim=c(-50,50)) +
   theme_sleek() + labs(x="Covariate effect", y="", col="Ocean Region") +
   theme(axis.text.y=element_blank(),
-        axis.ticks.y=element_blank(), 
-        legend.position="none")
+        legend.key.size = unit(10, "pt"),
+        legend.position=c(0.9, 0.2),
+        legend.background = element_blank(),
+        legend.text = element_text(size = 8),
+        legend.title = element_text(size=9),
+        panel.spacing.y = unit(-0.5, "pt"),
+        axis.ticks.y=element_blank()) 
+
 
 ## Notes: Include years with early/middle/late
 ## match x axis with stationary model: % change in ln R/S
@@ -445,9 +451,12 @@ FIGURE: "sparkline plots" (like above but with time series of posteriors, stocks
 
 ```{r random walk models: figures}
 #Data
+# Load model fit
+load(file="../output/models/dyn/hbm_dyn_2c.Rdata")
+
 # Stock specific dataframe
 probs <- c(0.025, 0.05, 0.10, 0.50, 0.90, 0.95, 0.975)
-summ <- rstan::summary(dyn.2c, pars = c("gamma", "kappa"), probs = probs)[[1]]
+summ <- rstan::summary(dyn.2c, pars = c("gamma", "kappa"), probs = probs)$summary
 df.dyn.st.2c <- data.frame(Stock = sock$Stock,
                    Ocean.Region2 = sock$Ocean.Region2,
                    BY = sock$BY,
