@@ -97,7 +97,7 @@ params_out <- c("beta1", "beta2", "gamma", "alpha", "beta", "log_lik")
 nlvl = 2 # 2 state model
 hmm_ac_out_2c <- list() # Master list to store outputs
 
-for(i in 28:nlevels(sock$Stock)) {
+for(i in 1:nlevels(sock$Stock)) {
   
 hmm.dat <- dplyr::filter(sock, Stock == levels(sock$Stock)[i])
 

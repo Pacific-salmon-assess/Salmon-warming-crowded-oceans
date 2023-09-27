@@ -449,7 +449,7 @@ FIGURE: Time series of covariate coefficient posteriors (mean across stocks in b
 FIGURE: "sparkline plots" (like above but with time series of posteriors, stocks as rows)
  -- Decided not to include sparkline plots -- 
 
-```{r random walk models: figures}
+```{r random walk models: figures, warning=FALSE}
 #Data
 # Load model fit
 load(file="../output/models/dyn/hbm_dyn_2c.Rdata")
@@ -487,14 +487,15 @@ ggplot(df.dyn.reg.2c) +
   geom_line(data= df.dyn.st.2c, aes(x=BY, y=mu, group=Stock, col=ocean_region_lab), alpha=0.2) +
   geom_line(aes(x=BY, y=reg_mean, col=ocean_region_lab), linewidth=1) +
   geom_ribbon(aes(x=BY, y=reg_mean, ymin=lower_10, ymax=upper_90, fill=ocean_region_lab), alpha=0.2) +
-  facet_grid(cols=vars(ocean_region_lab), rows=vars(varnam), scales="free_y") + 
+  facet_grid(cols=vars(ocean_region_lab), rows=vars(factor(varnam, levels=c("SST", "Competitors"))), scales="free_y") + 
   ylim(c(-1,1)) + 
   scale_colour_manual(values=col.region, aesthetics=c("colour", "fill")) +
-  theme_sleek() + theme(legend.position="none")
+  theme_sleek() + theme(legend.position="none") +
+   labs(x="Brood Year", y="Posterior mean coeffiicents")
 
 
 ## try moving average to smooth
-
+## order regions correctly
 
 ```
 
@@ -506,12 +507,47 @@ FIGURE: Realized coefficients and state coefficients (both as caterpillar-ish pl
 
 FIGURE: 2 state plots - add measure of uncertainty (density hist or box and whiskers)
 
-```{r hidden markov models, include=FALSE}
+```{r hmm timeseries}
 # Load fit summary
 load("../output/hmm_ac_out_2c.Rdata")
-hmm_ac_out_2c
-#
+
+#Data 
+stk.summ.df <- hmm_param_df(hmm_ac_out_2c, summary="stock")
+stk.summ.df <- ocean_region_lab(stk.summ.df, var="region")
+reg.summ.df <- hmm_param_df(hmm_ac_out_2c, summary="region")
+reg.summ.df <- ocean_region_lab(reg.summ.df, var="region")
+
+ggplot(reg.summ.df) + 
+  geom_hline(yintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
+  geom_line(data=stk.summ.df, aes(x=BY, y=realb_mu, group=Stock, col=ocean_region_lab), alpha=0.2) +
+  geom_line(aes(x=BY, y=realb_mu, col=ocean_region_lab), linewidth=1) +
+  geom_ribbon(aes(x=BY, ymin=realb_10, ymax=realb_90, fill=ocean_region_lab), alpha=0.2) +
+  facet_grid(cols=vars(ocean_region_lab), rows=vars(factor(beta_covar, levels=c("SST", "Competitors"))), scales="free_y") +
+  scale_colour_manual(values=col.region, aesthetics = c("colour", "fill")) +
+  theme_sleek() + theme(legend.position="none", 
+                          axis.text.x = element_blank()) +
+  labs(x="Brood Year", y="Posterior mean coeffiicents")
+
+
 ```
+
+```{r hmm state coefficients, fig.width=6, fig.height=7}
+# Data
+post.df <- hmm_param_df(hmm_ac_out_2c, summary="none")
+post.df <- ocean_region_lab(post.df, var="region")
+p.post.df <- unique(select(.data=post.df, Stock, ocean_region_lab, contains("beta")))
+p.post.df <- stock.plot.lab(p.post.df, numbered=F)
+
+# Dot and whiskers
+ggplot(p.post.df) + 
+  geom_point(aes(x=beta_mu, y=stock_lab, col=ocean_region_lab), shape="\u007C", size=2) +
+  geom_segment(aes(x=beta_2.5, xend=beta_97.5, y=stock_lab, yend=stock_lab, col=ocean_region_lab)) +
+  geom_segment(aes(x=beta_10, xend=beta_90, y=stock_lab, yend=stock_lab, col=ocean_region_lab), linewidth=3.5, alpha=0.2) +
+  facet_wrap(vars(factor(beta_covar, levels=c("SST", "Competitors")))) + 
+  scale_colour_manual(values=col.region) + theme_sleek() + theme(legend.position="none") +
+  labs(x="State coefficient posterior", y="")
+```
+
 
 # Next steps
 

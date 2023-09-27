@@ -334,7 +334,7 @@ if(!exists("hmm_ac_out_2c")){
   params_out <- c("beta1", "beta2", "gamma", "alpha", "beta", "log_lik")
   for(i in 1:nlevels(sock$Stock)){
     load(file=paste0("./output/models/hmm-ss/hmm_ac_2c_", levels(sock$Stock)[i], ".Rdata"))
-    hmm_ac_out_2c[[i]] <- rstan::summary(hmm_ac_c2, pars = params_out, probs=c(0.025, 0.1, 0.5, 0.9, 0.975))$summary
+    hmm_ac_out_2c[[i]] <- rstan::summary(hmm_ac_2c, pars = params_out, probs=c(0.025, 0.1, 0.5, 0.9, 0.975))$summary
   }
   save(hmm_ac_out_2c, file="./output/hmm_ac_out_2c.Rdata")
 }
@@ -342,75 +342,9 @@ if(!exists("hmm_ac_out_2c")){
 ## Data
 post.df <- hmm_param_df(hmm_ac_out_2c, summary="none")
 
+stk.summ.df <- hmm_param_df(hmm_ac_out_2c, summary="stock")
 
-# Data -----------------------------------
-names(hmm_ac_out_2c) <- levels(sock$Stock)
-post.df <- plyr::ldply(hmm_ac_out_2c, .id = "stock", .fun=function(x) { 
-  data.frame(beta1_mu = x[grep('^beta1', rownames(x)), "mean"],
-             beta1_2.5 = x[grep('^beta1', rownames(x)), "2.5%"],
-             beta1_20 = x[grep('^beta1', rownames(x)), "10%"],
-             beta1_80 = x[grep('^beta1', rownames(x)), "90%"],
-             beta1_97.5 = x[grep('^beta1', rownames(x)), "97.5%"],
-             beta2_mu = x[grep('^beta2', rownames(x)), "mean"],
-             beta2_2.5 = x[grep('^beta2', rownames(x)), "2.5%"],
-             beta2_20 = x[grep('^beta2', rownames(x)), "10%"],
-             beta2_80 = x[grep('^beta2', rownames(x)), "90%"],
-             beta2_97.5 = x[grep('^beta2', rownames(x)), "97.5%"],
-             gamma_mu = x[grep('^gamma', rownames(x)), "mean"],
-             gamma_2.5 = x[grep('^gamma', rownames(x)), "2.5%"],
-             gamma_97.5 = x[grep('^gamma', rownames(x)), "97.5%"],
-             state = c(1,2),
-             row.names=NULL) } )
-post.df <- plyr::ddply(post.df, .variables="stock", 
-                       .fun=function(x){
-                         BY <- rep(sock$BY[factor(sock$Stock, ordered=F) == x$stock[1]], each=2)
-                         region <- rep(sock$Ocean.Region2[factor(sock$Stock, ordered=F) == x$stock[1]], each=2)
-                         cbind(x, BY, region)})
-
-# Make stock lvl summary dataframe
-stk.summ.df <- post.df %>% 
-  mutate(prod1_mu = beta1_mu*gamma_mu,
-                                  prod1_2.5 = beta1_2.5*gamma_2.5,
-                                  prod1_97.5 = beta1_97.5*gamma_97.5,
-                                  prod2_mu = beta2_mu*gamma_mu,
-                                  prod2_2.5 = beta2_2.5*gamma_2.5,
-                                  prod2_97.5 = beta2_97.5*gamma_97.5
-                                  ) %>% 
-  dplyr::summarize(realb1_mu = sum(prod1_mu),
-                   realb1_2.5 = sum(prod1_2.5),
-                   realb1_97.5 = sum(prod1_97.5),
-                   realb2_mu = sum(prod2_mu),
-                   realb2_2.5 = sum(prod2_2.5),
-                   realb2_97.5 = sum(prod2_97.5),
-                   .by=c("stock", "BY", "region") )
-
-# Make regional lvl summary dataframe
-reg.summ.df <- stk.summ.df %>% dplyr::summarize(realb1_reg_mu = mean(realb1_mu, na.rm=T),
-                                                realb1_reg_2.5_avg = quantile(realb1_mu, 0.2),
-                                                realb1_reg_97.5_avg = quantile(realb1_mu, 0.8),
-                                                realb2_reg_mu = mean(realb2_mu, na.rm=T),
-                                                realb2_reg_2.5_avg = quantile(realb2_mu, 0.2),
-                                                realb2_reg_97.5_avg = quantile(realb2_mu, 0.8),
-                                                .by=c("BY", "region"))
-# Get posterior density data 
-for(i in 1:nlevels(sock$Stock)){
-  load(paste0("./output/models/hmm-ss/hmm_ac_2c_", levels(sock$Stock)[i], ".Rdata"))
-  post <- rstan::extract(hmm_ac_c2)
-  post_beta1 <- lapply(col_density(post$beta1, plot.it=F), plyr::adply, .margins=c(1,2))
-  post_beta2 <- lapply(col_density(post$beta2, plot.it=F), plyr::adply, .margins=c(1,2))
-  beta1_df <- join(post_beta1$x, post_beta1$y, by=c("X1","X2"))
-  beta2_df <- join(post_beta2$x, post_beta2$y, by=c("X1","X2"))
-  names(beta1_df) <- c("n", "state", "b1.x", "b1.dens")
-  names(beta2_df) <- c("n", "state", "b2.x", "b2.dens")
-  beta_df <- join(beta1_df, beta2_df, by=c("n","state") ) ## this is where it gets confusing - fix
-  beta_df$Stock = levels(sock$Stock)[i]
-  if(i==1) 
-    beta_df_master <- beta_df else
-      beta_df_master <- rbind(beta_df_master, beta_df)
-}
-beta_df_master <- left_join(beta_df_master, sock.info[,c("Stock", "Ocean.Region2")], by='Stock')
-beta_df_master$Stock <- factor(beta_df_master$Stock, levels=levels(sock$Stock))
-
+reg.summ.df <- hmm_param_df(hmm_ac_out_2c, summary="reg")
 
 ## Figures --------------------------------------
 
@@ -510,37 +444,4 @@ print(g)
 dev.off()
 
 
-## (6) Posterior states -- density
-g_b1 <- ggplot(beta_df_master) + 
-  geom_path(aes(x=b1.x, y=b1.dens, group=state, col=Ocean.Region2), linewidth=0.3) + 
-  facet_grid(rows=vars(Stock), as.table=F, switch="y") + 
-  scale_colour_manual(values=col.region) +
-  theme(axis.text.y = element_blank(),
-        axis.ticks.y = element_blank(),
-        strip.text.y.left = element_text(angle=0),
-        strip.background = element_rect(fill="transparent", colour="transparent"),
-        strip.text = element_text(size=7),
-        panel.spacing.y = unit(0, unit="cm"),
-        panel.background = element_rect(fill="white"),
-        legend.position = "none") +
-  labs(y="", x="SST Covariate effect") + xlim(c(-1, 1))
-
-g_b2 <- ggplot(beta_df_master) + 
-  geom_path(aes(x=b2.x, y=b2.dens, group=state, col=Ocean.Region2), linewidth=0.3) + 
-  facet_grid(rows=vars(Stock), as.table=F, switch="y") + 
-  scale_colour_manual(values=col.region) +
-  theme(axis.text.y = element_blank(),
-        axis.ticks.y = element_blank(),
-        strip.background = element_blank(),
-        strip.text = element_blank(),
-        panel.spacing.y = unit(0, unit="cm"),
-        panel.background = element_rect(fill="white"),
-        legend.position = "none") +
-  labs(y="", x="Competitor Covariate effect") + xlim(c(-1, 1))
-
-g <- cowplot::plot_grid(g_b1, g_b2, nrow=1, rel_widths = c(1.25, 1))
-
-pdf("./figures/hmm/single-stock/hmm_ac_2c_statedens.pdf", width=8, height=10)
-print(g)
-dev.off()
 

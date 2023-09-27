@@ -8,7 +8,7 @@ stock.plot.lab <- function(data, var="Stock", numbered=TRUE){
   ## data = a data.frame with a "Stock" column
   ## Returns original dataframe with a new factor column, 'stock_lab'
   
-  stock <- unique(data[[var]])
+  stock <- as.character(unique(data[[var]]))
 
   # replace words with shortened versions
   lab <- gsub("Lower", "Low.", stock)
@@ -17,7 +17,6 @@ stock.plot.lab <- function(data, var="Stock", numbered=TRUE){
   lab <- gsub("River", "R.", lab)
   lab <- gsub("Type", "", lab)
 
-  
   if(numbered){
     lab <- paste0(1:length(lab), ". ", lab)
   }
@@ -380,85 +379,69 @@ hmm_param_df <- function(data, summary = "stock", reg.quant=c(0.1, 0.9)) {
   # summary = "none" returns full posterior df (post.df)
   
   # reg.quant = for regional summary, quantiles to calculate
-  
   names(data) <- levels(sock$Stock)
   quant <- colnames(data[[1]])[grep('%$', colnames(data[[1]]))]
-  col.names <- c(paste("beta1", c("mu", quant), sep = "_"),
-                 paste("beta2", c("mu", quant), sep = "_"),
-                 paste("gamma", c("mu", quant[c(1,5)]), sep = "_"))
+  col.names <- c(paste("beta", c("mu", gsub("%", "", quant)), sep = "_"),
+                 paste("gamma", c("mu", gsub("%", "", quant[c(1,5)])), sep = "_"))
   
-  post.df <- plyr::ldply(data, .id = "stock", .fun=function(x) { 
-    data.frame(beta1_mu = x[grep('^beta1', rownames(x)), "mean"],
-               beta1_1 = x[grep('^beta1', rownames(x)), quant[1]],
-               beta1_2 = x[grep('^beta1', rownames(x)), quant[2]],
-               beta1_3 = x[grep('^beta1', rownames(x)), quant[3]],
-               beta1_4 = x[grep('^beta1', rownames(x)), quant[4]],
-               beta1_5 = x[grep('^beta1', rownames(x)), quant[5]],
-               beta2_mu = x[grep('^beta2', rownames(x)), "mean"],
-               beta2_1 = x[grep('^beta2', rownames(x)), quant[1]],
-               beta2_2 = x[grep('^beta2', rownames(x)), quant[2]],
-               beta2_3 = x[grep('^beta2', rownames(x)), quant[3]],
-               beta2_4 = x[grep('^beta2', rownames(x)), quant[4]],
-               beta2_5 = x[grep('^beta2', rownames(x)), quant[5]],
-               gamma_mu = x[grep('^gamma', rownames(x)), "mean"],
-               gamma_1 = x[grep('^gamma', rownames(x)), quant[1]],
-               gamma_5 = x[grep('^gamma', rownames(x)), quant[5]],
-               state = c(1,2),
-               row.names=NULL) } )
-  
-  post.df <- plyr::ddply(post.df, .variables="stock", 
+  post.df <- plyr::ldply(data, .id = "Stock", .fun=function(x) { 
+    data.frame(beta_mu = x[grep('^beta\\d', rownames(x)), "mean"][c(1,3,2,4)],
+               beta_1 = x[grep('^beta\\d', rownames(x)), quant[1]][c(1,3,2,4)],
+               beta_2 = x[grep('^beta\\d', rownames(x)), quant[2]][c(1,3,2,4)],
+               beta_3 = x[grep('^beta\\d', rownames(x)), quant[3]][c(1,3,2,4)],
+               beta_4 = x[grep('^beta\\d', rownames(x)), quant[4]][c(1,3,2,4)],
+               beta_5 = x[grep('^beta\\d', rownames(x)), quant[5]][c(1,3,2,4)],
+               gamma_mu = rep(x[grep('^gamma', rownames(x)), "mean"], each=2),
+               gamma_1 = rep(x[grep('^gamma', rownames(x)), quant[1]], each=2),
+               gamma_5 = rep(x[grep('^gamma', rownames(x)), quant[5]], each=2),
+               state = rep(1:2, each=2),
+               beta_covar = rep(c("SST", "Competitors"), 2),
+               row.names=NULL
+    ) } )
+  post.df <- plyr::ddply(post.df, .variables="Stock", 
                          .fun=function(x){
-                           BY <- rep(sock$BY[factor(sock$Stock, ordered=F) == x$stock[1]], each=2)
-                           region <- rep(sock$Ocean.Region2[factor(sock$Stock, ordered=F) == x$stock[1]], each=2)
+                           BY <- rep(sock$BY[factor(sock$Stock, ordered=F) == x$Stock[1]], each=4)
+                           region <- rep(sock$Ocean.Region2[factor(sock$Stock, ordered=F) == x$Stock[1]], each=4)
                            cbind(x, BY, region)})
-  
-  
-  if(summary == "none"){
-    names(post.df)[2:(ncol(post.df)-3)] <- col.names
-     return(post.df)
+
+    if(summary == "none"){
+      names(post.df)[2:(ncol(post.df)-4)] <- col.names
+      return(post.df)
   }
   
-  # stock summary
+  # Stock summary
   
-stk.col.names <- c(paste("realb1", c("mu", quant[c(1,5)]), sep = "_"),
-                     paste("realb2", c("mu", quant[c(1,5)]), sep = "_"))
+stk.col.names <- paste("realb", c("mu", gsub("%", "", quant[c(1,5)])), sep = "_")
 stk.summ.df <- post.df %>% 
-      mutate(prod1_mu = beta1_mu*gamma_mu,
-             prod1_lower = beta1_1*gamma_1,
-             prod1_upper = beta1_5*gamma_5,
-             prod2_mu = beta2_mu*gamma_mu,
-             prod2_lower = beta2_1*gamma_5,
-             prod2_upper = beta2_1*gamma_5
-      ) %>% 
-      dplyr::summarize(realb1_mu = sum(prod1_mu),
-                       realb1_lower = sum(prod1_lower),
-                       realb1_upper = sum(prod1_upper),
-                       realb2_mu = sum(prod2_mu),
-                       realb2_lower = sum(prod2_lower),
-                       realb2_upper = sum(prod2_upper),
-                       .by=c("stock", "BY", "region") )
+      mutate(prod_mu = beta_mu*gamma_mu,
+             prod_lower = beta_1*gamma_1,
+             prod_upper = beta_5*gamma_5 ) %>% 
+      dplyr::summarize(realb_mu = sum(prod_mu),
+                       realb_lower = sum(prod_lower),
+                       realb_upper = sum(prod_upper),
+                       .by=c("Stock", "BY", "region", "beta_covar") )
  
  if(summary == "stock"){
-   ##Names!!
-   names(stk.summ.df)[4:ncol(stk.summ.df)] <- stk.col.names
+   names(stk.summ.df)[5:ncol(stk.summ.df)] <- stk.col.names
     return(stk.summ.df)
   }
   
-    reg.col.names <- c(paste("realb1", c("mu", reg.quant), sep = "_"),
-                       paste("realb2", c("mu", reg.quant), sep = "_"))
+  # Region summary
+    reg.col.names <- paste("realb", c("mu", reg.quant*100), sep = "_")
     
     reg.summ.df <- stk.summ.df %>% 
-      dplyr::summarize(realb1_reg_mu = mean(realb1_mu, na.rm=T),
-                       realb1_reg_lower = quantile(realb1_mu, reg.quant[1]),
-                       realb1_reg_upper = quantile(realb1_mu, reg.quant[2]),
-                       realb2_reg_mu = mean(realb2_mu, na.rm=T),
-                       realb2_reg_lower = quantile(realb2_mu, reg.quant[1]),
-                       realb2_reg_upper = quantile(realb2_mu, reg.quant[2]),
-                       .by=c("BY", "region"))
+      dplyr::summarize(realb_reg_mu = mean(realb_mu, na.rm=T),
+                       realb_reg_lower = quantile(realb_mu, reg.quant[1]),
+                       realb_reg_upper = quantile(realb_mu, reg.quant[2]),
+                       n_stk=n_distinct(Stock),
+                       .by=c("BY", "region", "beta_covar")) %>%
+      filter(n_stk >= 4)      # no less than 4 stocks in an avg
+
     if(summary == "region"){  
-      names(reg.summ.df)[3:length(reg.summ.df)] <- reg.col.names
+      names(reg.summ.df)[4:(length(reg.summ.df)-1)] <- reg.col.names
       return(reg.summ.df)
-    } else print("summary argument must be one of 'stock', 'region', or 'none'")
+    } 
+    else print("summary argument must be one of 'stock', 'region', or 'none'")
   
 }
 
