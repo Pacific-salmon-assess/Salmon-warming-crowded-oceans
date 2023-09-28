@@ -105,8 +105,6 @@ Details on model formulation are provided below. These models are fit in a Bayes
 
 ## Data
 
-
-
 ### Spawner-recruitment
 
 ```{r productivity timeseries, fig.width=4, fig.height=8}
@@ -131,15 +129,14 @@ ggplot(prod_dat) +
 # Can i get names to align right?
 # Add Region legend?
 ```
-**Figure 1**. Productivity (R/S) time series of all Sockeye stocks included in analyses.
 
+**Figure 1**. Productivity (R/S) time series of all Sockeye stocks included in analyses.
 
 We have been working to update and add to a large collection of time series of spawner (escapement) and total recruitment (catch plus escapement) for all five species of Pacific salmon. Details on the specific timeseries are avaialble [here](https://docs.google.com/spreadsheets/d/1W6bxaIkzlPkQ4PpN7_SKRWMkLrMlfqWK-FywexUstKs/edit#gid=314988634). The spatial and temporal extent of those populations and species that we have fit models to so far are detailed below.
 
 FIGURE: map of sockeye salmon ocean-entry locations.
 
 FIGURE: sparkline/"lie detector" plot of ln(R/S) timeseries
-
 
 ### Covariates
 
@@ -148,7 +145,6 @@ Our analysis is focused on two covariates:
 1.  Sea surface temperatures near juvenile salmon ocean-entry points to index regional-scale environmental variability during the first few months in the ocean, which are hypothesized to represent a critical period in the Pacific salmon life cycle that can strongly influence year class strength.
 
 2.  The abundance of sockeye, chum, and pink salmon across the North Pacific in the second and/or third years of marine life as an index of potential direct or indirect competition for food. This approach is consistent with research that has suggested some salmon species primarily exhibit responses to competition with other salmon during their second and/or third growing seasons at sea ([Connors et al. 2020](https://cdnsciencepub.com/doi/full/10.1139/cjfas-2019-0422); [Ruggerone and Connors 2015](https://cdnsciencepub.com/doi/full/10.1139/cjfas-2014-0134)).
-
 
 ```{r map w/ covariates, fig.width=6, fig.height=7}
 
@@ -193,67 +189,65 @@ covar <- ggplot(covar.dat.st) + geom_line(aes(x=BY, y=value, group=Stock, colour
    scale_colour_manual(values=col.region) +
    theme_sleek() + theme(legend.position="none")
 
-cowplot::plot_grid(map, covar, nrow=2, rel_heights=c(3,2))
+cowplot::plot_grid(map, covar, nrow=2, rel_heights=c(3,2), rel_widths = c(2,2))
 
  # Change y scales to be actual temperature in degrees, competitor abundance?
  # Get facet labels on the other side
 
 ```
+
 ***Figure 2***. Sockeye ocean entry locations and associated climate and competitor covariate time series. (a) ....
 
-FIGURE: Multi-panel plots for each covariate (columns covariates, rows regions, faint lines individual stocks, thick line median) 
+FIGURE: Multi-panel plots for each covariate (columns covariates, rows regions, faint lines individual stocks, thick line median)
 
 ## Stationary models
 
-In the simplest stationary model we model salmon productivity hierarchically as a function of spawner abundance, early marine ocean conditions, and competitor abundance:
+In the simplest stationary class of models salmon productivity was modelled hierarchically as a function of spawner abundance, early marine ocean conditions, and potential competitor abundance later in marine life:
 
-
-## Random walk models
-=======
+```{=tex}
 \begin{equation}
 ln(R_{i,t}/S_{i,t}) = \alpha_{i} - \beta S_{i,t} + \gamma_{k,i,r} X_{k,i,t} + \varepsilon_{i,t}
 \end{equation}
+```
+where $R$ is the total recruitment from population $i$ and spawners $S$ in brood year $t$, $\alpha$ is productivity (intrinsic rate of growth), $\beta$ is the magnitude of within brood-year density-dependent effects on survival, $\gamma$ is the effect of covariate $k$, $X$ is the specific covariate standardized to mean 0 and standard deviation of 1, and $\epsilon$ is inter-annual variation in survival from egg to adulthood which was assumed to follow a first-order autocorrelated process:
 
-
-where $R$ is the total recruitment from population $i$ and spawners $S$ in brood year $t$,  $\alpha$ is productivity (intrinsic rate of growth), $\beta$ is the magnitude of within brood-year density-dependent effects on survival, $\gamma$ is the effect of covariate $k$, $X$ is the specific covariate standardized to mean 0 and standard deviation of 1, and $\epsilon$ is inter-annual variation in survival from egg to adulthood which was assumed to follow a first-order autocorrelated process:
-
+```{=tex}
 \begin{equation}
 \varepsilon_{i,t}=\phi \varepsilon_{i,t-1} + \sqrt{1-\phi^2 }\delta_{i,t}  \\ \delta_{i,t}\sim N(0,\sigma_{i}^2)
 \end{equation}
-
+```
 where $\phi$ is the autocorrelation coefficient, and $\delta$ represents uncorrelated, white noise, interannual variation in survival.
 
-The population-specific parameters $\gamma_{k,i,r}$ were modelled hierarchically by assuming they arise from common hyper-distributions:
-\begin{equation}
+The population-specific parameters $\gamma_{k,i,r}$ were modelled hierarchically by assuming they arise from common hyper-distributions: \begin{equation}
 \gamma_{k,i,r}\sim N(\mu_{\gamma,k,r},\sigma_{\gamma,k,r}^2)
 \end{equation}
 
-where $r$ is one of four broad ocean regions within which salmon populations have previously been shown to exhibit similar responses to ocean climate and ecosystem variation and $\mu$ is the region level average effect. 
+where $r$ is one of four broad ocean regions within which salmon populations have previously been shown to exhibit similar responses to ocean climate and ecosystem variation and $\mu$ is the region level average effect.
 
-For Fraser River sockeye stocks (No. X-Y in Fig. X), spawner abundances were in units of effective female spawners (i.e., female spawner abundance adjusted for unspawned eggs), whereas for all other stocks spawner abundances were total male and female spawners. Thus, $\alpha_{i}$ parameters were split into two groups (one group that included Fraser River stocks and another group that included all non-Fraser River stocks) that were exchangeable within each group but not between the two groups. 
-
+For Fraser River sockeye stocks (No. 1-19 in Fig. 1), spawner abundances were in units of effective female spawners (i.e., female spawner abundance adjusted for unspawned eggs), whereas for all other stocks spawner abundances were total male and female spawners. Thus, $\alpha_{i}$ parameters were split into two groups (one group that included Fraser River stocks and another group that included all non-Fraser River stocks) that were exchangeable within each group but not between the two groups.
 
 ## Era models
-The first class of non-stationary model we considered allowed the $\gamma_{k,i,r,e}$ parameters to change at predefined points in time which corresponded with well documented Northeast Pacific regime shifts in 1976/77 and 1989/99 ([Hare and Mantua, 2000](https://www.sciencedirect.com/science/article/pii/S0079661100000331)) resulting in three eras ($e$). As with the stationary models we assumed the era specific climate and ecosystem parameters were exchangeable among populations within the same ocean ecosystem and era thereby estimating both population specific and ocean ecosystem level effects by era.
+
+The first class of non-stationary model we considered allowed the $\gamma_{k,i,r,e}$ parameters to change at predefined points in time corresponding with well documented Northeast Pacific regime shifts in 1976/77 and 1989/99 ([Hare and Mantua, 2000](https://www.sciencedirect.com/science/article/pii/S0079661100000331)) resulting in three eras ($e$). As with the stationary models we assumed the era specific climate and ecosystem parameters were exchangeable among populations within the same ocean ecosystem and era thereby estimating both population specific and ocean ecosystem level effects by era.
 
 ## Random walk models
-The second class of non-stationary models we considered allowed the climate and ecosystem parameters to evolve over time according to a random walk:
-\begin{equation}
-\gamma_{k,i,t}=\gamma_{k,i,t-1}+w_{k,t}\\ w_{k,t}\sim N(0,\sigma_{w_{k}}^2)
-\end{equation}
-where $w$ is process variation and $\sigma_{w}^2$ determines the degree if temporal variability in the $\gamma$ series. For these models the covariate effects were not modelled independently instead of being exchangeable among populations within regions(i.e., hierarchically). 
 
+The second class of non-stationary models we considered allowed the climate and ecosystem parameters to evolve over time according to a random walk: \begin{equation}
+\gamma_{k,i,t}=\gamma_{k,i,t-1}+w_{k,t}\\ w_{k,t}\sim N(0,\sigma_{w_{k}}^2)
+\end{equation} where $w$ is process variation and $\sigma_{w}^2$ determines the degree if temporal variability in the $\gamma$ series. For these models the covariate effects were  modelled independently instead of being exchangeable among populations within regions (i.e., hierarchically).
 
 ## Hidden Markov models
+
 The last class of non-statioanry models we considered were the most flexible and...
 
 ## Model fitting
+We fit the model described above in a Bayesian estimation framework with Stan [Stan Development Team 2020](https://mc-stan.org/), which implements the No-U-Turn Hamiltonian Markov chain Monte Carlo algorithm [Hoffman et al. 2014](https://www.jmlr.org/papers/volume15/hoffman14a/hoffman14a.pdf) for Bayesian statistical inference to generate the joint posterior probability distribution of all unknowns in the model. For each  model run, we sampled from 4 chains with 4,000 iterations each and discarded the first 1,000 as warm-up. We assessed chain convergence visually via trace plots and posterior predictive checks and by ensuring that $\hat{R}$ [potential scale reduction factor; [Vehtari et al. 2021](https://projecteuclid.org/journals/bayesian-analysis/volume-16/issue-2/Rank-Normalization-Folding-and-Localization--An-Improved-R%CB%86-for/10.1214/20-BA1221.full)] was less than 1.01 and that the effective sample size was greater than 400 for each parameter in the model. 
 
 # Results
 
 ## Stationary models
 
-```{r stationary models: posterior probability dist.}
+```{r stationary models: posterior probability dist., fig.align = "center", out.height='88%', out.width = '80%'}
 # code to generate figures...
 
 load("../output/models/stat/stat_a.Rdata")
@@ -400,8 +394,6 @@ ggplot(dens.df.st.2c) +
 ## match x axis with stationary model: % change in ln R/S
 ```
 
-
-
 FIGURE: Time period covariate coefficient posteriors grouped by region and covariate, stacked by stock
 
 ```{r Apriori models: caterpillar plot}
@@ -446,8 +438,7 @@ ggplot(df.era.st.2c) +
 
 FIGURE: Time series of covariate coefficient posteriors (mean across stocks in bold, faint lines for individual stocks) grouped by region and covariate
 
-FIGURE: "sparkline plots" (like above but with time series of posteriors, stocks as rows)
- -- Decided not to include sparkline plots -- 
+FIGURE: "sparkline plots" (like above but with time series of posteriors, stocks as rows) -- Decided not to include sparkline plots --
 
 ```{r random walk models: figures, warning=FALSE}
 #Data
@@ -488,7 +479,7 @@ ggplot(df.dyn.reg.2c) +
   geom_line(aes(x=BY, y=reg_mean, col=ocean_region_lab), linewidth=1) +
   geom_ribbon(aes(x=BY, y=reg_mean, ymin=lower_10, ymax=upper_90, fill=ocean_region_lab), alpha=0.2) +
   facet_grid(cols=vars(ocean_region_lab), rows=vars(factor(varnam, levels=c("SST", "Competitors"))), scales="free_y") + 
-  ylim(c(-1,1)) + 
+  ylim(c(-0.75,0.75)) + 
   scale_colour_manual(values=col.region, aesthetics=c("colour", "fill")) +
   theme_sleek() + theme(legend.position="none") +
    labs(x="Brood Year", y="Posterior mean coeffiicents")
@@ -547,7 +538,6 @@ ggplot(p.post.df) +
   scale_colour_manual(values=col.region) + theme_sleek() + theme(legend.position="none") +
   labs(x="State coefficient posterior", y="")
 ```
-
 
 # Next steps
 
