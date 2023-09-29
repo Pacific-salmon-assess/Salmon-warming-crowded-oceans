@@ -68,9 +68,13 @@ geographic.order <- function(x) {
   geo.id <-  rbind(WC_stk[, c("Stock", "geo_id")], SEAK_stk[, c("Stock", "geo_id")], GOA_stk[, c("Stock", "geo_id")], BS_stk[, c("Stock", "geo_id")])
   geo.id <- geo.id[order(geo.id$geo_id), ] # sort in ascending order
   
-  x$Stock <- factor(x$Stock, levels = geo.id$Stock, ordered = T)
+  stockcol <- factor(x$Stock, levels = geo.id$Stock)
   
-  return(x$Stock)
+  df = x
+  #if(!all(df$Stock == x$Stock)) print("Problem!!")
+  df$Stock <- stockcol
+  
+  return(df)
 }
 
 
@@ -1966,7 +1970,7 @@ fill.time.series <- function(data) {
     ## the time series for a particular salmon stocks also get removed if `use`
     ## is set to 0. This function adds back in those data points, setting them
     ## to NA.
-
+  
     id <- unique(data$Stock.ID)
     lst <- vector("list", length(id))
     for(i in seq_along(id)) {

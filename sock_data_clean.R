@@ -128,7 +128,7 @@ bt.out.6 <- ddply(bt.out.5, .(Stock.ID), function(i) {
                        })
 
 ## Order stocks geographically to make plotting easier
-bt.out.6$Stock <- geographic.order(bt.out.6)
+bt.out.6 <- geographic.order(bt.out.6)
 bt.out.7 <- dplyr::arrange(bt.out.6, factor(Stock, levels=levels(bt.out.6$Stock)))
 
 # Summary
@@ -166,7 +166,7 @@ s.info.brood$ocean_label2 <- case_when(s.info.brood$Ocean.Region2 == "WC" ~ "Wes
                                        s.info.brood$Ocean.Region2 == "SEAK" ~ "Southeast Alaska")
 
 ## Order stocks geographically to make comparison easier
-s.info.brood$Stock <- geographic.order(s.info.brood)
+s.info.brood <- geographic.order(s.info.brood)
 s.info.brood <- dplyr::arrange(s.info.brood, factor(Stock, levels=levels(s.info.brood$Stock)))
 
 
