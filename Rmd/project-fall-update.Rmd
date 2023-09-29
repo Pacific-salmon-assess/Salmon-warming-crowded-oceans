@@ -170,12 +170,14 @@ map.info <- sock.info %>% select(Stock, lon, lat, ocean_label2) %>%
   filter(!(first.stk %in% c(54:56))) # remove some overlapping points
 map.info$first.stk[map.info$first.stk %in% c(52, 53)] <- 52
 map.info$last.stk[map.info$last.stk %in% c(52, 53)] <- 56
+map.info <- map.info %>% mutate(num = ifelse(first.stk == last.stk, first.stk, paste(first.stk, last.stk, sep="-")))
 
-ggplot(map.info) + 
+map <- ggplot(map.info) + 
       geom_sf(data=na_map, color="grey50", fill="white", linewidth=0.1) + 
       ggspatial::geom_spatial_point(aes(x=lon, y=lat, col=ocean_label2, shape=ocean_label2, fill=ocean_label2), 
                          crs=4326, size=3, stroke=1.75, alpha=0.7) +
-      geom_text(aes(x=lon, y=lat, label=first.stk), vjust=1, col="gray20") +
+      #geom_text(aes(x=lon, y=lat, label=num), vjust=1.4, col="gray20", size=3) +
+      ggrepel::geom_text_repel(aes(x=lon, y=lat, label=num), col="gray20", size=3, min.segment.length = 0.25, box.padding=0.1) +
       coord_sf(xlim=axes$xlims, ylim=axes$ylims) +
       scale_x_continuous(breaks=axes$xbreaks, labels=axes$xlabels) +
       scale_y_continuous(breaks=axes$ybreaks, labels=axes$ylabels) +
