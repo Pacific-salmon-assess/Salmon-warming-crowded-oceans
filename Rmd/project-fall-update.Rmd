@@ -107,7 +107,7 @@ Details on model formulation are provided below. These models are fit in a Bayes
 
 ### Spawner-recruitment
 
-```{r productivity timeseries, fig.width=3, fig.height=6}
+```{r productivity timeseries}
 prod_dat <- ocean_region_lab(sock)
 prod_dat <- stock.plot.lab(prod_dat)
 
