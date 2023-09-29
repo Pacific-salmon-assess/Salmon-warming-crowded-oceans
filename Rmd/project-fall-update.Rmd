@@ -61,11 +61,11 @@ bayesplot::bayesplot_theme_set(new = theme_sleek())
 
 # read in data 
 
-sock <- read.csv("../data/master_brood_table_covar.csv",
+sock <- read.csv("../data/sockeye/master_brood_table_covar.csv",
                  stringsAsFactors = FALSE)
 sock$Stock <- factor(sock$Stock, levels = unique(sock$Stock))
 
-sock.info <- read.csv("../data/master_stock_info.csv",
+sock.info <- read.csv("../data/sockeye/master_stock_info.csv",
                       stringsAsFactors = FALSE)
 sock.info$Stock <- factor(sock.info$Stock, levels = unique(sock.info$Stock))
 
@@ -164,11 +164,22 @@ axes <- list( xlims=c(-165.5, -121),
               ybreaks=seq(50, 60, 5),
               ylabels=as.character(seq(50,60,5)))
   
-map <- ggplot() + 
+#make map data
+map.info <- sock.info %>% select(Stock, lon, lat, ocean_label2) %>% 
+  mutate(stock.no = 1:nrow(sock.info)) %>% 
+  dplyr::summarize(n.stk = n_distinct(Stock),
+                   first.stk = first(stock.no),
+                   last.stk = last(stock.no),
+                   .by= c("lat", "lon", "ocean_label2")) %>%
+  filter(!(first.stk %in% c(54:56))) # remove some overlapping points
+map.info$first.stk[map.info$first.stk %in% c(52, 53)] <- 52
+map.info$last.stk[map.info$last.stk %in% c(52, 53)] <- 56
+
+ggplot(map.info) + 
       geom_sf(data=na_map, color="grey50", fill="white", linewidth=0.1) + 
-      ggspatial::geom_spatial_point(data = sock.info,
-                         aes(x=lon, y=lat, col=ocean_label2, shape=ocean_label2, fill=ocean_label2), 
-                         crs=4326, size=3, stroke=1.75) +
+      ggspatial::geom_spatial_point(aes(x=lon, y=lat, col=ocean_label2, shape=ocean_label2, fill=ocean_label2), 
+                         crs=4326, size=3, stroke=1.75, alpha=0.7) +
+      geom_text(aes(x=lon, y=lat, label=first.stk), vjust=1, col="gray20") +
       coord_sf(xlim=axes$xlims, ylim=axes$ylims) +
       scale_x_continuous(breaks=axes$xbreaks, labels=axes$xlabels) +
       scale_y_continuous(breaks=axes$ybreaks, labels=axes$ylabels) +
