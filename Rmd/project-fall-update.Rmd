@@ -93,9 +93,9 @@ This document summarizes preliminary results of analyses that seek to quantifyin
 
 We are fitting four general classes of spawner-recruitment models to characterize relationships between ocean conditions and salmon productivity over time:
 
-1.  Stationary models that estimate a single time invariant relationship between ocean conditions and salmon productivity (e.g., [Connors et al. 2020](https://cdnsciencepub.com/doi/full/10.1139/cjfas-2019-0422))
+1.  Stationary models that estimate invariant relationships between ocean conditions and salmon productivity (e.g., [Connors et al. 2020](https://cdnsciencepub.com/doi/full/10.1139/cjfas-2019-0422))
 
-2.  A-priori change point models that allow relationships to vary among periods that corresponded with observed Northeast Pacific regime shifts in 1976/77 and 1988/89, as well as the onset of the recent marine heat wave period in 2014 (e.g., [Malick 2020](https://onlinelibrary.wiley.com/doi/10.1111/fog.12469))
+2.  A-priori change point (or "Era") models that allow relationships to vary among periods that corresponded with observed Northeast Pacific regime shifts in 1976/77 and 1988/89, as well as the onset of the recent marine heat wave period in 2014 (e.g., [Malick 2020](https://onlinelibrary.wiley.com/doi/10.1111/fog.12469))
 
 3.  Random walk models that allow relationships to evolve through time (e.g., [Malick 2020](https://onlinelibrary.wiley.com/doi/10.1111/fog.12469))
 
@@ -379,7 +379,7 @@ ggplot(df.dot) +
 
 **Figure 4**. Stock-specific posterior mean (points) and 95% CI (horizontal bars) estimates of SST and Competitor covariate effects (left and right, respectively). Vertical lines and shaded areas are group mean effects and 95% CI. 
 
-## A-priori models
+## Era models
 
 
 ```{r Apriori models: density plot}
@@ -567,6 +567,7 @@ p.post.df <- stock.plot.lab(p.post.df, numbered=F)
 
 # Dot and whiskers
 ggplot(p.post.df) + 
+  geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
   geom_point(aes(x=beta_mu, y=stock_lab, col=ocean_region_lab), shape="\u007C", size=2) +
   geom_segment(aes(x=beta_2.5, xend=beta_97.5, y=stock_lab, yend=stock_lab, col=ocean_region_lab)) +
   geom_segment(aes(x=beta_10, xend=beta_90, y=stock_lab, yend=stock_lab, col=ocean_region_lab), linewidth=3.5, alpha=0.2) +
