@@ -195,7 +195,7 @@ covar.dat.st <- ocean_region_lab(covar.dat.st)
 covar.dat.reg <- dplyr::summarize(.data=covar.dat.st, mean_covar = mean(value), .by = c("BY", "ocean_region_lab", "covar_nam"))
 
 covar <- ggplot(covar.dat.st) + geom_line(aes(x=BY, y=value, group=Stock, colour=ocean_region_lab), linewidth=0.5, alpha=0.4) +
-  geom_line(data=covar.dat.reg, aes(x=BY, y=mean_covar, col=ocean_region_lab), linewidth=1) +
+  geom_line(data=covar.dat.reg, aes(x=BY, y=mean_covar, col=ocean_region_lab), linewidth=0.5) +
   facet_grid(rows=vars(covar_nam), cols=vars(ocean_region_lab), scales="free_y") +
   scale_colour_manual(values=col.region) +
   scale_y_continuous(n.breaks=4) +
@@ -267,7 +267,7 @@ We fit the model described above in a Bayesian estimation framework with Stan [S
 
 ## Stationary models
 
-```{r stationary models: posterior probability dist., fig.align = "center", out.height='88%', out.width = '80%'}
+```{r stationary models: posterior probability dist., fig.align = "center"}
 # code to generate figures...
 
 load("../output/models/stat/stat_a.Rdata")
@@ -558,7 +558,7 @@ ggplot(reg.summ.df) +
 **Figure 8**. Time-varying mean estimates of SST and Competitor covariate effects from hidden Markov models. Time-varying effects are calculated from the estimated probability of each hidden state in a given year, and covariate coefficients for each state (Figure 9). Individual stock estimates are in faint lines, while regional means and 90% CI are represented by bold lines and shaded areas. Regional summaries are post-hoc calculations, as each stock was modelled seperately.
 
 
-```{r hmm state coefficients, fig.width=6, fig.height=7}
+```{r hmm state coefficients, fig.height=6}
 # Data
 post.df <- hmm_param_df(hmm_ac_out_2c, summary="none")
 post.df <- ocean_region_lab(post.df, var="region")
