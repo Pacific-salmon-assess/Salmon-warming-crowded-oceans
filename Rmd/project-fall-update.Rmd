@@ -91,7 +91,7 @@ This document summarizes preliminary results of analyses that seek to quantify t
 
 # Methods
 
-We are fitting four general classes of spawner-recruitment models to characterize relationships between ocean conditions and salmon productivity over time:
+Our overarching approach is to fit four general classes of spawner-recruitment models to characterize relationships between ocean conditions and salmon productivity over space and time:
 
 1.  Stationary models that estimate invariant relationships between ocean conditions and salmon productivity (e.g., [Connors et al. 2020](https://cdnsciencepub.com/doi/full/10.1139/cjfas-2019-0422))
 
@@ -101,7 +101,7 @@ We are fitting four general classes of spawner-recruitment models to characteriz
 
 4.  Hidden Markov models that allow relationships to vary according to the state (regime) the system is in, where both the sequence of states and state-specific relationships are estimated using a Hidden Markov Model framework.
 
-Details on model formulation are provided below. These models are fit in a Bayesian estimation framework using Stan and compared using approximate leave-one-out cross validation. Inference will be primarily based on the magnitude, direction, and uncertainty of standardized covariate effects and the degree to which they vary over time and across ocean regions, species, and life histories.
+Details on model formulation are provided below. These models are fit in a Bayesian estimation framework uand inference is primarily based on the magnitude, direction, and uncertainty of standardized covariate effects and the degree to which they vary over time and across ocean regions, species, and life histories.
 
 ## Data
 
@@ -130,16 +130,16 @@ ggplot(prod_dat) +
 
 ```
 
-**Figure 1**. Productivity (R/S) time series of all Sockeye stocks included in analyses.
+**Figure 1**. Productivity (log[R/S]) time series of all Sockeye stocks included in analyses.
 
 
 ### Covariates
 
 Our analysis is focused on two covariates:
 
-1.  Sea surface temperatures near juvenile salmon ocean-entry points to index regional-scale environmental variability during the first few months in the ocean, which are hypothesized to represent a critical period in the Pacific salmon life cycle that can strongly influence year class strength.
+1.  Sea surface temperatures near juvenile salmon ocean-entry points to index regional-scale environmental variability during the first few months in the ocean, which are hypothesized to represent a critical period in the Pacific salmon life cycle that can strongly influence year class strength ([Mueter et al. 2002](https://cdnsciencepub.com/doi/abs/10.1139/f02-020?casa_token=KzFFwc9QXhAAAAAA:HXYklBNRVXs_o5_C-B74arVwNRHeyiexXRK3hPV_EbL63t8k-VwrTOFmdClLehivIPFuVrNw03sU)).
 
-2.  The abundance of pink salmon across the North Pacific in the second and/or third years of marine life as an index of potential direct or indirect competition for food. This approach is consistent with research that has suggested some salmon species primarily exhibit responses to competition with other salmon during their second and/or third growing seasons at sea ([Connors et al. 2020](https://cdnsciencepub.com/doi/full/10.1139/cjfas-2019-0422); [Ruggerone and Connors 2015](https://cdnsciencepub.com/doi/full/10.1139/cjfas-2014-0134)).
+2.  The abundance of pink salmon across the North Pacific in the second and/or third years of marine life as an index of potential direct or indirect competition for food. This approach is consistent with research that has suggested some salmon species primarily exhibit responses to competition with other salmon during their second and/or third growing seasons at sea ([Connors et al. 2020](https://cdnsciencepub.com/doi/full/10.1139/cjfas-2019-0422); [Ruggerone et al.2023](https://www.int-res.com/abstracts/meps/v719/p1-40)).
 
 ```{r map w/ covariates, fig.width=6, fig.height=7, warning=FALSE}
 
@@ -239,7 +239,7 @@ The population-specific parameters $\gamma_{k,i,r}$ were modelled hierarchically
 
 where $r$ is one of four broad ocean regions within which salmon populations have previously been shown to exhibit similar responses to ocean climate and ecosystem variation and $\mu$ is the region level average effect.
 
-For Fraser River sockeye stocks (No. 1-19 in Fig. 1), spawner abundances were in units of effective female spawners (i.e., female spawner abundance adjusted for unspawned eggs), whereas for all other stocks spawner abundances were total male and female spawners. Thus, $\alpha_{i}$ parameters were split into two groups (one group that included Fraser River stocks and another group that included all non-Fraser River stocks) that were exchangeable within each group but not between the two groups.
+For Fraser River Sockeye stocks (No. 1-19 in Fig. 1), spawner abundances were in units of effective female spawners (i.e., female spawner abundance adjusted for unspawned eggs), whereas for all other stocks spawner abundances were total male and female spawners. Thus, $\alpha_{i}$ parameters were split into two groups (one group that included Fraser River stocks and another group that included all non-Fraser River stocks) that were exchangeable within each group but not between the two groups.
 
 ## Era models
 
@@ -270,10 +270,10 @@ We fit the model described above in a Bayesian estimation framework with Stan [S
 ## Preliminary Insights
 
 ### Latitudinal responses
-There is strong evidence for latitudinal responses to both ocean warming and interspecific competition, revealed by the stationary models (Figure 3). The effect of SST ranges from weakly negative in the southernmost region to strongly positive in the northernmost region, where the magnitude of the SST is double what it is in the south. Conversely, competitor abundance has a strongly negative effect in the south but a weak effect in the north (Figure 3).
+We found strong evidence for latitudinal responses to both ocean warming and interspecific competition, revealed by the stationary models (Figure 3). The effect of SST ranges from moderately negative in the southernmost region to strongly positive in the northernmost region, where the magnitude of the SST is double what it is in the south. Conversely, competitor abundance has a strongly negative effect in the south but a weak effect in the north (Figure 3).
 
 ### Evidence for nonstationarity
-The various classes of nonstationary models imply variably strengthening, weakening, or emerging relationships over time and across regions. For example, assuming predefined ocean regimes in the Era model resulted in a negative, slightly shifting SST relationship in the West Coast region, while the Random Walk model suggests a gradually declining relationship from slightly positive in the earliest years. Across Alaska regions, the era model predicts that the 3 northern regions similarly shift from weakly positive to slightly negative, but the random walk model predicts relatively stationary relationships over time in Southeast Alaska and the Gulf of Alaska. 
+The various classes of nonstationary models suggest there is evidence for variably strengthening, weakening, or emerging relationships over time and across regions. For example, assuming predefined ocean regimes in the Era model resulted in a negative, slightly shifting SST relationship in the West Coast region, while the Random Walk model suggests a gradually declining relationship from slightly positive in the earliest years. Across Alaska regions, the era model predicts that the 3 northern regions similarly shift from weakly positive to slightly negative, but the random walk model predicts relatively stationary relationships over time in Southeast Alaska and the Gulf of Alaska. 
 
 The Southeast Alaska region may exhibit unique relationships due to its ocean conditions being highly dependent on year-to-year shifts in the North Pacific current (?). While the era model predicts weak effects with SST in Southeast Alaska across time periods, the random walk model suggests directional change that is dramatically negative in the last two decades. 
 
@@ -346,7 +346,7 @@ ggplot(m.df) +
 
 ```
 
-**Figure 3**. Posterior probability distributions of the predicted effect of SST (top), competitors (middle), and the combined effect (bottom) from all covariate terms, on sockeye salmon survival. Regional hyperdistributions of the covariate effects are in bold lines, with individual stock-specific distributions illustrated by the light lines. Covariate effects are standardized (i.e., per standard deviation unit increase in each covariate).
+**Figure 3**. Posterior probability distributions of the predicted effect of SST (top), competitors (middle), and the combined effect (bottom) from all covariate terms, on Sockeye salmon survival. Regional hyperdistributions of the covariate effects are in bold lines, with individual stock-specific distributions illustrated by the light lines. Covariate effects are standardized (i.e., per standard deviation unit increase in each covariate).
 
 ```{r stationary models: caterpillar plot}
 gamma.stock <- hb_param_df(stat_a, "gamma", "Ocean.Region2", "SST")
@@ -599,13 +599,13 @@ ggplot(p.post.df) +
 # Next steps
 
 ## Data and environmental covariates
--   Update sockeye, pink, and chum spawner-recruitment time-series based on data from ADF&G and DFO; incorporate into analysis (in progress)
+-   Update Sockeye, Pink, and Chum spawner-recruitment time-series based on data from ADF&G and DFO; incorporate into analysis (in progress)
 
 -   Incorporate Chinook and coho spawner-recruitment time series into analysis
 
 -  Explore alternative temporal and spatial domains over which to average SST anomalies to derive the early ocean temperature covariate
 
-- Explore alternative indices of interspecific competition at sea, including combined abundance of pink, chum, and sockeye, as well as effective density to account for body size 
+- Explore alternative indices of interspecific competition at sea, including combined abundance of pink, chum, and Sockeye, as well as effective density to account for body size 
 
 
 ## Modelling
