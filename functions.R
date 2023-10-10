@@ -1330,7 +1330,7 @@ clim.wgt.avg <- function(brood.table,
             climate <- subset(env.data, Stock.ID == i)
         for (j in unique(brood$BY)){
 
-            if(type == "first_year") {
+                      if(type == "first_year") {
                 env.mat[as.character(j),as.character(i)] <-
                     brood$ocean_0[brood$BY == j] * climate[climate$Year == j+1, env.covar] +
                     brood$ocean_1[brood$BY == j] * climate[climate$Year == j+2, env.covar] +

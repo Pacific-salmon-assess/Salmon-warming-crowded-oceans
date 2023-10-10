@@ -15,9 +15,11 @@ source ("functions.R")
 suppressWarnings(source("load.R")) #(1)
 # source("data_download.R")  ## ONLY if climate data have changed - very long run time
 source("sock_data_clean.R") #(2)
+source("pink_chum_data_clean.R")
 source("sst_import_process.R") #(3)
 source("sst_explore.R") #(4)
 source("sock_covariates.R") #(5) 
+
 source("sock_explore.R") #(6) 
 source("stat_single_stock_fit.R") # (7) 
 source("stat_hbm_fit.R") #(8) 

@@ -41,6 +41,7 @@ bt <- data.frame(Stock.ID = p.brood$stock.id,
                  Ocean.Region2 = NA,
                  Sub.Region = p.brood$sub.region,
                  BY = p.brood$broodyear,
+                 R1.1 = p.brood$recruits,
                  R = p.brood$recruits,
                  S = p.brood$spawners )
                 
@@ -67,21 +68,23 @@ bt.out.4 <- bt.out.3 %>%
 )) ## Check region== AYK coords! 
 
 ## Fill in missing years that fall w/in min and max BY for each stock
-bt.out.5 <- fill.time.series(bt.out.4) # this adds NAs and is supposed to! 
-
+#bt.out.5 <- fill.time.series(bt.out.4) # this adds NAs and is supposed to! 
+# DON'T do this step for pinks. Need another solution 
+# TODO find a method that doesn't mess up odd/even years
 
 ## Trim time series of NA values by selecting the longest
 ## string of consecutive brood years for stocks with NA values.
-bt.out.6 <- ddply(bt.out.5, .(Stock.ID), function(i) {
-  BY <- i$BY
-  R  <- i$R
-  BY.na <- ifelse(is.na(R), NA, BY)
-  ind <- consec_years(BY.na)
-  return(i[i$BY %in% ind, ])
-})
+#bt.out.6 <- ddply(bt.out.5, .(Stock.ID), function(i) {
+ # BY <- i$BY
+#  R  <- i$R
+#  BY.na <- ifelse(is.na(R), NA, BY)
+  #ind <- consec_years(BY.na)
+  #return(i[i$BY %in% ind, ])
+#}) 
+# TODO skip this step too: see above
 
 ## Order stocks geographically to make plotting easier
-bt.out.7 <- geographic.order(bt.out.6)
+bt.out.7 <- geographic.order(bt.out.5)
 bt.out.7 <- dplyr::arrange(bt.out.7, factor(Stock, levels=levels(bt.out.7$Stock)))
 
 # Summary
@@ -127,7 +130,7 @@ pink.info <- p.info.brood
 ## Read in downloaded data
 c.brood <- read.table("./data-downloaded/chum/raw_chum_brood_table2023-09-20.csv",
                       sep = ",",skip = 0,
-                      na.string = c("NA", "ND", "Canadians:  Please check the G-R ages.  "),
+                      na.string = c("NA", "ND"),
                       stringsAsFactors = FALSE, header = TRUE)
 
 c.info <- read.table("./data-downloaded/chum/chum_info2023-09-20.csv", sep = ",",
@@ -157,12 +160,13 @@ sapply(c.brood, class)
 names(c.brood) <- str_to_title(names(c.brood))
 names(c.brood)[names(c.brood) %in% c("Stock.id", "Sub.region", "Broodyear", "Use")] <- c("Stock.ID", "Sub.Region", "BY", "UseFlag")
 names(c.brood)[names(c.brood) %in% c("Spawners", "Recruits")] <- c("S", "R")
-names(c.brood) <- gsub("^Recruits\\.", "R", names(c.brood))
+names(c.brood)[grepl("\\d$", names(c.brood))] <- paste0("R1.", as.numeric(str_extract(names(c.brood)[grepl("\\d$", names(c.brood))], "\\d$"))-1)
 
 ## Subset usable data points
 c.brood.use <- c.brood[c.brood$UseFlag == 1, ]
 c.brood.use <- c.brood.use[ , names(c.brood.use) != "Age"]
 c.brood.use <- dplyr::filter(c.brood.use, Stock.ID != 366, Stock.ID != 363) # Remove 2 stocks with no recruitment detail for now
+# WHY ARE SO MANY DUPLICATED?!
 head(c.brood.use)
 tail(c.brood.use)
 nrow(c.brood.use)
@@ -193,21 +197,22 @@ bt.out.4 <- bt.out.3 %>%
   ))
 
 ## Fill in missing years that fall w/in min and max BY for each stock
-bt.out.5 <- fill.time.series(bt.out.4) # this adds NAs and is supposed to! 
-
+#bt.out.5 <- fill.time.series(bt.out.4) # this adds NAs and is supposed to! 
+# Skip for now as above
 
 ## Trim time series of NA values by selecting the longest
 ## string of consecutive brood years for stocks with NA values.
-bt.out.6 <- ddply(bt.out.5, .(Stock.ID), function(i) {
-  BY <- i$BY
-  R  <- i$R
-  BY.na <- ifelse(is.na(R), NA, BY)
-  ind <- consec_years(BY.na)
-  return(i[i$BY %in% ind, ])
-})
+## this does weird things
+#bt.out.6 <- ddply(bt.out.5, .(Stock.ID), function(i) {
+ # BY <- i$BY
+  # R  <- i$R
+  # BY.na <- ifelse(is.na(R), NA, BY)
+  # ind <- consec_years(BY.na)
+  # return(i[i$BY %in% ind, ])
+#})
 
 ## Order stocks geographically to make plotting easier
-bt.out.6 <- geographic.order(bt.out.6)
+bt.out.6 <- geographic.order(bt.out.4)
 bt.out.7 <- dplyr::arrange(bt.out.6, factor(Stock, levels=levels(bt.out.6$Stock)))
 
 # Summary

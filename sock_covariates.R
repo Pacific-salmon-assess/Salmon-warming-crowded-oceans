@@ -2,7 +2,7 @@
 ## -------------------------------------------------------------------------- ##
 
 # A simplified version of covariates script, including only:
-# first year SST, competitors in 2nd year, 
+# first year SST, competitors in 2nd year
 
 ##   Load necessary data
 
