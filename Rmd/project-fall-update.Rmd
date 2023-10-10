@@ -87,7 +87,7 @@ names(shp.reg) <- unique(sock.info$ocean_label2)
 
 # Purpose
 
-This document summarizes preliminary results of analyses that seek to quantify the extent to which salmon productivity is correlated with (a) ocean conditions during early marine life and (b) potential salmon competitors later in marine life, and the degree to which these relationships vary over time and space. More details on motivation for project can be found [here](https://docs.google.com/document/d/10S7fLbRe9TfdlgTrm0hEvXyFVNHW8M8M/edit) and all code to reproduce the analyses in this document is [here](https://github.com/Pacific-salmon-assess/Salmon-warming-crowded-oceans). All findings are preliminary and subject to change.
+This document summarizes preliminary results of analyses that seek to quantify the extent to which salmon survival (log(R/S)) is correlated with (a) ocean conditions during early marine life and (b) potential salmon competitors later in marine life, and the degree to which these relationships vary over time and space. More details on motivation for project can be found [here](https://docs.google.com/document/d/10S7fLbRe9TfdlgTrm0hEvXyFVNHW8M8M/edit) and all code to reproduce the analyses in this document is [here](https://github.com/Pacific-salmon-assess/Salmon-warming-crowded-oceans). All findings are preliminary and subject to change.
 
 # Methods
 
@@ -97,7 +97,7 @@ Our overarching approach is to fit four general classes of spawner-recruitment m
 
 2.  A-priori change point (or "Era") models that allow relationships to vary among periods that corresponded with observed Northeast Pacific regime shifts in 1976/77 and 1988/89 (e.g., [Malick 2020](https://onlinelibrary.wiley.com/doi/10.1111/fog.12469)), as well as the onset of the recent marine heat wave period in 2014 (in upcoming analyses)
 
-3.  Random walk models that allow relationships to evolve through time (e.g., [Malick 2020](https://onlinelibrary.wiley.com/doi/10.1111/fog.12469))
+3.  Random walk models that allow relationships to evolve gradually through time (e.g., [Malick 2020](https://onlinelibrary.wiley.com/doi/10.1111/fog.12469))
 
 4.  Hidden Markov models that allow relationships to vary according to the state (regime) the system is in, where both the sequence of states and state-specific relationships are estimated using a Hidden Markov Model framework.
 
@@ -115,7 +115,7 @@ prod_dat <- stock.plot.lab(prod_dat)
 
 ggplot(prod_dat) + 
   geom_vline(xintercept=c(1976,1988), color = "grey50", linetype = 2, linewidth = 0.25) +
-  geom_line(aes(x=BY, y=RS_stnd, col=ocean_region_lab)) + 
+  geom_line(aes(x=BY, y=lnRS, col=ocean_region_lab)) + 
   facet_grid(rows=vars(stock_lab), switch ="y", scales="free_y", as.table=F) + 
   scale_colour_manual(values=col.region) +
   theme(axis.text.y = element_blank(),
@@ -130,7 +130,7 @@ ggplot(prod_dat) +
 
 ```
 
-**Figure 1**. Productivity (log[R/S]) time series of all Sockeye stocks included in analyses.
+**Figure 1**. Survival (log[R/S]) time series of all Sockeye stocks included in analyses. Vertical dashed lines correspond with pre-defined ocean regime shifts included in the "eras" model.
 
 
 ### Covariates
@@ -243,7 +243,7 @@ For Fraser River Sockeye stocks (No. 1-19 in Fig. 1), spawner abundances were in
 
 ## Era models
 
-The first class of non-stationary models we considered allowed the $\gamma_{k,i,r,e}$ parameters to change at predefined points in time corresponding with well documented Northeast Pacific regime shifts in 1976/77 and 1989/99 ([Hare and Mantua, 2000](https://www.sciencedirect.com/science/article/pii/S0079661100000331)) resulting in three eras ($e$). As with the stationary models we assumed the era specific climate and ecosystem parameters were exchangeable among populations within the same ocean ecosystem and era thereby estimating both population specific and ocean ecosystem level effects by era.
+The first class of non-stationary models we considered allowed the $\gamma_{k,i,r,e}$ parameters to change at predefined points in time corresponding with well documented Northeast Pacific regime shifts in 1976/77 and 1989/99 ([Hare and Mantua, 2000](https://www.sciencedirect.com/science/article/pii/S0079661100000331)) resulting in three eras ($e$). As with the stationary models, we assumed the era-specific climate and ecosystem parameters were exchangeable among populations within the same ocean ecosystem and era, thereby estimating both population specific and ocean ecosystem level effects by era.
 
 ## Random walk models
 
@@ -258,9 +258,10 @@ where $w$ is process variation and $\sigma_{w}^2$ determines the degree of tempo
 
 ## Hidden Markov models
 
-The last class of non-stationary models estimates discrete covariate effects $\gamma_{k,i,q}$ dictated by regime state $q$. The estimated timeseries of hidden regime states $z_{t}$ is modelled as a Markov process (ie. year-to-year regime states depend only on the state in the previous time-step ($p(z_{t}|z_{t-1})$)) that progresses according to an estimated transition probability matrix. The model is evaluated based on the joint likelihood of the observations given each regime $p(y_{1:T}|z_{1:T})$ and the regime sequence $p(z_{1:T})$.
+The last class of non-stationary models is conceptually similar to the random walk, but where the coefficient effects are pooled into discrete ordered distributions (i.e. low or high $\gamma$) representing unobserved regime states $q$, and the probability of being in each state is evaluated at each time-step. The estimated timeseries of regime states $z_{t}$ is modelled as a Markov process (ie. year-to-year regime states depend only on the state in the previous time-step ($p(z_{t}|z_{t-1})$)) that progresses according to an estimated transition probability matrix. 
 
-The hidden Markov model is conceptually similar to the random walk, but where the coefficient effects are pooled into discrete ordered distributions (i.e. low or high $\gamma$) and the probability of being in each state is evaluated at each time-step. The sequence of most probable regime states through time is therefore inferred from the data rather than set a priori as in the era model.
+Covariate effects $\gamma_{k,i,q}$ are modelled as independent among stocks, not pooled by ocean ecosystem. The model requires that one primary covariate (SST) defines regime states, and the other (Competitors) has discrete $\gamma$ distributions corresponding with each state.
+
 
 ## Model fitting
 We fit the model described above in a Bayesian estimation framework with Stan [Stan Development Team 2020](https://mc-stan.org/), which implements the No-U-Turn Hamiltonian Markov chain Monte Carlo algorithm [Hoffman et al. 2014](https://www.jmlr.org/papers/volume15/hoffman14a/hoffman14a.pdf) for Bayesian statistical inference to generate the joint posterior probability distribution of all unknowns in the model. For each  model run, we sampled from 4 chains with 4,000 iterations each and discarded the first 1,000 as warm-up. We assessed chain convergence visually via trace plots and posterior predictive checks and by ensuring that $\hat{R}$ [potential scale reduction factor; [Vehtari et al. 2021](https://projecteuclid.org/journals/bayesian-analysis/volume-16/issue-2/Rank-Normalization-Folding-and-Localization--An-Improved-R%CB%86-for/10.1214/20-BA1221.full)] was less than 1.01 and that the effective sample size was greater than 400 for each parameter in the model. 
@@ -270,19 +271,19 @@ We fit the model described above in a Bayesian estimation framework with Stan [S
 ## Preliminary Insights
 
 ### Latitudinal responses
-We found strong evidence for latitudinal responses to both ocean warming and interspecific competition, revealed by the stationary models (Figure 3). The effect of SST ranges from moderately negative in the southernmost region to strongly positive in the northernmost region, where the magnitude of the SST is double what it is in the south. Conversely, competitor abundance has a strongly negative effect in the south but a weak effect in the north (Figure 3).
+We found strong evidence for latitudinal responses to both ocean warming and interspecific competition, revealed by the stationary models (Figure 3). The effect of SST ranges from moderately negative in the southernmost region to strongly positive in the northernmost region. Conversely, competitor abundance has a strongly negative effect in the south but a weak effect in the north (Figure 3).
 
 ### Evidence for nonstationarity
-The various classes of nonstationary models suggest there is evidence for variably strengthening, weakening, or emerging relationships over time and across regions. For example, assuming predefined ocean regimes in the Era model resulted in a negative, slightly shifting SST relationship in the West Coast region, while the Random Walk model suggests a gradually declining relationship from slightly positive in the earliest years. Across Alaska regions, the era model predicts that the 3 northern regions similarly shift from weakly positive to slightly negative, but the random walk model predicts relatively stationary relationships over time in Southeast Alaska and the Gulf of Alaska. 
+The various classes of nonstationary models suggest there is evidence for variably strengthening, weakening, or emerging relationships over time and across regions. For example, assuming predefined ocean regimes in the Era model resulted in a negative, slightly shifting SST relationship in the West Coast region (Figure 5), while the Random Walk model suggests a gradually declining relationship from slightly positive in the earliest years (Figure 7). Across Alaska regions, the era model predicts that the 3 northern regions similarly shift from weakly positive to slightly negative relationships with competitors (Figure 5), but the random walk model predicts relatively stationary relationships over time in Southeast Alaska and the Gulf of Alaska (Figure 7). 
 
-The Southeast Alaska region may exhibit unique relationships due to its ocean conditions being highly dependent on year-to-year shifts in the North Pacific current (?). While the era model predicts weak effects with SST in Southeast Alaska across time periods, the random walk model suggests directional change that is dramatically negative in the last two decades. 
+The Southeast Alaska region may exhibit unique relationships due to its ocean conditions being highly dependent on year-to-year shifts in the North Pacific current. While the era model estimates relatively weak SST effects in Southeast Alaska across time periods (Figure 5), the random walk model suggests directional change that is dramatically negative in the last two decades (Figure 7). 
 
 Some common insights arise from the era and random walk models, including: 
-- A strong negative shift in response to competitor abundance in the Bering Sea, where Pink salmon abundance more than doubles over the time period examined,
-- A strengthening of the already negative relationship of West Coast stocks with competitor abundance,
-- The most overall stable dynamics occurring in the Gulf of Alaska.
+* A strong negative shift in response to competitor abundance in the Bering Sea, where Pink salmon abundance more than doubles over the time period examined (Figure 2),
+* A strengthening of the already negative relationship of West Coast stocks with competitor abundance,
+* The most overall stable dynamics occurring in the Gulf of Alaska.
 
-The Hidden Markov models show relatively weak evidence for non-stationarity. In general, the HMM predicted that covariate relationships readily alternated between states, rather than the periods of stationarity separated by regime shifts that we would expect this type of model to detect. As an exception, the bi-directional pattern of the SST effect in Southeast Alaska is also visible in the HMM results. 
+The Hidden Markov models show relatively weak evidence for non-stationarity. In general, the HMM predicted that covariate relationships readily alternated between states, rather than exhibiting periods of stationarity separated by regime shifts like we would expect this type of model to detect. As an exception, the bi-directional pattern of the SST effect in Southeast Alaska is also visible in the HMM results (Figure 8). 
 
 
 ## Stationary models
@@ -346,7 +347,7 @@ ggplot(m.df) +
 
 ```
 
-**Figure 3**. Posterior probability distributions of the predicted effect of SST (top), competitors (middle), and the combined effect (bottom) from all covariate terms, on Sockeye salmon survival. Regional hyperdistributions of the covariate effects are in bold lines, with individual stock-specific distributions illustrated by the light lines. Covariate effects are standardized (i.e., per standard deviation unit increase in each covariate).
+**Figure 3**. Posterior probability distributions of the predicted effect of SST (top), competitors (middle), and the combined effect (bottom) from all covariate terms, on Sockeye salmon survival. Regional hyper-distributions of the covariate effects are in bold lines, with individual stock-specific distributions illustrated by the light lines. Covariate effects are standardized (i.e., per standard deviation unit increase in each covariate).
 
 ```{r stationary models: caterpillar plot}
 gamma.stock <- hb_param_df(stat_a, "gamma", "Ocean.Region2", "SST")
@@ -446,7 +447,7 @@ ggplot(dens.df.st.2c) +
 
 ## Notes: Include years with early/middle/late
 ```
-**Figure 5**. Posterior probability distributions of the predicted effect of SST and competitors on Sockeye productivity over three pre-defined time periods/eras (earliest in top panel). Breakpoints between eras correspond with documented NP ocean regime shifts. Regional mean (hyperdistribution) covariate effects are in bold lines and individual stocks' distributions are in light lines. 
+**Figure 5**. Posterior probability distributions of the predicted effect of SST and competitors on Sockeye survival over three pre-defined time periods/eras (earliest in top panel). Breakpoints between eras correspond with documented North Pacific ocean regime shifts. Regional mean (hyper-distribution) covariate effects are in bold lines and individual stocks' distributions are in light lines. 
 
 
 
@@ -544,7 +545,7 @@ ggplot(df.dyn.reg.2c) +
 
 
 ```
-**Figure 7**. Time-varying posterior mean estimates of SST and Competitor covariate effects, which vary from year to year as a random walk. Individual stock estimates are in faint lines, while regional means and 90% CI are represented by bold lines and shaded areas. Regional summaries are post-hoc calculations, as random walk parameters were not grouped hierarchically.
+**Figure 7**. Time-varying posterior mean estimates of SST and Competitor covariate effects, modelled as a random walk. Individual stock estimates are in faint lines, while regional means and 90% CI are represented by bold lines and shaded areas. Regional summaries are post-hoc calculations, as random walk $\gamma$ parameters are not grouped hierarchically.
 
 
 ## Hidden Markov models
@@ -573,7 +574,7 @@ ggplot(reg.summ.df) +
 
 
 ```
-**Figure 8**. Time-varying mean estimates of SST and Competitor covariate effects from hidden Markov models. Time-varying effects are calculated from the estimated probability of each hidden state in a given year, and covariate coefficients for each state (Figure 9). Individual stock estimates are in faint lines, while regional means and 90% CI are represented by bold lines and shaded areas. Regional summaries are post-hoc calculations, as each stock was modelled seperately.
+**Figure 8**. Time-varying mean estimates of SST and Competitor covariate effects from hidden Markov models. Time-varying effects are calculated from the probability timeseries of regime states $p(z_{t})$ and covariate coefficients for each state $\gamma_{k,i,q}$ (Figure 9). Individual stock estimates are in faint lines, while regional means and 90% CI are represented by bold lines and shaded areas. Regional summaries are post-hoc calculations, as each stock was modelled separately.
 
 
 ```{r hmm state coefficients, fig.height=6}
@@ -593,22 +594,22 @@ ggplot(p.post.df) +
   scale_colour_manual(values=col.region) + theme_sleek() + theme(legend.position="none") +
   labs(x="Posterior state coefficient", y="")
 ```
-**Figure 9**. Posterior estimates of SST and Competitor coefficients for each hidden state (n=2) in stock-specific hidden markov models. Vertical ticks show posterior means, shaded areas are 80% CI, and horizontal bars are 95% CI. States are determined by SST, and a competitor effect is then determined for each state.
+**Figure 9**. Posterior estimates of SST and Competitor coefficients $\gamma_{k,i,q}$ for each hidden state $q$ in hidden Markov models. Vertical ticks show posterior means, shaded areas are 80% CI, and horizontal bars are 95% CI. States are determined by SST, and a competitor effect is then determined for each state.
 
 
 # Next steps
 
 ## Data and environmental covariates
--   Update Sockeye, Pink, and Chum spawner-recruitment time-series based on data from ADF&G and DFO; incorporate into analysis (in progress)
+* Update Sockeye, Pink, and Chum spawner-recruitment time-series based on data from ADF&G and DFO; incorporate into analysis (in progress)
 
--   Incorporate Chinook and coho spawner-recruitment time series into analysis
+* Incorporate Chinook and coho spawner-recruitment time series into analysis
 
--  Explore alternative temporal and spatial domains over which to average SST anomalies to derive the early ocean temperature covariate
+* Explore alternative temporal and spatial domains over which to average SST anomalies to derive the early ocean temperature covariate
 
-- Explore alternative indices of interspecific competition at sea, including combined abundance of pink, chum, and Sockeye, as well as effective density to account for body size 
+* Explore alternative indices of interspecific competition at sea, including combined abundance of pink, chum, and Sockeye, as well as effective density to account for body size 
 
 
 ## Modelling
-- Explore hierarchical parameterization of random walk model (and hidden markov?) to estimate region-wide effects
+* Explore hierarchical parameterization of random walk model (and hidden markov?) to estimate region-wide effects
 
-- Add a 'marine heatwave' time period to era models that begins in ~2014 at the onset of several anomolously warm years at sea
+* Add a 'marine heatwave' time period to era models that begins in ~2014 at the onset of several anomalous warm years at sea
