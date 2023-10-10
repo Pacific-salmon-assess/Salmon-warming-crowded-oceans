@@ -279,8 +279,11 @@ The various classes of nonstationary models suggest there is evidence for variab
 The Southeast Alaska region may exhibit unique relationships due to its ocean conditions being highly dependent on year-to-year shifts in the North Pacific current. While the era model estimates relatively weak SST effects in Southeast Alaska across time periods (Figure 5), the random walk model suggests directional change that is dramatically negative in the last two decades (Figure 7). 
 
 Some common insights arise from the era and random walk models, including: 
-* A strong negative shift in response to competitor abundance in the Bering Sea, where Pink salmon abundance more than doubles over the time period examined (Figure 2),
-* A strengthening of the already negative relationship of West Coast stocks with competitor abundance,
+
+* A strong negative shift in response to competitor abundance in the Bering Sea, where Pink salmon abundance more than doubles over the time period examined (Figure 2);
+
+* A strengthening of the already negative relationship of West Coast stocks with competitor abundance;
+
 * The most overall stable dynamics occurring in the Gulf of Alaska.
 
 The Hidden Markov models show relatively weak evidence for non-stationarity. In general, the HMM predicted that covariate relationships readily alternated between states, rather than exhibiting periods of stationarity separated by regime shifts like we would expect this type of model to detect. As an exception, the bi-directional pattern of the SST effect in Southeast Alaska is also visible in the HMM results (Figure 8). 
