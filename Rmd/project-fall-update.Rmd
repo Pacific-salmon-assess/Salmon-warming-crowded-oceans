@@ -260,7 +260,7 @@ where $w$ is process variation and $\sigma_{w}^2$ determines the degree of tempo
 
 The last class of non-stationary models is conceptually similar to the random walk, but where the coefficient effects are pooled into discrete ordered distributions (i.e. low or high $\gamma$) representing unobserved regime states $q$, and the probability of being in each state is evaluated at each time-step. The estimated timeseries of regime states $z_{t}$ is modelled as a Markov process (ie. year-to-year regime states depend only on the state in the previous time-step ($p(z_{t}|z_{t-1})$)) that progresses according to an estimated transition probability matrix. 
 
-Covariate effects $\gamma_{k,i,q}$ are modelled as independent among stocks, not pooled by ocean ecosystem. The model requires that one primary covariate (SST) defines regime states, and the other (Competitors) has discrete $\gamma$ distributions corresponding with each state.
+Covariate effects $\gamma_{k,i,t,q}$ are modelled as independent among stocks, not pooled by ocean ecosystem. The model requires that one primary covariate (SST) defines regime states, and the other (Competitors) has discrete $\gamma$ distributions corresponding with each state.
 
 
 ## Model fitting
@@ -279,9 +279,13 @@ The various classes of nonstationary models suggest there is evidence for variab
 The Southeast Alaska region may exhibit unique relationships due to its ocean conditions being highly dependent on year-to-year shifts in the North Pacific current. While the era model estimates relatively weak SST effects in Southeast Alaska across time periods (Figure 5), the random walk model suggests directional change that is dramatically negative in the last two decades (Figure 7). 
 
 Some common insights arise from the era and random walk models, including: 
+
 * A strong negative shift in response to competitor abundance in the Bering Sea, where Pink salmon abundance more than doubles over the time period examined (Figure 2),
-* A strengthening of the already negative relationship of West Coast stocks with competitor abundance,
+
+* A strengthening of the already negative relationship of West Coast stocks with competitor abundance, and
+
 * The most overall stable dynamics occurring in the Gulf of Alaska.
+
 
 The Hidden Markov models show relatively weak evidence for non-stationarity. In general, the HMM predicted that covariate relationships readily alternated between states, rather than exhibiting periods of stationarity separated by regime shifts like we would expect this type of model to detect. As an exception, the bi-directional pattern of the SST effect in Southeast Alaska is also visible in the HMM results (Figure 8). 
 
@@ -574,7 +578,7 @@ ggplot(reg.summ.df) +
 
 
 ```
-**Figure 8**. Time-varying mean estimates of SST and Competitor covariate effects from hidden Markov models. Time-varying effects are calculated from the probability timeseries of regime states $p(z_{t})$ and covariate coefficients for each state $\gamma_{k,i,q}$ (Figure 9). Individual stock estimates are in faint lines, while regional means and 90% CI are represented by bold lines and shaded areas. Regional summaries are post-hoc calculations, as each stock was modelled separately.
+**Figure 8**. Time-varying mean estimates of SST and Competitor covariate effects from hidden Markov models. Time-varying effects are calculated from the probability timeseries of regime states $p(z_{t})$ and covariate effects for each state $\gamma_{k,i,t,q}$ (Figure 9). Individual stock estimates are in faint lines, while regional means and 90% CI are represented by bold lines and shaded areas. Regional summaries are post-hoc calculations, as each stock was modelled separately.
 
 
 ```{r hmm state coefficients, fig.height=6}
@@ -594,7 +598,7 @@ ggplot(p.post.df) +
   scale_colour_manual(values=col.region) + theme_sleek() + theme(legend.position="none") +
   labs(x="Posterior state coefficient", y="")
 ```
-**Figure 9**. Posterior estimates of SST and Competitor coefficients $\gamma_{k,i,q}$ for each hidden state $q$ in hidden Markov models. Vertical ticks show posterior means, shaded areas are 80% CI, and horizontal bars are 95% CI. States are determined by SST, and a competitor effect is then determined for each state.
+**Figure 9**. Posterior estimates of SST and Competitor coefficients $\gamma_{k,i}$ for each hidden state $q$ in hidden Markov models. Vertical ticks show posterior means, shaded areas are 80% CI, and horizontal bars are 95% CI. States are determined by SST, and a competitor effect is then determined for each state.
 
 
 # Next steps
