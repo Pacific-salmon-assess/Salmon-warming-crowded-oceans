@@ -101,7 +101,7 @@ Our overarching approach is to fit four general classes of spawner-recruitment m
 
 4.  Hidden Markov models that allow relationships to vary according to the state (regime) the system is in, where both the sequence of states and state-specific relationships are estimated using a Hidden Markov Model framework.
 
-Details on model formulation are provided below. These models are fit in a Bayesian estimation framework uand inference is primarily based on the magnitude, direction, and uncertainty of standardized covariate effects and the degree to which they vary over time and across ocean regions, species, and life histories.
+Details on model formulation are provided below. These models are fit in a Bayesian estimation framework and inference is primarily based on the magnitude, direction, and uncertainty of standardized covariate effects and the degree to which they vary over time and across ocean regions, species, and life histories.
 
 ## Data
 
@@ -260,18 +260,18 @@ where $w$ is process variation and $\sigma_{w}^2$ determines the degree of tempo
 
 The last class of non-stationary models is conceptually similar to the random walk, but where the coefficient effects are pooled into discrete ordered distributions (i.e. low or high $\gamma$) representing unobserved regime states $q$, and the probability of being in each state is evaluated at each time-step. The estimated timeseries of regime states $z_{t}$ is modelled as a Markov process (ie. year-to-year regime states depend only on the state in the previous time-step ($p(z_{t}|z_{t-1})$)) that progresses according to an estimated transition probability matrix. 
 
-Covariate effects $\gamma_{k,i,t,q}$ are modelled as independent among stocks, not pooled by ocean ecosystem. The model requires that one primary covariate (SST) defines regime states, and the other (Competitors) has discrete $\gamma$ distributions corresponding with each state.
+Covariate effects $\gamma_{k,i,t,q}$ are modelled as independent among stocks, not pooled by ocean ecosystem. One primary covariate (SST) defines regime states, and the other (Competitors) has discrete $\gamma$ distributions corresponding with each state.
 
 
 ## Model fitting
-We fit the model described above in a Bayesian estimation framework with Stan [Stan Development Team 2020](https://mc-stan.org/), which implements the No-U-Turn Hamiltonian Markov chain Monte Carlo algorithm [Hoffman et al. 2014](https://www.jmlr.org/papers/volume15/hoffman14a/hoffman14a.pdf) for Bayesian statistical inference to generate the joint posterior probability distribution of all unknowns in the model. For each  model run, we sampled from 4 chains with 4,000 iterations each and discarded the first 1,000 as warm-up. We assessed chain convergence visually via trace plots and posterior predictive checks and by ensuring that $\hat{R}$ [potential scale reduction factor; [Vehtari et al. 2021](https://projecteuclid.org/journals/bayesian-analysis/volume-16/issue-2/Rank-Normalization-Folding-and-Localization--An-Improved-R%CB%86-for/10.1214/20-BA1221.full)] was less than 1.01 and that the effective sample size was greater than 400 for each parameter in the model. 
+We fit the model described above in a Bayesian estimation framework with Stan ([Stan Development Team 2020](https://mc-stan.org/)), which implements the No-U-Turn Hamiltonian Markov chain Monte Carlo algorithm ([Hoffman et al. 2014](https://www.jmlr.org/papers/volume15/hoffman14a/hoffman14a.pdf)) for Bayesian statistical inference to generate the joint posterior probability distribution of all unknowns in the model. For each  model run, we sampled from 4 chains with 4,000 iterations each and discarded the first 1,000 as warm-up. We assessed chain convergence visually via trace plots and posterior predictive checks and by ensuring that $\hat{R}$ (potential scale reduction factor; [Vehtari et al. 2021](https://projecteuclid.org/journals/bayesian-analysis/volume-16/issue-2/Rank-Normalization-Folding-and-Localization--An-Improved-R%CB%86-for/10.1214/20-BA1221.full)) was less than 1.01 and that the effective sample size was greater than 400 for each parameter in the model. 
 
 # Results
 
 ## Preliminary Insights
 
 ### Latitudinal responses
-We found strong evidence for latitudinal responses to both ocean warming and interspecific competition, revealed by the stationary models (Figure 3). The effect of SST ranges from moderately negative in the southernmost region to strongly positive in the northernmost region. Conversely, competitor abundance has a strongly negative effect in the south but a weak effect in the north (Figure 3).
+We found strong evidence for latitudinal responses to both ocean warming and interspecific competition in the stationary models (Figure 3). The effect of SST ranges from moderately negative in the southernmost region to strongly positive in the northernmost region. Conversely, competitor abundance has a strongly negative effect in the south but a weak effect in the north (Figure 3).
 
 ### Evidence for nonstationarity
 The various classes of nonstationary models suggest there is evidence for variably strengthening, weakening, or emerging relationships over time and across regions. For example, assuming predefined ocean regimes in the Era model resulted in a negative, slightly shifting SST relationship in the West Coast region (Figure 5), while the Random Walk model suggests a gradually declining relationship from slightly positive in the earliest years (Figure 7). Across Alaska regions, the era model predicts that the 3 northern regions similarly shift from weakly positive to slightly negative relationships with competitors (Figure 5), but the random walk model predicts relatively stationary relationships over time in Southeast Alaska and the Gulf of Alaska (Figure 7). 
@@ -280,14 +280,15 @@ The Southeast Alaska region may exhibit unique relationships due to its ocean co
 
 Some common insights arise from the era and random walk models, including: 
 
-* A strong negative shift in response to competitor abundance in the Bering Sea, where Pink salmon abundance more than doubles over the time period examined (Figure 2),
 
-* A strengthening of the already negative relationship of West Coast stocks with competitor abundance, and
+* A strong negative shift in response to competitor abundance in the Bering Sea, where Pink salmon abundance more than doubled over the time period examined (Figure 2);
+
+* A strengthening of the already negative relationship of West Coast stocks with Pink salmon abundance;
 
 * The most overall stable dynamics occurring in the Gulf of Alaska.
 
 
-The Hidden Markov models show relatively weak evidence for non-stationarity. In general, the HMM predicted that covariate relationships readily alternated between states, rather than exhibiting periods of stationarity separated by regime shifts like we would expect this type of model to detect. As an exception, the bi-directional pattern of the SST effect in Southeast Alaska is also visible in the HMM results (Figure 8). 
+The Hidden Markov models show relatively weak evidence for non-stationarity. In general, the HMM predicted that covariate relationships readily alternated between states, rather than exhibiting the periods of stationarity separated by regime shifts that we would expect this type of model to detect. As an exception, the bi-directional pattern of the SST effect in Southeast Alaska is also visible in the HMM results (Figure 8). 
 
 
 ## Stationary models
@@ -604,16 +605,16 @@ ggplot(p.post.df) +
 # Next steps
 
 ## Data and environmental covariates
-* Update Sockeye, Pink, and Chum spawner-recruitment time-series based on data from ADF&G and DFO; incorporate into analysis (in progress)
+* Update Sockeye, Pink, and Chum spawner-recruitment time-series based on data from ADF&G and DFO; incorporate into analysis (in progress);
 
-* Incorporate Chinook and coho spawner-recruitment time series into analysis
+* Incorporate Chinook and coho spawner-recruitment time series into analysis;
 
-* Explore alternative temporal and spatial domains over which to average SST anomalies to derive the early ocean temperature covariate
+* Explore alternative temporal and spatial domains over which to average SST anomalies to derive the early ocean temperature covariate;
 
 * Explore alternative indices of interspecific competition at sea, including combined abundance of pink, chum, and Sockeye, as well as effective density to account for body size 
 
 
 ## Modelling
-* Explore hierarchical parameterization of random walk model (and hidden markov?) to estimate region-wide effects
+* Explore hierarchical parameterization of random walk model (and hidden Markov?) to estimate region-wide effects;
 
 * Add a 'marine heatwave' time period to era models that begins in ~2014 at the onset of several anomalous warm years at sea
