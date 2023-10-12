@@ -12,24 +12,34 @@ A work in progress summary of methods and results to date is [here](https://paci
 
 - `functions.R`: all functions written for the analysis are placed in this file.
   
-- `data_download.R`: download data needed for project and write to CSV.
+- `data_download.R`: download climate data needed for project and write to CSV.
 
-- `sock_data_clean.R`: clean/process the raw downloaded sockeye data.
+- `sock_data_clean.R`: clean/process the raw downloaded Sockeye data.
+
+- `pink_chum_data_clean.R`: clean/process raw Pink and Chum data.
   
 - `sst_import_process.R`: read in SST data, generate anomalies and calculate average SST over a specified period and region.
 
-- `sst_explore.R`: explore the SST anomalies. 
+- `sst_explore.R`: explore the SST anomalies and generate figures. 
 
-- `sock_covariates.R`:  create stock specific covariates used in analysis.
+- `sock_covariates.R`:  create stock specific covariates used in analysis for Sockeye.
+
+- `pink_chum_covariates.R`: create stock-specific covariates used in Pink and Chum analyses.
 
 - `sock_explore.R`:  exploratory graphics and summaries of sockeye and covariate data.
 
-- `single_stock.R`:  exploratory single-stock generalized Ricker models.
+- `stat_single_stock_fit.R`:  exploratory single-stock generalized Ricker models.
 
-- `hbm_fit.R`:  fit stationary hierarchical bayesian models.
+- `stat_hbm_fit.R`:  fit stationary hierarchical bayesian models.
 
-- `pub.R`:  generate all tables and figures.
+- `stat_hbm_inf.R`:  generate tables and figures from stationary models.
 
-- `background_plots.R`:  background figures.
+- `dyn_hbm_fit.R`: fit dynamic ('era' and random walk) hierarchical bayesian models.
+
+- `dyn_hbm_inf.R`: generate figures from era and random walk models.
+
+- `hmm_single_stock_fit.R`: fit single stock hidden Markov models. 
+
+- `hmm_single_stock_inf.R`: generate figures from hidden Markov models.
 
 - `recruitment_means.R`: script for estimating age @ ocean entry proportions for stocks without detailed age composition data
