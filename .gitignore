@@ -13,3 +13,4 @@ archive/**/*
 !archive/**/*.stan #ignore all archived items except stan models
 #scripts
 /explore.R
+/covar_explore.R
