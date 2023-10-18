@@ -12,6 +12,7 @@ library(reshape2)
 library(rworldmap)
 library(ersst)     # see: https://github.com/michaelmalick/r-ersst
 library(rsoi)
+library(here)
 require(fields)
 require(plotrix)
 require(data.table)
