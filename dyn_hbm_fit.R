@@ -1,43 +1,54 @@
 ## Fit Nonstationary hierarchical Bayesian models ("Era" and Random walk)
 # This is adapted from: https://github.com/michaelmalick/sockeye-nonstationary
 
-if(!dir.exists("./figures/dyn/"))
-  dir.create("./figures/dyn/")
 
-if(!dir.exists("./figures/dyn/hbm_fit/"))
-    dir.create("./figures/dyn/hbm_fit/")
+## Set Species -----
+#speciesFlag = "pink"
+speciesFlag = "chum"
+#speciesFlag = "sockeye"
 
-if(!dir.exists("./output/models/dyn/"))
-    dir.create("./output/models/dyn/")
+if(speciesFlag=="pink") 
+  data_master <- pink else if(speciesFlag=="chum") 
+    data_master <- chum else if(speciesFlag=="sockeye")
+      data_master <- sock
+    
+# Set paths to output locations - dependent on species 
+fig.dir <- here("figures", "dyn", speciesFlag, "hbm_fit") # place to store figures generated in this script
+fit.dir <- here("output", "models", "dyn", speciesFlag) # place to store model fits
+diag.dir <- here("output", "diagnostics", "dyn", speciesFlag) # place to store diagnostics
+    
 
-if(!dir.exists("./output/diagnostics/dyn/"))
-    dir.create("./output/diagnostics/dyn/")
+# Make them if they don't exist
+if(!dir.exists(fig.dir))
+  dir.create(fig.dir, recursive = T)
+
+if(!dir.exists(fit.dir))
+    dir.create(fit.dir, recursive = T)
+
+if(!dir.exists(diag.dir))
+    dir.create(diag.dir, recursive = T)
 
 
 ## Get data for Stan ---------------------------------------
-stan.dat.sst  <- stan_data_dyn(sock, "early_sst_stnd",
+stan.dat.sst  <- stan_data_dyn(data_master, "early_sst_stnd",
                            breakpoint1 = 1977,
                            breakpoint2 = 1989,
                            var.region = "Ocean.Region2",
                            scale.x1 = TRUE)
-save(stan.dat.sst, file = "./output/stan_dat_sst.RData")
 
-stan.dat.comp <- stan_data_dyn(sock, "np_pinks_sec_stnd",
+stan.dat.comp <- stan_data_dyn(data_master, "np_pinks_sec_stnd",
                                breakpoint1 = 1977,
                                breakpoint2 = 1989,
                                var.region = "Ocean.Region2",
                                scale.x1 = TRUE)
-save(stan.dat.comp, file = "./output/stan_dat_comp.RData")
 
-stan.dat.2c <- stan_data_dyn(sock, 
+stan.dat.2c <- stan_data_dyn(data_master, 
                              var.x2 = "early_sst_stnd",
                              var.x3 = "np_pinks_sec_stnd",
                              breakpoint1 = 1977,
                              breakpoint2 = 1989,
                              var.region="Ocean.Region2", 
                              scale.x1 = TRUE)
-
-save(stan.dat.2c, file = "./output/stan_dat_2c.RData")
 
 
 ## Set pars to monitor -------------------------------------
@@ -83,7 +94,7 @@ era.sst <- rstan::stan(file = "./stan/hbm_era_1c.stan",
                         seed = sample(1:1e6, 1),
                         control = list(adapt_delta = 0.98,
                                        max_treedepth = 10))
-save(era.sst, file = "./output/models/dyn/hbm_era_sst.RData")
+save(era.sst, file = here(fit.dir, "hbm_era_sst.RData"))
 
 dyn.sst <- rstan::stan(file = "./stan/hbm_dyn_1c.stan",
                         data = stan.dat.sst,
@@ -96,7 +107,7 @@ dyn.sst <- rstan::stan(file = "./stan/hbm_dyn_1c.stan",
                         seed = sample(1:1e6, 1),
                         control = list(adapt_delta = 0.98,
                                        max_treedepth = 10))
-save(dyn.sst, file = "./output/models/dyn/hbm_dyn_sst.RData")
+save(dyn.sst, file = here(fit.dir, "hbm_dyn_sst.RData"))
 
 
 ## Comp
@@ -112,7 +123,7 @@ era.comp <- rstan::stan(file = "./stan/hbm_era_1c.stan",
                         seed = sample(1:1e6, 1),
                         control = list(adapt_delta = 0.98,
                                        max_treedepth = 10))
-save(era.comp, file = "./output/models/dyn/hbm_era_comp.RData")
+save(era.comp, file = here(fit.dir, "hbm_era_comp.RData"))
 
 dyn.comp <- rstan::stan(file = "./stan/hbm_dyn_1c.stan",
                         data = stan.dat.comp,
@@ -125,7 +136,7 @@ dyn.comp <- rstan::stan(file = "./stan/hbm_dyn_1c.stan",
                         seed = sample(1:1e6, 1),
                         control = list(adapt_delta = 0.98,
                                        max_treedepth = 10))
-save(dyn.comp, file = "./output/models/dyn/hbm_dyn_comp.RData")
+save(dyn.comp, file = here(fit.dir, "hbm_dyn_comp.RData"))
 
 
 ## 2-covariate
@@ -141,7 +152,7 @@ era.2c <- rstan::stan(file = "./stan/hbm_era_2c.stan",
                        seed = sample(1:1e6, 1),
                        control = list(adapt_delta = 0.98,
                                       max_treedepth = 10))
-save(era.2c, file = "./output/models/dyn/hbm_era_2c.RData")
+save(era.2c, file = here(fit.dir, "hbm_era_2c.RData"))
 
 dyn.2c <- rstan::stan(file = "./stan/hbm_dyn_2c.stan",
                       data = stan.dat.2c,
@@ -154,7 +165,7 @@ dyn.2c <- rstan::stan(file = "./stan/hbm_dyn_2c.stan",
                       seed = sample(1:1e6, 1),
                       control = list(adapt_delta = 0.98,
                                      max_treedepth = 10))
-save(dyn.2c, file = "./output/models/dyn/hbm_dyn_2c.Rdata")
+save(dyn.2c, file = here(fit.dir, "hbm_dyn_2c.Rdata"))
 
 ## Check pathology -----------------------------------------
 # does not include 2-covar models yet
@@ -205,14 +216,14 @@ rstan::get_elapsed_time(dyn.comp)
 
 ## SST
 
-pdf("./figures/dyn/hbm_fit/era_sst_diag.pdf", width = 7, height = 5)
+pdf(here(fig.dir, "era_sst_diag.pdf"), width = 7, height = 5)
     coda_neff(get_neff(era.sst, pars = pars_era_1c), total_draws(era.sst))
     coda_rhat(get_rhat(era.sst, pars = pars_era_1c))
     coda_diag(As.mcmc.list(era.sst, pars = pars_era_1c))
 dev.off()
 
 
-pdf("./figures/dyn/hbm_fit/dyn_sst_diag.pdf", width = 7, height = 5)
+pdf(here(fig.dir, "dyn_sst_diag.pdf"), width = 7, height = 5)
     coda_neff(get_neff(dyn.sst, pars = pars_dyn_1c), total_draws(dyn.sst))
     coda_rhat(get_rhat(dyn.sst, pars = pars_dyn_1c))
     coda_diag(As.mcmc.list(dyn.sst, pars = pars_dyn_1c))
@@ -220,14 +231,14 @@ dev.off()
 
 ## Comp
 
-pdf("./figures/dyn/hbm_fit/era_comp_diag.pdf", width = 7, height = 5)
+pdf(here(fig.dir, "era_comp_diag.pdf"), width = 7, height = 5)
   coda_neff(get_neff(era.comp, pars = pars_era_1c), total_draws(era.comp))
   coda_rhat(get_rhat(era.comp, pars = pars_era_1c))
   coda_diag(As.mcmc.list(era.comp, pars = pars_era_1c))
 dev.off()
 
 
-pdf("./figures/dyn/hbm_fit/dyn_comp_diag.pdf", width = 7, height = 5)
+pdf(here(fig.dir, "dyn_comp_diag.pdf"), width = 7, height = 5)
   coda_neff(get_neff(dyn.comp, pars = pars_dyn_1c), total_draws(dyn.comp))
   coda_rhat(get_rhat(dyn.comp, pars = pars_dyn_1c))
   coda_diag(As.mcmc.list(dyn.comp, pars = pars_dyn_1c))
@@ -235,11 +246,11 @@ dev.off()
 
 
 ## Posterior predictive checks -----------------------------
-plot_post_pc(era.sst, stan.dat.sst$y, pdf.path = "./figures/dyn/hbm_fit/era_sst_yrep.pdf")
-plot_post_pc(dyn.sst, stan.dat.sst$y, pdf.path = "./figures/dyn/hbm_fit/dyn_sst_yrep.pdf")
+plot_post_pc(era.sst, stan.dat.sst$y, pdf.path = here(fig.dir, "era_sst_yrep.pdf"))
+plot_post_pc(dyn.sst, stan.dat.sst$y, pdf.path = here(fig.dir, "dyn_sst_yrep.pdf"))
 
-plot_post_pc(era.comp, stan.dat.comp$y, pdf.path = "./figures/dyn/hbm_fit/era_comp_yrep.pdf")
-plot_post_pc(dyn.comp, stan.dat.comp$y, pdf.path = "./figures/dyn/hbm_fit/dyn_comp_yrep.pdf")
+plot_post_pc(era.comp, stan.dat.comp$y, pdf.path = here(fig.dir, "era_comp_yrep.pdf"))
+plot_post_pc(dyn.comp, stan.dat.comp$y, pdf.path = here(fig.dir, "dyn_comp_yrep.pdf"))
 
 
 
@@ -254,11 +265,11 @@ loo.dyn.comp <- rstan::loo(dyn.comp, cores = 4)
 
 
 
-save(loo.era.sst, file = "./output/diagnostics/dyn/loo_era_sst.RData")
-save(loo.dyn.sst, file = "./output/diagnostics/dyn/loo_dyn_sst.RData")
+save(loo.era.sst, file = here(diag.dir, "loo_era_sst.RData"))
+save(loo.dyn.sst, file = here(diag.dir, "loo_dyn_sst.RData"))
 
-save(loo.era.comp, file = "./output/diagnostics/dyn/loo_era_comp.RData")
-save(loo.dyn.comp, file = "./output/diagnostics/dyn/loo_dyn_comp.RData")
+save(loo.era.comp, file = here(diag.dir, "loo_era_comp.RData"))
+save(loo.dyn.comp, file = here(diag.dir, "loo_dyn_comp.RData"))
 
 
 
@@ -272,21 +283,21 @@ sum(pareto_k_values(loo.dyn.comp) > 0.7)
 
 ## SST
 
-pdf("./figures/dyn/hbm_fit/era_sst_loo.pdf", width = 7, height = 5)
+pdf(here(fig.dir, "era_sst_loo.pdf"), width = 7, height = 5)
     plot(loo.era.sst, label_points = TRUE)
 dev.off()
 
-pdf("./figures/dyn/hbm_fit/dyn_sst_loo.pdf", width = 7, height = 5)
+pdf(here(fig.dir, "dyn_sst_loo.pdf"), width = 7, height = 5)
     plot(loo.dyn.sst, label_points = TRUE)
 dev.off()
 
 ## Comp
 
-pdf("./figures/dyn/hbm_fit/era_comp_loo.pdf", width = 7, height = 5)
+pdf(here(fig.dir, "era_comp_loo.pdf"), width = 7, height = 5)
 plot(loo.era.comp, label_points = TRUE)
 dev.off()
 
-pdf("./figures/dyn/hbm_fit/dyn_comp_loo.pdf", width = 7, height = 5)
+pdf(here("dyn_comp_loo.pdf"), width = 7, height = 5)
 plot(loo.dyn.comp, label_points = TRUE)
 dev.off()
 
