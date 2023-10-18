@@ -94,8 +94,8 @@ hb05_density_df <- function(stanfit, ocean.regions = 3) {
   ## Density smoothness
   adjust <- 1.5
   
-  if(ocean.regions == 3) region_col <- sock.info$Ocean.Region 
-  else if (ocean.regions == 4) region_col <- sock.info$Ocean.Region2
+  if(ocean.regions == 3) region_col <- info_master$Ocean.Region 
+  else if (ocean.regions == 4) region_col <- info_master$Ocean.Region2
   
   ## Define region column indices
   if (fitnam == "stat_ctrl"){ #Use 2020 data for control model
@@ -105,17 +105,17 @@ hb05_density_df <- function(stanfit, ocean.regions = 3) {
     ind.bs  <- which(control_dat$Ocean.Region == "BS")
     
   } else if( fitnam == "stat_tr"){
-    ind.wc  <- match(sock.info$Stock[which(region_col == "WC" & sock.info$yr_end >= 1975)], levels(sock$Stock) ) 
-    ind.goa <- match(sock.info$Stock[which(region_col == "GOA" & sock.info$yr_end >= 1975)], levels(sock$Stock) )
-    ind.bs  <- match(sock.info$Stock[which(region_col == "BS" & sock.info$yr_end >= 1975)], levels(sock$Stock) )
-    ind.seak <- match(sock.info$Stock[which(region_col == "SEAK" & sock.info$yr_end >= 1975)], levels(sock$Stock))
+    ind.wc  <- match(info_master$Stock[which(region_col == "WC" & info_master$yr_end >= 1975)], levels(data_master$Stock) ) 
+    ind.goa <- match(info_master$Stock[which(region_col == "GOA" & info_master$yr_end >= 1975)], levels(data_master$Stock) )
+    ind.bs  <- match(info_master$Stock[which(region_col == "BS" & info_master$yr_end >= 1975)], levels(data_master$Stock) )
+    ind.seak <- match(info_master$Stock[which(region_col == "SEAK" & info_master$yr_end >= 1975)], levels(data_master$Stock))
     ind.reg <- list(ind.bs, ind.goa, ind.wc, ind.seak)
     
   } else {
-    ind.wc  <- match(sock.info$Stock[which(region_col == "WC")], levels(sock$Stock) ) 
-    ind.goa <- match(sock.info$Stock[which(region_col == "GOA")], levels(sock$Stock) )
-    ind.bs  <- match(sock.info$Stock[which(region_col == "BS")], levels(sock$Stock) )
-    ind.seak <- match(sock.info$Stock[which(region_col == "SEAK")], levels(sock$Stock))
+    ind.wc  <- match(info_master$Stock[which(region_col == "WC")], levels(data_master$Stock) ) 
+    ind.goa <- match(info_master$Stock[which(region_col == "GOA")], levels(data_master$Stock) )
+    ind.bs  <- match(info_master$Stock[which(region_col == "BS")], levels(data_master$Stock) )
+    ind.seak <- match(info_master$Stock[which(region_col == "SEAK")], levels(data_master$Stock))
     ind.reg <- ifelse(ocean.regions == 3, list(ind.bs, ind.goa, ind.wc), list(ind.bs, ind.goa, ind.wc, ind.seak) )
   }
   
@@ -809,7 +809,7 @@ plot_post_pc <- function(stanfit, y,
 
 
 ## hb_param_df ---------------------------------------------
-hb_param_df <- function(stanfit, par, region.var, var = NULL, info = sock.info) {
+hb_param_df <- function(stanfit, par, region.var, var = NULL, info = info_master) {
     ## Wrangle hierarchical parameter summary into a data frame
     ## Output data.frame includes stock-specific and mean params
     ##
@@ -817,7 +817,7 @@ hb_param_df <- function(stanfit, par, region.var, var = NULL, info = sock.info) 
     ## par = parameter name
     ## region.var = column name in sock.info of region variable
     ## var = optional variable name, add as column "var" to output data.frame
-  
+
     probs <- c(0.025, 0.05, 0.10, 0.50, 0.90, 0.95, 0.975)
     s.par <- as.data.frame(summary(stanfit, pars = par, probs = probs)[[1]])
     s.par$par <- par
