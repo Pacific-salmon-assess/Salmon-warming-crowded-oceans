@@ -45,22 +45,22 @@ stock.id,species,stock,region,sub.region,jurisdiction,lat,lon,source.id,comment,
 244,Pink,Unalakleet,AYK,AYK,AK,63.86944,160.7878,"14, 15",,NA,BS
 245,Pink,Nome,AYK,AYK,AK,64.4828,165.305,"14, 15",,NA,BS
 246,Pink,Moses-Norton,AYK,AYK,AK,64.5839,161.54856,"14, 15",Sum of Moses Point and Norton Bay Subdistricts,NA,BS
-251,Pink,Nahwitti (odd),WC,BC Central,BC,52.45,129.1,16,,NA,WC
+251,Pink,Nahwitti (odd),WC,BC Central,BC,50.43,128,16,,NA,WC
 253,Pink,Hecate Strait-Fjords (even),WC,BC Central,BC,52.45,129.1,16,,NA,WC
-254,Pink,Nass-Skeena Estuary (even),SEAK,BC North,BC,52.45,129.1,16,,NA,WC
+254,Pink,Nass-Skeena Estuary (even),SEAK,BC North,BC,54.09,130.21,16,,NA,WC
 255,Pink,Hecate Strait-Fjords (odd),WC,BC Central,BC,52.45,129.1,16,,NA,WC
 256,Pink,Hecate Lowlands ,WC,BC Central,BC,52.45,129.1,16,,NA,WC
-257,Pink,Middle-Upper Skeena (even),SEAK,BC North,BC,52.45,129.1,16,,NA,WC
+257,Pink,Middle-Upper Skeena (even),SEAK,BC North,BC,54.09,130.21,16,,NA,WC
 258,Pink,Hecate Strait-Lowlands ,WC,BC Central,BC,52.45,129.1,16,,NA,WC
-259,Pink,Lower Skeena River ,SEAK,BC North,BC,52.45,129.1,16,,NA,WC
-260,Pink,Middle-Upper Skeena (odd),WC,BC North,BC,52.45,129.1,16,,NA,WC
-261,Pink,Nass-Skeena Estuary (odd),SEAK,BC North,BC,52.45,129.1,16,,NA,WC
-263,Pink,North Haida Gwaii ,SEAK,BC North,BC,52.45,129.1,16,,NA,WC
-264,Pink,East Haida Gwaii ,SEAK,BC North,BC,52.45,129.1,16,,NA,WC
-265,Pink,West Haida Gwaii ,SEAK,BC North,BC,52.45,129.1,16,,NA,WC
-266,Pink,Homathko-Klinaklini-Smith-Rivers-Bella Coola-Dean ,WC,BC Central,BC,52.45,129.1,16,,NA,WC
-267,Pink,Georgia Strait (even),WC,BC South,BC,52.45,129.1,16,,NA,WC
-268,Pink,Georgia Strait (odd),WC,BC South,BC,52.45,129.1,16,,NA,WC
+259,Pink,Lower Skeena River ,SEAK,BC North,BC,54.09,130.21,16,,NA,WC
+260,Pink,Middle-Upper Skeena (odd),WC,BC North,BC,54.09,130.21,16,,NA,WC
+261,Pink,Nass-Skeena Estuary (odd),SEAK,BC North,BC,54.09,130.21,16,,NA,WC
+263,Pink,North Haida Gwaii ,SEAK,BC North,BC,54.09,132.14,16,,NA,WC
+264,Pink,East Haida Gwaii ,SEAK,BC North,BC,52.66,131.29,16,,NA,WC
+265,Pink,West Haida Gwaii ,SEAK,BC North,BC,52.6,132.09,16,,NA,WC
+266,Pink,Homathko-Klinaklini-Smith-Rivers-Bella Coola-Dean ,WC,BC Central,BC,51.44111597,127.78,16,,NA,WC
+267,Pink,Georgia Strait (even),WC,BC South,BC,49.80573928,124.0410067,16,,NA,WC
+268,Pink,Georgia Strait (odd),WC,BC South,BC,49.80573928,124.0410067,16,,NA,WC
 270,Pink,Southern Fjords (even),WC,BC South,BC,50.88,126.61,16,,NA,WC
 247,Pink,Nisqually,Inside WA,Inside WA,WA,47.101,-122.706,7,NA,NA,WC
-248,Pink,S South Misc.,Inside WA,Inside WA,WA,447.16,-122.91,7,NA,NA,WC
+248,Pink,S South Misc.,Inside WA,Inside WA,WA,47.16,-122.91,7,NA,NA,WC
