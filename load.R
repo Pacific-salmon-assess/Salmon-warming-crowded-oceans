@@ -46,22 +46,5 @@ if(!dir.exists("./output/"))
     dir.create("./output/")
 
 
-## Load saved HBM outputs
-#if(dir.exists("./output/"))
-#    load_rdata(path = "./output/", verbose = FALSE)
-#if(dir.exists("./output/models/"))
-#    load_rdata(path = "./output/models/", verbose = TRUE)
-
-
-## Data
-sock <- read.csv("./data/master_brood_table_covar.csv",
-                 stringsAsFactors = FALSE)
-sock$Stock <- factor(sock$Stock, levels = unique(sock$Stock))
-
-sock.info <- read.csv("./data/master_stock_info.csv",
-                      stringsAsFactors = FALSE)
-sock.info$Stock <- factor(sock.info$Stock, levels = unique(sock.info$Stock))
-
-
 ## Set bayesplot theme
 bayesplot::bayesplot_theme_set(new = theme_sleek())
