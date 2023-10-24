@@ -1,24 +1,40 @@
 ## (6) Exploratory graphics and summaries for sockeye and covariate data ## 
 ## --------------------------------------------------------------------- ##
 
+## Set Species -----
+speciesFlag = "pink"
+#speciesFlag = "chum"
+#speciesFlag = "sockeye"
 
-if(!dir.exists("./figures/sock-explore/"))
-    dir.create("./figures/sock-explore/")
+if(speciesFlag=="pink") {
+  data_master <- pink
+  info_master <- pink.info} else if(speciesFlag=="chum") {
+    data_master <- chum
+    info_master <- chum.info } else if(speciesFlag=="sockeye"){
+      data_master <- sock
+      info_master <- sock.info }
+
+# Set paths to output locations - dependent on species 
+fig.dir <- here("figures", "spp-explore", speciesFlag) # place to store figures generated in this script
+
+# Make it if it doesn't exist
+if(!dir.exists(fig.dir))  dir.create(fig.dir, recursive = T)
+
 
 ## Data summaries ------------------------------------------
-head(sock)
-tail(sock)
-levels(sock$Stock)
-paste("brood tbl ordered geographically? -", all(levels(sock$Stock) == unique(sock$Stock))) 
-paste("info tbl ordered geographically? -", all(levels(sock.info$Stock) == unique(sock.info$Stock))) 
-paste("levels in brood tbl and info tbl the same? -", all(levels(sock.info$Stock) == levels(sock$Stock)))
-summary(sock)
+head(data_master)
+tail(data_master)
+levels(data_master$Stock)
+paste("brood tbl ordered geographically? -", all(levels(data_master$Stock) == unique(data_master$Stock))) 
+paste("info tbl ordered geographically? -", all(levels(info_master$Stock) == unique(info_master$Stock))) 
+paste("levels in brood tbl and info tbl the same? -", all(levels(info_master$Stock) == levels(data_master$Stock)))
+summary(data_master)
 
-length(unique(sock$Stock))
-min(sock$BY)
-max(sock$BY)
+length(unique(data_master$Stock))
+min(data_master$BY)
+max(data_master$BY)
 
-plyr::ddply(sock, .(Stock), summarize,
+plyr::ddply(data_master, .(Stock), summarize,
             min.yr = min(BY),
             max.yr = max(BY),
             n.total = length(BY),
@@ -31,19 +47,19 @@ plyr::ddply(sock, .(Stock), summarize,
 ## Plot the average correlation of between productivity and the covariates
 ## grouping by ocean region.
 
-cor.stock <- plyr::ddply(sock, .(Stock.ID), summarize,
-                         Ocean.Region = unique(Ocean.Region),
+cor.stock <- plyr::ddply(data_master, .(Stock.ID), summarize,
+                         Ocean.Region2 = unique(Ocean.Region2),
                          early_sst = cor(lnRS, early_sst, use = "pairwise.complete.obs"),
                          np_pinks_sec = cor(lnRS, np_pinks_sec, use = "pairwise.complete.obs"))
 
 cor.stock$Stock.ID <- NULL
-cor.stock <- reshape2::melt(cor.stock, id.vars = "Ocean.Region")
+cor.stock <- reshape2::melt(cor.stock, id.vars = "Ocean.Region2")
 
-cor.ocean <- plyr::ddply(cor.stock, .(Ocean.Region, variable), summarize,
+cor.ocean <- plyr::ddply(cor.stock, .(Ocean.Region2, variable), summarize,
                          cor.avg = mean(value))
 
-pdf("./figures/sock-explore/cor_prod_covar_bar.pdf", width = 12, height = 9)
-g <- barchart(cor.avg ~ variable, data = cor.ocean, groups = Ocean.Region,
+pdf(here(fig.dir, "cor_prod_covar_bar.pdf"), width = 12, height = 9)
+g <- barchart(cor.avg ~ variable, data = cor.ocean, groups = Ocean.Region2,
               origin = 0, par.settings = theme.mjm(),
               auto.key = list(space = "right"),
               ylab = "Average correlation",
@@ -64,13 +80,13 @@ covars <- c("early_sst",
 ## create empty 3D array
 array.cor <- array(NA, dim = c(length(covars),
                                 length(covars),
-                                nrow(sock.info)))
+                                nrow(info_master)))
 
 
 ## calculate stock specific covar correlations
-for(i in seq_along(sock.info$Stock.ID)) {
-    sock.i <- sock[sock$Stock.ID == sock.info$Stock.ID[i], ]
-    covar.i <- subset(sock.i, select = covars)
+for(i in seq_along(info_master$Stock.ID)) {
+    stk.i <- data_master[data_master$Stock.ID == info_master$Stock.ID[i], ]
+    covar.i <- subset(stk.i, select = covars)
     cor.i <- cor(covar.i, use = "pairwise.complete.obs")
     array.cor[ , , i] <- cor.i
 }
@@ -80,7 +96,7 @@ cor.covars <- apply(array.cor, c(1, 2), mean)
 row.names(cor.covars) <- covars
 colnames(cor.covars) <- covars
 
-pdf("./figures/sock-explore/cor_covar_matrix.pdf", width = 12, height = 9)
+pdf(here(fig.dir, "cor_covar_matrix.pdf"), width = 12, height = 9)
 cols <- chroma::dpal(500, hue = c(240, 0), chroma = 70, power = 1.0)
 at.index <- seq(-1, 1, 0.1)
 g <- levelplot(cor.covars, xlab = "", ylab = "",
@@ -98,8 +114,8 @@ dev.off()
 
 
 ## Map ocean entry -----------------------------------------
-pdf("./figures/sock-explore/map_ocean_entry.pdf", width = 7, height = 6)
-plot(sock.info$lon, sock.info$lat,
+pdf(here(fig.dir, "map_ocean_entry.pdf"), width = 7, height = 6)
+plot(info_master$lon, info_master$lat,
      xlim = c(-170, -120),
      ylim = c(45, 70),
      main = "Unique ocean entry locations",
@@ -108,14 +124,14 @@ plot(sock.info$lon, sock.info$lat,
      xlab = "Longitude",
      ylab = "Latitude")
 plot(countriesLow, add = TRUE, border = "grey50")
-points(sock.info$lon, sock.info$lat, pch = 16, col = as.factor(sock.info$Ocean.Region))
+points(info_master$lon, info_master$lat, pch = 16, col = as.factor(info_master$Ocean.Region2))
 dev.off()
 
 
 ## Productivity time series --------------------------------
 # Make sure Stock is ordered by latitude
-pdf("./figures/sock-explore/productivity_by_stock.pdf", width = 19, height = 9)
-g <- xyplot(R/S ~ BY | Stock, data = sock,
+pdf(here(fig.dir, "productivity_by_stock.pdf"), width = 19, height = 9)
+g <- xyplot(R/S ~ BY | Stock, data = data_master,
             type = "l",
             scales = list(y = list(relation = "free")),
             ylab = "Productivity (R/S)",
@@ -128,8 +144,8 @@ g <- xyplot(R/S ~ BY | Stock, data = sock,
 print(g)
 dev.off()
 
-pdf("./figures/sock-explore/productivity_by_stock_stnd.pdf", width = 19, height = 9)
-g <- xyplot(RS_stnd ~ BY | Stock, data = sock,
+pdf(here(fig.dir, "productivity_by_stock_stnd.pdf"), width = 19, height = 9)
+g <- xyplot(RS_stnd ~ BY | Stock, data = data_master,
             type = "l",
             ylab = "Standardized productivity",
             xlab = "Brood year",
@@ -142,8 +158,8 @@ g <- xyplot(RS_stnd ~ BY | Stock, data = sock,
 print(g)
 dev.off()
 
-pdf("./figures/sock-explore/spawner_recruit.pdf", width = 19, height = 9)
-g <- xyplot(R ~ S | Stock, data = sock,
+pdf(here(fig.dir, "spawner_recruit.pdf"), width = 19, height = 9)
+g <- xyplot(R ~ S | Stock, data = data_master,
             type = "p",
             pch = 16, cex = 0.5,
             scales = list(relation = "free"),
@@ -163,8 +179,8 @@ g <- xyplot(R ~ S | Stock, data = sock,
 print(g)
 dev.off()
 
-pdf("./figures/sock-explore/spawner_recruit_ln.pdf", width = 19, height = 9)
-g <- xyplot(lnRS ~ S | Stock, data = sock,
+pdf(here(fig.dir, "spawner_recruit_ln.pdf"), width = 19, height = 9)
+g <- xyplot(lnRS ~ S | Stock, data = data_master,
             type = "p",
             pch = 16, cex = 0.5,
             scales = list(relation = "free"),
@@ -182,8 +198,8 @@ dev.off()
 
 
 ## SST indices ---------------------------------------------
-pdf("./figures/sock-explore/sst_early_index.pdf", width = 19, height = 9)
-g <- xyplot(early_sst ~ BY | Stock, data = sock,
+pdf(here(fig.dir, "sst_early_index.pdf"), width = 19, height = 9)
+g <- xyplot(early_sst ~ BY | Stock, data = data_master,
             type = "l",
             par.settings = theme.mjm(),
             xlab = "Brood year",
@@ -202,8 +218,8 @@ dev.off()
 
 ## Pink abundance indices ----------------------------------
 
-pdf("./figures/sock-explore/pink_index_second_year.pdf", width = 19, height = 9)
-g <- xyplot(np_pinks_sec ~ BY | Stock, data = sock,
+pdf(here(fig.dir, "pink_index_second_year.pdf"), width = 19, height = 9)
+g <- xyplot(np_pinks_sec ~ BY | Stock, data = data_master,
             type = "l",
             xlab = "Brood year",
             ylab = "Second year pink abundance index",
@@ -221,8 +237,8 @@ dev.off()
 ## Comparisons of covars -----------------------------------
 
 
-pdf("./figures/sock-explore/comparison_pink_second_sst_early.pdf", width = 19, height = 9)
-g <- xyplot(np_pinks_sec_stnd ~ early_sst_stnd | Stock, data = sock,
+pdf(here(fig.dir, "comparison_pink_second_sst_early.pdf"), width = 19, height = 9)
+g <- xyplot(np_pinks_sec_stnd ~ early_sst_stnd | Stock, data = data_master,
             type = "p", col = 1, cex = 0.5,
             xlim = c(-3.25, 3.25),
             ylim = c(-3.25, 3.25),
@@ -243,49 +259,51 @@ dev.off()
 
 
 ## Age structure -------------------------------------------
-pdf("./figures/sock-explore/age_ocean_entry_proportions.pdf", width = 19, height = 9)
-oc <- subset(sock, select = c("Stock", "BY", "ocean_0", "ocean_1", "ocean_2", "ocean_3", "ocean_4"))
-oc <- reshape2::melt(oc, id.vars = c("Stock", "BY"))
-g <- xyplot(value ~ BY | Stock, data = oc,
-            groups = variable,
-            auto.key = list(space = "right"),
-            type = "l",
-            par.settings = theme.mjm(),
-            xlab = "Brood year",
-            ylab = "Proportion of fish entering ocean",
-            main = "Proportion of fish entering ocean in BY+",
-            panel = function(x, y, ...) {
-                panel.xyplot(x, y, ...)
-            })
-print(g)
-dev.off()
-
-pdf("./figures/sock-explore/age_class_proportions.pdf", width = 19, height = 14)
-oc <- subset(sock, select = c("Stock", "BY", grep("^R[0-9]", names(sock), value = TRUE)))
-oc <- reshape2::melt(oc, id.vars = c("Stock", "BY"))
-g <- levelplot(value ~ BY*variable | Stock, data = oc,
-            type = "l",
-            par.settings = theme.mjm(),
-            xlab = "Brood year",
-            ylab = "Age class",
-            main = "Age class proportions",
-            panel = function(x, y, ...) {
-                panel.grid(h = -18, v = -1)
-                panel.levelplot(x, y, ...)
-            })
-print(g)
-dev.off()
-
+if(speciesFlag == "sockeye") {
+  pdf(here(fig.dir, "age_ocean_entry_proportions.pdf"), width = 19, height = 9)
+  oc <- subset(data_master, select = c("Stock", "BY", "ocean_0", "ocean_1", "ocean_2", "ocean_3", "ocean_4"))
+  oc <- reshape2::melt(oc, id.vars = c("Stock", "BY"))
+  g <- xyplot(value ~ BY | Stock, data = oc,
+              groups = variable,
+              auto.key = list(space = "right"),
+              type = "l",
+              par.settings = theme.mjm(),
+              xlab = "Brood year",
+              ylab = "Proportion of fish entering ocean",
+              main = "Proportion of fish entering ocean in BY+",
+              panel = function(x, y, ...) {
+                  panel.xyplot(x, y, ...)
+              })
+  print(g)
+  dev.off()
+  
+  
+  pdf(here(fig.dir, "age_class_proportions.pdf"), width = 19, height = 14)
+  oc <- subset(data_master, select = c("Stock", "BY", grep("^R[0-9]", names(data_master), value = TRUE)))
+  oc <- reshape2::melt(oc, id.vars = c("Stock", "BY"))
+  g <- levelplot(value ~ BY*variable | Stock, data = oc,
+              type = "l",
+              par.settings = theme.mjm(),
+              xlab = "Brood year",
+              ylab = "Age class",
+              main = "Age class proportions",
+              panel = function(x, y, ...) {
+                  panel.grid(h = -18, v = -1)
+                  panel.levelplot(x, y, ...)
+              })
+  print(g)
+  dev.off()
+}
 
 
 ## Bivariate -----------------------------------------------
-sst.pos.neg <- ifelse(sock$early_sst_stnd >= 0, "sst_pos", "sst_neg")
+sst.pos.neg <- ifelse(data_master$early_sst_stnd >= 0, "sst_pos", "sst_neg")
 bi.panel <- function(x, y, ...) {
     panel.xyplot(x, y, ...)
     panel.abline(lm(y ~ x), ...)
 }
-pdf("./figures/sock-explore/productivity_pinks_conditional_sst.pdf", width = 19, height = 14)
-g <- xyplot(lnRS ~ np_pinks_sec_stnd | Stock, data = sock,
+pdf(here(fig.dir, "productivity_pinks_conditional_sst.pdf"), width = 19, height = 14)
+g <- xyplot(lnRS ~ np_pinks_sec_stnd | Stock, data = data_master,
             groups = sst.pos.neg,
             type = "p",
             par.settings = theme.mjm(),
@@ -300,13 +318,13 @@ print(g)
 dev.off()
 
 ##  for SST -----------------------------------------------
-pink.pos.neg <- ifelse(sock$np_pinks_sec_stnd >= 0, "pink_pos", "pink_neg")
+pink.pos.neg <- ifelse(data_master$np_pinks_sec_stnd >= 0, "pink_pos", "pink_neg")
 bi.panel <- function(x, y, ...) {
   panel.xyplot(x, y, ...)
   panel.abline(lm(y ~ x), ...)
 }
-pdf("./figures/sock-explore/productivity_sst_conditional_pink.pdf", width = 19, height = 14)
-g <- xyplot(lnRS ~ early_sst_stnd | Stock, data = sock,
+pdf(here(fig.dir, "productivity_sst_conditional_pink.pdf"), width = 19, height = 14)
+g <- xyplot(lnRS ~ early_sst_stnd | Stock, data = data_master,
             groups = pink.pos.neg,
             type = "p",
             par.settings = theme.mjm(),
