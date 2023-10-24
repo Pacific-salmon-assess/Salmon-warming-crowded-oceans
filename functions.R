@@ -1572,6 +1572,7 @@ single.stock.fit <- function(formulas, years, plot.path) {
     if(!dir.exists(plot.path)) {
         dir.create(plot.path, recursive = TRUE)
     }
+  
 
     mod.list <- formulas
     mod.coef <- vector("list", length(mod.list))
@@ -1581,9 +1582,9 @@ single.stock.fit <- function(formulas, years, plot.path) {
     names(mod.coef.oc2) <- names(mod.list)
 
     ## get unique ocean.regions and stock names
-    reg1 <- subset(sock, select = c("Stock", "Ocean.Region"))
-    regions <- reg1[!duplicated(reg1), ]
-    reg2 <- subset(sock, select = c("Stock", "Ocean.Region2"))
+    #reg1 <- subset(data_master, select = c("Stock", "Ocean.Region"))
+    #regions <- reg1[!duplicated(reg1), ]
+    reg2 <- subset(data_master, select = c("Stock", "Ocean.Region2"))
     regions2 <- reg2[!duplicated(reg2), ]
     
 
@@ -1591,30 +1592,31 @@ single.stock.fit <- function(formulas, years, plot.path) {
         m.formula <- mod.list[[i]]
         m.name <- names(mod.list)[i]
         g.sub <- paste0(m.name, ": ", gsub("  ", "", paste(deparse(m.formula), collapse = "")))
-        i.path <- paste0(plot.path, m.name, "/")
-
+        i.path <- paste0(plot.path, "/")
+#browser()
         if(!dir.exists(i.path)) {
             dir.create(i.path, recursive = TRUE)
         }
 
         i.path.f <- paste0(i.path, m.name)
-
+        if(!dir.exists(i.path.f)) dir.create(i.path.f)
+        
         ##### Debug
         # cat(m.name, "\n")
         # if(m.name == "model9a") browser()
         #####
 
         ## Fit lm models
-        dat <- sock[sock$BY %in% years, ]
+        dat <- data_master[data_master$BY %in% years, ]
         m.fit <- nlme::lmList(m.formula, data = dat, na.action = na.omit)
 
         ## Create coefficient data.frame
         m.coef <- coef(m.fit)
         m.coef$Stock <- names(m.fit)
         m.coef <- reshape2::melt(m.coef, id.vars = "Stock")
-        m.coef$Stock <- factor(m.coef$Stock, levels = names(m.fit), ordered=is.ordered(sock$geo_id))
-        m.coef <- merge(m.coef, regions, by = "Stock", all.x = TRUE, sort = FALSE)
-        mod.coef[[i]] <- m.coef
+        m.coef$Stock <- factor(m.coef$Stock, levels = names(m.fit))
+        #m.coef <- merge(m.coef, regions, by = "Stock", all.x = TRUE, sort = FALSE)
+        #mod.coef[[i]] <- m.coef
         m.coef.oc2 <- merge(m.coef, regions2, by = "Stock", all.x = TRUE, sort = FALSE)
         mod.coef.oc2[[i]] <- m.coef.oc2
 
@@ -1630,7 +1632,7 @@ single.stock.fit <- function(formulas, years, plot.path) {
                          residuals = resid(m.fit, type = "pooled.pearson"))
         rf$Stock <- factor(rf$Stock, levels = names(m.fit))
 
-        n.covar <- sum(!unique(as.character(m.coef$variable)) %in% c("(Intercept)", "S"))
+        n.covar <- sum(!unique(as.character(m.coef.oc2$variable)) %in% c("(Intercept)", "S"))
         dot.width <- 10
         if(n.covar == 1)
             dot.width <- 6
@@ -1643,8 +1645,8 @@ single.stock.fit <- function(formulas, years, plot.path) {
         if(n.covar >= 5)
             dot.width <- 14
 
-        pdf(paste0(i.path.f, "_coef_hist.pdf"), width = 10, height = 8)
-        g <- histogram( ~ value | variable, data = m.coef,
+        pdf(paste0(i.path.f, "/coef_hist.pdf"), width = 10, height = 8)
+        g <- histogram( ~ value | variable, data = m.coef.oc2,
                        par.settings = theme.mjm(),
                        par.strip.text = list(cex = 0.7),
                        breaks = 7,
@@ -1663,9 +1665,9 @@ single.stock.fit <- function(formulas, years, plot.path) {
         print(g)
         dev.off()
 
-        pdf(paste0(i.path.f, "_coef_hist_region.pdf"), width = 10, height = 8)
-        g <- densityplot( ~ value | variable, data = m.coef,
-                         groups = Ocean.Region,
+        pdf(paste0(i.path.f, "/coef_hist_region.pdf"), width = 10, height = 8)
+        g <- densityplot( ~ value | variable, data = m.coef.oc2,
+                         groups = Ocean.Region2,
                          adjust = 1.3,
                          scales = list(relation = "free"),
                          par.settings = theme.mjm(lwd = 2),
@@ -1683,52 +1685,52 @@ single.stock.fit <- function(formulas, years, plot.path) {
         dev.off()
         
         # colours = first ocean region grouping (3 groups)
-        pdf(paste0(i.path.f, "_coef_dot_all.pdf"), width = dot.width + 2, height = 8)
-        g <- xyplot(as.factor(Stock) ~ value | variable, data = m.coef,
-                    groups = Ocean.Region,
-                    par.settings = theme.mjm(),
-                    par.strip.text = list(cex = 0.7),
-                    layout = c(NA, 1),
-                    scales = list(x = list(relation = "free")),
-                    ylab = "",
-                    xlab = "Coefficient",
-                    main = "Single-stock model coefficients by stock",
-                    sub = g.sub,
-                    auto.key = list(space = "right"),
-                    panel = function(x, y, ...) {
-                        panel.abline(v = 0, col = "grey60", lty = 2)
-                        panel.xyplot(x, y, ...)
-                    })
-        print(g)
-        dev.off()
+        #pdf(paste0(i.path.f, "_coef_dot_all.pdf"), width = dot.width + 2, height = 8)
+        #g <- xyplot(as.factor(Stock) ~ value | variable, data = m.coef,
+         #           groups = Ocean.Region2,
+          #          par.settings = theme.mjm(),
+           #         par.strip.text = list(cex = 0.7),
+            #        layout = c(NA, 1),
+             #       scales = list(x = list(relation = "free")),
+              #      ylab = "",
+               #     xlab = "Coefficient",
+                #    main = "Single-stock model coefficients by stock",
+                 #   sub = g.sub,
+                  #  auto.key = list(space = "right"),
+                   # panel = function(x, y, ...) {
+                    #    panel.abline(v = 0, col = "grey60", lty = 2)
+                     #   panel.xyplot(x, y, ...)
+                    #})
+        #print(g)
+        #dev.off()
         
         # colours = first ocean region grouping (3 groups)
-        if(m.name != "model1a") {
-          pdf(paste0(i.path.f, "_coef_dot_covars.pdf"), width = dot.width, height = 8)
+        #if(m.name != "model1a") {
+         # pdf(paste0(i.path.f, "_coef_dot_covars.pdf"), width = dot.width, height = 8)
           
-          g <- xyplot(as.factor(Stock) ~ value | variable, data = m.coef,
-                      subset = !variable %in% c("(Intercept)", "S"),
-                      groups = Ocean.Region,
-                      par.settings = theme.mjm(),
-                      par.strip.text = list(cex = 0.7),
-                      layout = c(NA, 1),
-                      scales = list(x = list(relation = "same")),
-                      ylab = "",
-                      xlab = "Coefficient",
-                      main = "Single-stock model coefficients by stock",
-                      sub = g.sub,
-                      auto.key = list(space = "right"),
-                      panel = function(x, y, ...) {
-                        panel.abline(v = 0, col = "grey60", lty = 2)
-                        panel.xyplot(x, y, ...)
-                      })
-          print(g)
+          #g <- xyplot(as.factor(Stock) ~ value | variable, data = m.coef,
+           #           subset = !variable %in% c("(Intercept)", "S"),
+            #          groups = Ocean.Region2,
+             #         par.settings = theme.mjm(),
+              #        par.strip.text = list(cex = 0.7),
+               #       layout = c(NA, 1),
+                #      scales = list(x = list(relation = "same")),
+                 #     ylab = "",
+                  #    xlab = "Coefficient",
+                   #   main = "Single-stock model coefficients by stock",
+                    #  sub = g.sub,
+                     # auto.key = list(space = "right"),
+                      #panel = function(x, y, ...) {
+                       # panel.abline(v = 0, col = "grey60", lty = 2)
+                        #panel.xyplot(x, y, ...)
+                      #})
+          #print(g)
           
-          dev.off()
-        }
+        #  dev.off()
+        #}
 
         # colours = second ocean region grouping (4 groups)
-        pdf(paste0(i.path.f, "_coef_dot_all_oc2.pdf"), width = dot.width + 2, height = 8)
+        pdf(paste0(i.path.f, "/coef_dot_all_oc2.pdf"), width = dot.width + 2, height = 8)
         g <- xyplot(as.factor(Stock) ~ value | variable, data = m.coef.oc2,
                     groups = Ocean.Region2,
                     par.settings = theme.mjm(),
@@ -1749,7 +1751,7 @@ single.stock.fit <- function(formulas, years, plot.path) {
 
         # colours = second ocean region grouping (4 groups)
         if(m.name != "model1a") {
-          pdf(paste0(i.path.f, "_coef_dot_covars_oc2.pdf"), width = dot.width, height = 8)
+          pdf(paste0(i.path.f, "/coef_dot_covars_oc2.pdf"), width = dot.width, height = 8)
           
           g <- xyplot(as.factor(Stock) ~ value | variable, data = m.coef.oc2,
                       subset = !variable %in% c("(Intercept)", "S"),
@@ -1773,7 +1775,7 @@ single.stock.fit <- function(formulas, years, plot.path) {
         }
 
         
-        pdf(paste0(i.path.f, "_resid_scatter.pdf"), width = 10, height = 8)
+        pdf(paste0(i.path.f, "/resid_scatter.pdf"), width = 10, height = 8)
         g <- xyplot(residuals ~ fitted, data = rf,
                     par.settings = theme.mjm(),
                     par.strip.text = list(cex = 0.7),
@@ -1789,7 +1791,7 @@ single.stock.fit <- function(formulas, years, plot.path) {
         print(g)
         dev.off()
 
-        pdf(paste0(i.path.f, "_resid_scatter_stock.pdf"), width = 14, height = 9)
+        pdf(paste0(i.path.f, "/resid_scatter_stock.pdf"), width = 14, height = 9)
         g <- xyplot(residuals ~ fitted | Stock, data = rf,
                     par.settings = theme.mjm(),
                     par.strip.text = list(cex = 0.7),
@@ -1805,7 +1807,7 @@ single.stock.fit <- function(formulas, years, plot.path) {
         print(g)
         dev.off()
 
-        pdf(paste0(i.path.f, "_resid_qq.pdf"), width = 10, height = 8)
+        pdf(paste0(i.path.f, "/resid_qq.pdf"), width = 10, height = 8)
         g <- qqmath( ~ residuals, data = rf,
                     par.settings = theme.mjm(),
                     par.strip.text = list(cex = 0.7),
@@ -1821,7 +1823,7 @@ single.stock.fit <- function(formulas, years, plot.path) {
         print(g)
         dev.off()
 
-        pdf(paste0(i.path.f, "_resid_qq_stock.pdf"), width = 14, height = 9)
+        pdf(paste0(i.path.f, "/resid_qq_stock.pdf"), width = 14, height = 9)
         g <- qqmath( ~ residuals | Stock, data = rf,
                     par.settings = theme.mjm(),
                     par.strip.text = list(cex = 0.7),
@@ -1870,7 +1872,7 @@ single.stock.fit <- function(formulas, years, plot.path) {
                 x.max <- NA
             }
 
-            pdf(paste0(i.path.f, "_vif_dot.pdf"), width = 12, height = 8)
+            pdf(paste0(i.path.f, "/vif_dot.pdf"), width = 12, height = 8)
             g <- xyplot(as.factor(Stock) ~ value | variable, data = vf,
                         par.settings = theme.mjm(),
                         par.strip.text = list(cex = 0.7),
