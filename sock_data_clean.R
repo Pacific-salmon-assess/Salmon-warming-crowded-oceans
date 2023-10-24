@@ -7,12 +7,12 @@
 
 
 ## Read in downloaded data
-s.brood <- read.table("./data-downloaded/raw_brood_table_2023_07_19.csv",
+s.brood <- read.table("./data-downloaded/sockeye/raw_brood_table_2023_07_19.csv",
                       sep = ",",skip = 0,
                       na.string = c("NA", "ND", "Canadians:  Please check the G-R ages.  "),
                       stringsAsFactors = FALSE, header = TRUE)
 
-s.info <- read.table("./data-downloaded/raw_stock_info_2023_06_18.csv", sep = ",",
+s.info <- read.table("./data-downloaded/sockeye/raw_stock_info_2023_06_18.csv", sep = ",",
                      skip = 0, stringsAsFactors = FALSE, header = TRUE, quote="", fill=TRUE)
 
 
@@ -138,7 +138,7 @@ tail(bt.out)
 sapply(bt.out, class)
 summary(bt.out)
 
-write.csv(bt.out, "./data/master_brood_table.csv", row.names = FALSE)
+write.csv(bt.out, "./data/sockeye/master_brood_table.csv", row.names = FALSE)
 
 
 
@@ -157,20 +157,14 @@ s.info.brood <- ddply(bt.out, .(Stock.ID), summarize,
                             yr_end = max(BY))
 
 s.info.brood$alpha_region <- ifelse(s.info.brood$Region == "Fraser River", "FR", "AK")
-s.info.brood$ocean_label <- case_when(s.info.brood$Ocean.Region == "WC" ~ "West Coast",
-                                      s.info.brood$Ocean.Region == "GOA" ~ "Gulf of Alaska",
-                                      s.info.brood$Ocean.Region == "BS" ~ "Bering Sea")
-s.info.brood$ocean_label2 <- case_when(s.info.brood$Ocean.Region2 == "WC" ~ "West Coast", 
-                                       s.info.brood$Ocean.Region2 == "GOA" ~ "Gulf of Alaska", 
-                                       s.info.brood$Ocean.Region2 == "BS" ~ "Bering Sea",
-                                       s.info.brood$Ocean.Region2 == "SEAK" ~ "Southeast Alaska")
+s.info.brood <- ocean_region_lab(s.info.brood)
 
 ## Order stocks geographically to make comparison easier
 s.info.brood <- geographic.order(s.info.brood)
 s.info.brood <- dplyr::arrange(s.info.brood, factor(Stock, levels=levels(s.info.brood$Stock)))
 
 
-write.csv(s.info.brood, "./data/master_stock_info.csv", row.names = FALSE)
+write.csv(s.info.brood, "./data/sockeye/master_stock_info.csv", row.names = FALSE)
 
 sock.info <- s.info.brood
 

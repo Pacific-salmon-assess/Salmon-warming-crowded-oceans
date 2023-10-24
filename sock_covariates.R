@@ -7,7 +7,7 @@
 ##   Load necessary data
 
 ## Master brood table
-bt.raw <- read.csv("./data/master_brood_table.csv", header=T)
+bt.raw <- read.csv("./data/sockeye/master_brood_table.csv", header=T)
 bt.complete <- bt.raw[complete.cases(bt.raw),]
 head(bt.complete)
 tail(bt.complete)
@@ -46,7 +46,7 @@ np.pink.sec <- pink.wgt.avg(brood.table = bt.complete,
 master <- dplyr::left_join(bt.complete, early.sst, by=c("BY","Stock.ID"))
 master <- dplyr::left_join(master, np.pink.sec, by=c("BY","Stock.ID"))
 master.bt_w_cov1 <- master
-master.bt_w_cov1$Stock <- geographic.order(master.bt_w_cov1) # Ordered factor
+master.bt_w_cov1 <- geographic.order(master.bt_w_cov1) # Ordered factor
 head(master.bt_w_cov1)
 tail(master.bt_w_cov1)
 summary(master.bt_w_cov1)
@@ -69,5 +69,5 @@ master.bt_w_cov3 <- fill.time.series(master.bt_w_cov2)
 
 # Export to output
 sock <- master.bt_w_cov3
-write.csv(sock, "data/master_brood_table_covar.csv", row.names=FALSE)
+write.csv(sock, "data/sockeye/master_brood_table_covar.csv", row.names=FALSE)
 
