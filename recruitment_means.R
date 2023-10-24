@@ -25,7 +25,7 @@ bbay_lh3 <- bbay_lh2 %>%
 
 
 ## Read in skeena lifehistory
-skeena_lh <- read.csv("./data-downloaded/skeena_lifehistory_prop.csv")
+skeena_lh <- read.csv("./data-downloaded/sockeye/skeena_lifehistory_prop.csv")
 
 ## Bind skeena and bristol bay stocks
 lifehist <- bind_rows(bbay_lh3, skeena_lh) %>% replace(is.na(.), 0)
