@@ -69,11 +69,16 @@ sock.info <- read.csv("../data/sockeye/master_stock_info.csv",
                       stringsAsFactors = FALSE)
 sock.info$Stock <- factor(sock.info$Stock, levels = unique(sock.info$Stock))
 
+# Add temporarily while converting to multiple spp in directory
+speciesFlag = "sockeye"
+data_master <- sock
+info_master <- sock.info
+
 ## Colour/ shape scales for plotting
 col.region <- rev(chroma::qpal(7, luminance = 40)[c(1, 3, 5, 7)])
 col.dk <- rev(chroma::qpal(7, luminance = 20)[c(1, 3, 5, 7)])
 
-names(col.region) <- names(col.dk) <- unique(sock.info$ocean_label2)
+names(col.region) <- names(col.dk) <- unique(sock.info$ocean_region_lab)
 
 
 col.eras <- c("#00b39e", "#b3a100", "#ff80d7", "#4db8ff",
@@ -82,7 +87,7 @@ col.eras <- c("#00b39e", "#b3a100", "#ff80d7", "#4db8ff",
 names(col.eras) <- paste0(rep(names(col.region), 3), ".", rep(c("Early", "Middle", "Late"), each=4))
 
 shp.reg <- c(18, 16, 17, 15)
-names(shp.reg) <- unique(sock.info$ocean_label2)
+names(shp.reg) <- unique(sock.info$ocean_region_lab)
 ```
 
 # Purpose
@@ -156,12 +161,12 @@ axes <- list( xlims=c(-165.5, -121),
               ylabels=as.character(seq(50,60,5)))
   
 #make map data
-map.info <- sock.info %>% select(Stock, lon, lat, ocean_label2) %>% 
+map.info <- sock.info %>% select(Stock, lon, lat, ocean_region_lab) %>% 
   mutate(stock.no = 1:nrow(sock.info)) %>% 
   dplyr::summarize(n.stk = n_distinct(Stock),
                    first.stk = first(stock.no),
                    last.stk = last(stock.no),
-                   .by= c("lat", "lon", "ocean_label2")) #%>%
+                   .by= c("lat", "lon", "ocean_region_lab")) #%>%
   #filter(!(first.stk %in% c(54:56))) # remove some overlapping points
 map.info[map.info$first.stk %in% c(52:56, 41:45), c("first.stk", "last.stk")] <- NA
 map.info <- map.info %>% mutate(num = ifelse(first.stk == last.stk, first.stk, paste(first.stk, last.stk, sep="-")))
@@ -169,7 +174,7 @@ misc.lab <- data.frame(x=c(-157.9, -152.5), y=c(59.5, 57.25), label=c("52-56", "
 
 map <- ggplot(map.info) + 
       geom_sf(data=na_map, color="grey30", fill="white", linewidth=0.1, ) + 
-      ggspatial::geom_spatial_point(aes(x=lon, y=lat, col=ocean_label2, shape=ocean_label2, fill=ocean_label2), 
+      ggspatial::geom_spatial_point(aes(x=lon, y=lat, col=ocean_region_lab, shape=ocean_region_lab, fill=ocean_region_lab), 
                          crs=4326, size=1, stroke=1.75, alpha=0.7) +
       #geom_text(aes(x=lon, y=lat, label=num), vjust=1.4, col="gray20", size=3) +
       ggrepel::geom_text_repel(aes(x=lon, y=lat, label=num), col="gray20", size=2.5, min.segment.length = 0.25, box.padding=0.1) +
@@ -296,7 +301,7 @@ The Hidden Markov models show relatively weak evidence for non-stationarity. In 
 ```{r stationary models: posterior probability dist., fig.align = "center"}
 # code to generate figures...
 
-load("../output/models/stat/stat_a.Rdata")
+load("../output/models/stat/sockeye/stat_a.Rdata")
 
 ## Fig: Posterior percent change density ------------------- 
 lst <- hb05_density_df(stat_a, ocean.regions = 4)
@@ -412,7 +417,7 @@ ggplot(df.dot) +
 ```{r Apriori models: density plot}
 
 ## Load era model fit
-load("../output/models/dyn/hbm_era_2c.Rdata")
+load("../output/models/dyn/sockeye/hbm_era_2c.Rdata")
 
 ## Data
 # Density dataframe - by stock
@@ -507,7 +512,7 @@ ggplot(df.era.st.2c) +
 ```{r random walk timeseries, warning=FALSE}
 #Data
 # Load model fit
-load(file="../output/models/dyn/hbm_dyn_2c.Rdata")
+load(file="../output/models/dyn/sockeye/hbm_dyn_2c.Rdata")
 
 # Stock specific dataframe
 probs <- c(0.025, 0.05, 0.10, 0.50, 0.90, 0.95, 0.975)
