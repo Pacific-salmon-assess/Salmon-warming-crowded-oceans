@@ -10,6 +10,14 @@
 ##  2. Determine the most appropriate hierarchical structure for the parameters
 ##  3. Explore model assumptions, e.g., normality, co-linearity, etc.
 
+## Make directories to save plots
+fig.dir <- here("figures", "stat", speciesFlag, "single-stock")
+fit.dir <- here("output", "models", "stat", speciesFlag, "single-stock")
+
+if(!dir.exists(fig.dir)) dir.create(fig.dir, recursive = T)
+if(!dir.exists(fit.dir)) dir.create(fit.dir, recursive = T)
+
+
 ## Specify model formulas ----------------------------------
 
 m1a.formula <- lnRS ~ S | Stock
@@ -28,14 +36,10 @@ mod.list <- list(model1a = m1a.formula,
 ## All years of data
 ss.all.yrs <- single.stock.fit(mod.list,
                                years = seq(min(sock$BY), max(sock$BY)),
-                               plot.path = "./figures/stat/single-stock/")
-
-# Create directories
-if(!dir.exists("./output/models/stat/")) dir.create("./output/models/stat/")
-if(!dir.exists("./output/models/stat/single-stock/")) dir.create("./output/models/stat/single-stock/")
+                               plot.path = fig.dir)
 
 # Save
-save(ss.all.yrs, file = "./output/models/stat/single-stock/single_stock_lms.Rdata")
+save(ss.all.yrs, file = here(fit.dir, "single_stock_lms.Rdata"))
 
 
 
