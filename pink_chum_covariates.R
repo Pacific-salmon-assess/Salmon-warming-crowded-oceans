@@ -22,21 +22,22 @@ bt.raw.pink <- read.csv("./data/pink/master_pink_brood_table.csv", header=T)
 bt.complete.pink <- bt.raw.pink[complete.cases(bt.raw.pink),]
 
 
-## Climate index: SST at ocean entry point in 1st yr marine life
+## Climate index: SST at ocean entry point in BY+1
 ## SST during early marine life : no age weighting required
-raw.clim.pink$BY <- raw.clim.pink$Year - 2 
-early.sst.pink <- dplyr::left_join(bt.complete.pink, raw.clim.pink, by=c("Stock.ID", "BY"))
+raw.clim.pink$BY <- raw.clim.pink$Year - 1 
+early.sst.pink <- dplyr::left_join(bt.complete.pink, raw.clim.pink, by=c("Stock.ID", "BY", "Species"))
 
-## competitor index: Pinks in 1st year marine life for pinks (2nd for all other sp)
-## competitors in second year of marine life
+## competitor index: Pink salmon NP abundance
+## competitors in BY+2
 raw.comp$BY <- raw.comp$Year - 2
-np.pink.sec.pink <- dplyr::left_join(bt.complete.pink[,c("Stock.ID", "BY")], raw.comp[, c("pink_numbers_np", "BY")], by= "BY")
+np.pink.sec.pink <- dplyr::left_join(bt.complete.pink[,c("Stock.ID", "BY", "Species")], raw.comp[, c("pink_numbers_np", "BY")], by= "BY")
 
 
 ## Merge datasets 
-master.pink <- dplyr::left_join(early.sst.pink, np.pink.sec.pink, by=c("BY","Stock.ID"))
-master.pink.bt_w_cov1 <- master.pink
+master.pink <- dplyr::left_join(early.sst.pink, np.pink.sec.pink, by=c("BY","Stock.ID", "Species"))
+master.pink.bt_w_cov1 <- dplyr::rename(master.pink, early_sst = sst_anomaly, np_pinks_sec = pink_numbers_np)
 master.pink.bt_w_cov1 <- geographic.order(master.pink.bt_w_cov1) # Ordered factor
+master.pink.bt_w_cov1[master.pink.bt_w_cov1$R==0, "R"] <- 1 # workaround to avoid -Inf values for lnR/S
 head(master.pink.bt_w_cov1)
 summary(master.pink.bt_w_cov1)
 unique(master.pink.bt_w_cov1$Stock.ID)
@@ -48,15 +49,15 @@ master.pink.bt_w_cov2 <- ddply(master.pink.bt_w_cov1, .(Stock), transform,
                           RS_stnd = scale(R/S)[ , 1],
                           lnRS = log(R/S),
                           S_stnd = scale(S)[ , 1],
-                          early_sst_stnd = scale(sst_anomaly)[ , 1], 
-                          np_pinks_sec_stnd = scale(pink_numbers_np)[ , 1])
+                          early_sst_stnd = scale(early_sst)[ , 1], 
+                          np_pinks_sec_stnd = scale(np_pinks_sec)[ , 1])
 
 
 ## Fill in missing years that fall w/in min and max BY for each stock
-master.pink.bt_w_cov3 <- fill.time.series(master.pink.bt_w_cov2) # do we want to use this for pinks?
+#master.pink.bt_w_cov3 <- fill.time.series(master.pink.bt_w_cov2) # don't use - why was this here for sockeye?
 
 # Export to output
-pink <- master.pink.bt_w_cov3
+pink <- master.pink.bt_w_cov2
 write.csv(pink, "data/pink/master_pink_brood_table_covar.csv", row.names=FALSE)
 
 
@@ -67,21 +68,21 @@ raw.clim.chum <- filter(raw.clim, Species=="Chum")
 bt.raw.chum <- read.csv("./data/chum/master_chum_brood_table.csv", header=T)
 bt.complete.chum <- bt.raw.chum[complete.cases(bt.raw.chum),]
 
-## Climate index: SST at ocean entry point in 1st yr marine life
+
+## Climate index: SST at ocean entry point BY+1
 ## SST during early marine life : no age weighting required
-raw.clim.chum$BY <- raw.clim.chum$Year - 2 
+raw.clim.chum$BY <- raw.clim.chum$Year - 1 
 early.sst.chum <- dplyr::left_join(bt.complete.chum, raw.clim.chum, by=c("Stock.ID", "BY", "Species"))
 
-## competitor index: pinks in 2nd year of marine life
+## competitor index: pinks in BY+2
 ## competitors in second year of marine life
-raw.comp$BY <- raw.comp$Year - 3
-np.pink.sec.chum <- dplyr::left_join(bt.complete.chum[,c("Stock.ID", "BY")], raw.comp[, c("pink_numbers_np", "BY")], by= "BY") # this isn't quite right
+raw.comp$BY <- raw.comp$Year - 2
+np.pink.sec.chum <- dplyr::left_join(bt.complete.chum[,c("Stock.ID", "BY", "Species")], raw.comp[, c("pink_numbers_np", "BY")], by= "BY")
 
 
 ## Merge datasets 
-master.chum <- dplyr::left_join(early.sst.chum, np.pink.sec.chum, by=c("BY","Stock.ID"))
-## Stopped here because of duplication issue
-master.chum.bt_w_cov1 <- master.chum
+master.chum <- dplyr::left_join(early.sst.chum, np.pink.sec.chum, by=c("BY","Stock.ID", "Species"))
+master.chum.bt_w_cov1 <- dplyr::rename(master.chum, early_sst = sst_anomaly, np_pinks_sec = pink_numbers_np)
 master.chum.bt_w_cov1 <- geographic.order(master.chum.bt_w_cov1) # Ordered factor
 head(master.chum.bt_w_cov1)
 summary(master.chum.bt_w_cov1)
@@ -94,15 +95,14 @@ master.chum.bt_w_cov2 <- ddply(master.chum.bt_w_cov1, .(Stock), transform,
                                RS_stnd = scale(R/S)[ , 1],
                                lnRS = log(R/S),
                                S_stnd = scale(S)[ , 1],
-                               early_sst_stnd = scale(sst_anomaly)[ , 1], 
-                               np_pinks_sec_stnd = scale(pink_numbers_np)[ , 1])
-
+                               early_sst_stnd = scale(early_sst)[ , 1], 
+                               np_pinks_sec_stnd = scale(np_pinks_sec)[ , 1])
 
 ## Fill in missing years that fall w/in min and max BY for each stock
-master.chum.bt_w_cov3 <- fill.time.series(master.chum.bt_w_cov2) 
+#master.chum.bt_w_cov3 <- fill.time.series(master.chum.bt_w_cov2) # don't
 
 
 # Export to output
-chum <- master.chum.bt_w_cov3
+chum <- master.chum.bt_w_cov2
 write.csv(chum, "data/chum/master_chum_brood_table_covar.csv", row.names=FALSE)
 

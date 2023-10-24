@@ -10,12 +10,12 @@ p.brood <- read.csv("./data-downloaded/pink/raw_pink_brood_table2023-09-20.csv",
                       sep = ",",skip = 0,
                       stringsAsFactors = FALSE, header = TRUE)
 
-p.info <- read.csv("./data-downloaded/pink/pink_info2023-09-20.csv", sep = ",",
+p.info <- read.csv("./data-downloaded/pink/pink_info2023-10-19.csv", sep = ",",
                      skip = 0, stringsAsFactors = FALSE, header = TRUE)
 
 
 ## Create lat/lon table ---------------------------------
-p.info$lat[p.info$lat==447.16] <- 47.16 ## check this
+p.info$lat[p.info$lat==447.16] <- 47.16
 p.info$lon <- -abs(p.info$lon)
 coord.lookup <- distinct(p.info[,c("stock", "lat", "lon")])
 names(coord.lookup) <- str_to_title(names(coord.lookup))
@@ -36,16 +36,17 @@ summary(p.brood)
 
 
 bt <- data.frame(Stock.ID = p.brood$stock.id,
+                 Species = "Pink",
                  Stock = p.brood$stock,
                  Region = p.brood$region,
                  Ocean.Region2 = NA,
                  Sub.Region = p.brood$sub.region,
                  BY = p.brood$broodyear,
-                 R1.1 = p.brood$recruits,
+                 R0.1 = p.brood$recruits,
                  R = p.brood$recruits,
                  S = p.brood$spawners )
                 
-bt.out.1 <- bt[!is.na(bt$S),]         # drop years with missing data
+bt.out.1 <- bt[!is.na(bt$S),]  # drop years with missing data
 summary(bt.out.1)
 
 bt.out.2 <- subset(bt.out.1,BY <= 2019) # currently have pink-NP data up to 2021 (+2 yr)
@@ -59,36 +60,18 @@ bt.out.3 <- left_join(bt.out.2, coord.lookup, by="Stock")
 head(bt.out.3)
 
 ## Add ocean.region groupings
-bt.out.4 <- bt.out.3 %>% 
-  mutate(Ocean.Region2 = case_when(
-          Region %in% c("Inside WA", "Fraser River", "BC South", "BC Central", "WC") ~ "WC",
-          Region %in% c("SEAK", "Yakutat", "Chignik", "Kodiak") ~ "SEAK",
-          Region %in% c("AK Peninsula", "Cook Inlet", "PWS" ) ~ "GOA",
-          Region %in% c("Bristol Bay", "AYK") ~ "BS"
-)) ## Check region== AYK coords! 
+bt.out.4 <- bt.out.3
+bt.out.4$Ocean.Region2 <- p.info$ocean.region[match(bt.out.3$Stock, p.info$stock)]
+bt.out.4$Ocean.Region2[bt.out.4$Sub.Region %in% c("SEAK", "BC North", "Yakutat")] <- "SEAK"
 
-## Fill in missing years that fall w/in min and max BY for each stock
-#bt.out.5 <- fill.time.series(bt.out.4) # this adds NAs and is supposed to! 
-# DON'T do this step for pinks. Need another solution 
-# TODO find a method that doesn't mess up odd/even years
-
-## Trim time series of NA values by selecting the longest
-## string of consecutive brood years for stocks with NA values.
-#bt.out.6 <- ddply(bt.out.5, .(Stock.ID), function(i) {
- # BY <- i$BY
-#  R  <- i$R
-#  BY.na <- ifelse(is.na(R), NA, BY)
-  #ind <- consec_years(BY.na)
-  #return(i[i$BY %in% ind, ])
-#}) 
-# TODO skip this step too: see above
+# In sockeye there is a step here to trim and add NAs for missing years
 
 ## Order stocks geographically to make plotting easier
-bt.out.7 <- geographic.order(bt.out.5)
-bt.out.7 <- dplyr::arrange(bt.out.7, factor(Stock, levels=levels(bt.out.7$Stock)))
+bt.out.5 <- geographic.order(bt.out.4)
+bt.out.6 <- dplyr::arrange(bt.out.5, factor(Stock, levels=levels(bt.out.5$Stock)))
 
 # Summary
-bt.out <- bt.out.7
+bt.out <- bt.out.6
 head(bt.out)
 tail(bt.out)
 sapply(bt.out, class)
@@ -98,7 +81,7 @@ write.csv(bt.out, "./data/pink/master_pink_brood_table.csv", row.names = FALSE)
 
 
 ## Make stock info table ------------------------------------
-p.info.brood <- ddply(bt.out.5, .(Stock.ID), plyr::summarize,
+p.info.brood <- ddply(bt.out.6, .(Stock.ID), plyr::summarize,
                       Stock = unique(Stock),
                       Region = unique(Region),
                       Ocean.Region2 = unique(Ocean.Region2),
@@ -110,13 +93,8 @@ p.info.brood <- ddply(bt.out.5, .(Stock.ID), plyr::summarize,
                       yr_start = min(BY),
                       yr_end = max(BY))
 
-p.info.brood$ocean_label2 <- case_when(p.info.brood$Ocean.Region2 == "WC" ~ "West Coast", 
-                                       p.info.brood$Ocean.Region2 == "GOA" ~ "Gulf of Alaska", 
-                                       p.info.brood$Ocean.Region2 == "BS" ~ "Bering Sea",
-                                       p.info.brood$Ocean.Region2 == "SEAK" ~ "Southeast Alaska")
-
-## Order stocks geographically to make comparison easier
-p.info.brood <- geographic.order(p.info.brood)
+p.info.brood <- ocean_region_lab(p.info.brood)
+p.info.brood <- geographic.order(p.info.brood) # Order stocks geographically to make comparison easier
 p.info.brood <- dplyr::arrange(p.info.brood, factor(Stock, levels=levels(p.info.brood$Stock)))
 
 
@@ -128,13 +106,13 @@ pink.info <- p.info.brood
 ## CHUM
 
 ## Read in downloaded data
-c.brood <- read.table("./data-downloaded/chum/raw_chum_brood_table2023-09-20.csv",
+c.brood <- read.csv("./data-downloaded/chum/raw_chum_brood_table2023-10-10.csv",
                       sep = ",",skip = 0,
-                      na.string = c("NA", "ND"),
-                      stringsAsFactors = FALSE, header = TRUE)
+                      na.string = c("NA", "ND", "<NA>"),
+                      stringsAsFactors = FALSE, header = TRUE, row.names=NULL)
 
-c.info <- read.table("./data-downloaded/chum/chum_info2023-09-20.csv", sep = ",",
-                     skip = 0, stringsAsFactors = FALSE, header = TRUE)
+c.info <- read.csv("./data-downloaded/chum/chum_info2023-10-10.csv", sep = ",",
+                     skip = 0, stringsAsFactors = FALSE, header = TRUE, row.names=NULL)
 
 
 # Create Lat/Lon lookup table
@@ -160,13 +138,14 @@ sapply(c.brood, class)
 names(c.brood) <- str_to_title(names(c.brood))
 names(c.brood)[names(c.brood) %in% c("Stock.id", "Sub.region", "Broodyear", "Use")] <- c("Stock.ID", "Sub.Region", "BY", "UseFlag")
 names(c.brood)[names(c.brood) %in% c("Spawners", "Recruits")] <- c("S", "R")
-names(c.brood)[grepl("\\d$", names(c.brood))] <- paste0("R1.", as.numeric(str_extract(names(c.brood)[grepl("\\d$", names(c.brood))], "\\d$"))-1)
+names(c.brood)[grepl("\\d$", names(c.brood))] <- paste0("R0.", as.numeric(str_extract(names(c.brood)[grepl("\\d$", names(c.brood))], "\\d$"))-1)
 
 ## Subset usable data points
 c.brood.use <- c.brood[c.brood$UseFlag == 1, ]
 c.brood.use <- c.brood.use[ , names(c.brood.use) != "Age"]
 c.brood.use <- dplyr::filter(c.brood.use, Stock.ID != 366, Stock.ID != 363) # Remove 2 stocks with no recruitment detail for now
-# WHY ARE SO MANY DUPLICATED?!
+c.brood.use$Species <- "Chum" 
+
 head(c.brood.use)
 tail(c.brood.use)
 nrow(c.brood.use)
@@ -178,7 +157,7 @@ bt = c.brood.use
 bt[,r.cols.new] <- lapply(bt[,r.cols.new], function(x) x/bt$R) # Make "R" columns proportions
 
 bt.out.1 <- bt[complete.cases(bt),]                # drop years with missing data
-bt.out.2 <- subset(bt.out.1,BY <= 2019) # currently have pink-NP data up to 2021 (+2 yr)
+bt.out.2 <- subset(bt.out.1, BY <= 2019) # currently have pink-NP data up to 2021 (+2 yr)
 
 # join lat/lon
 all(bt.out.2$Stock %in% c.info$stock)
@@ -188,35 +167,18 @@ bt.out.3 <- left_join(bt.out.2, coord.lookup, by="Stock")
 head(bt.out.3)
 
 # Add ocean regions
-bt.out.4 <- bt.out.3 %>% 
-  mutate(Ocean.Region2 = case_when(
-    Region %in% c("Inside WA", "Outside WA", "Fraser River", "BC South", "BC Central", "WC") ~ "WC",
-    Region %in% c("SEAK", "Yakutat", "Chignik", "Kodiak") ~ "SEAK",
-    Region %in% c("AK Peninsula", "Cook Inlet", "PWS" ) ~ "GOA",
-    Region %in% c("Bristol Bay", "AYK") ~ "BS"
-  ))
+bt.out.4 <- bt.out.3
+bt.out.4$Ocean.Region2 <- c.info$ocean.region[match(bt.out.3$Stock, c.info$stock)]
+bt.out.4$Ocean.Region2[bt.out.4$Sub.Region %in% c("SEAK", "BC North", "Yakutat")] <- "SEAK"
 
-## Fill in missing years that fall w/in min and max BY for each stock
-#bt.out.5 <- fill.time.series(bt.out.4) # this adds NAs and is supposed to! 
-# Skip for now as above
-
-## Trim time series of NA values by selecting the longest
-## string of consecutive brood years for stocks with NA values.
-## this does weird things
-#bt.out.6 <- ddply(bt.out.5, .(Stock.ID), function(i) {
- # BY <- i$BY
-  # R  <- i$R
-  # BY.na <- ifelse(is.na(R), NA, BY)
-  # ind <- consec_years(BY.na)
-  # return(i[i$BY %in% ind, ])
-#})
+# In sockeye there is a step here to trim and add NAs for missing years
 
 ## Order stocks geographically to make plotting easier
-bt.out.6 <- geographic.order(bt.out.4)
-bt.out.7 <- dplyr::arrange(bt.out.6, factor(Stock, levels=levels(bt.out.6$Stock)))
+bt.out.5 <- geographic.order(bt.out.4)
+bt.out.6 <- dplyr::arrange(bt.out.5, factor(Stock, levels=levels(bt.out.5$Stock)))
 
 # Summary
-bt.out <- bt.out.7
+bt.out <- bt.out.6
 head(bt.out)
 tail(bt.out)
 sapply(bt.out, class)
@@ -238,10 +200,7 @@ c.info.brood <- ddply(bt.out, .(Stock.ID), summarize,
                       yr_start = min(BY),
                       yr_end = max(BY))
 
-c.info.brood$ocean_label2 <- case_when(c.info.brood$Ocean.Region2 == "WC" ~ "West Coast", 
-                                       c.info.brood$Ocean.Region2 == "GOA" ~ "Gulf of Alaska", 
-                                       c.info.brood$Ocean.Region2 == "BS" ~ "Bering Sea",
-                                       c.info.brood$Ocean.Region2 == "SEAK" ~ "Southeast Alaska")
+c.info.brood <- ocean_region_lab(c.info.brood)
 
 ## Order stocks geographically to make comparison easier
 c.info.brood <- geographic.order(c.info.brood)
