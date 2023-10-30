@@ -29,4 +29,4 @@ eff_dens <- filter(competitors, metric == "biomass") |>
 competitors_long <- bind_rows(competitors, eff_dens)
 
 #write it to repo
-write.csv(competitors_long, here("data/competitor_density_long.csv"))
+write.csv(competitors_long, here("data/competitor_density_long.csv"), row.names = FALSE)
