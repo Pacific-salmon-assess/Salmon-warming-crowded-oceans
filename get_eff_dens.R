@@ -6,7 +6,7 @@ library(here)
 competitors <- read.csv(here("data-downloaded/competitor_indices_2023_05_16.csv")) |>
   pivot_longer(-Year, names_to = "type") |>
   mutate(species = ifelse(grepl("pink", type), "pink", "all"),
-         metric = ifelse(grepl("numbers", type), "n", "biomass"),
+         metric = ifelse(grepl("numbers", type), "abundance", "biomass"),
          area = case_when(grepl("np_bs", type) ~ "np-bs",
                           grepl("na_bs", type) ~ "na-bs",
                           grepl("np_goa", type) ~ "np-goa",
@@ -22,7 +22,7 @@ competitors <- read.csv(here("data-downloaded/competitor_indices_2023_05_16.csv"
 
 #break df into biomass only then overwrite w/ effective density
 eff_dens <- filter(competitors, metric == "biomass") |>
-  mutate(metric = "eff-dens",
+  mutate(metric = "eff.dens.",
          value = ((value)^(1/3))^2) #eff dens calculation
 
 #make it into one object
@@ -30,3 +30,10 @@ competitors_long <- bind_rows(competitors, eff_dens)
 
 #write it to repo
 write.csv(competitors_long, here("data/competitor_density_long.csv"), row.names = FALSE)
+
+# plot some stuff ------------------------------------------------------------------------
+ggplot(competitors_long, aes(Year, value, color = species)) +
+  geom_line() +
+  facet_grid(metric~area, scales = "free_y") +
+  theme_bw() +
+  labs(x = "year", title = "Competitor indicies")
