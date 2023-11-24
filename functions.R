@@ -770,7 +770,7 @@ plot_hbm_dens <- function(stanfit,
 plot_post_pc <- function(stanfit, y,
                          pdf.path = NULL,
                          var.yrep = "yrep",
-                         data = sock) {
+                         data = data_master) {
     ## Plot posterior predictive distributions
     ##
     ## stanfit = stanfit object sampled using priors only (no likelihood)
@@ -795,7 +795,6 @@ plot_post_pc <- function(stanfit, y,
     g <- ppc_dens_overlay(y = y, yrep = yrep[[1]][1:100, ]) +
         labs(title="Y rep: posterior predictive check")
     print(g)
-    
     g <- ppc_dens_overlay_grouped(y = y, yrep = yrep[[1]][1:50, ], 
                                   group=data$Stock)  +
         labs(title="Y rep: posterior predictive check")
@@ -1002,7 +1001,6 @@ stan_data_stat <- function(data,
     sock.stan[[var.region]] <- factor(sock.stan[[var.region]],
                                      levels = unique(sock.stan[[var.region]]))
 
-#browser()
     ## Get start/end for each stock
     start.end  <- levels_start_end(sock.stan$Stock)
 
@@ -1014,9 +1012,8 @@ stan_data_stat <- function(data,
     g.grp <- as.numeric(factor(grp.df$group, levels = unique(grp.df$group)))
 
     a.grp.df <- plyr::ddply(sock.stan, .(Stock), plyr::summarize,
-                            group = unique(Region))
-    a.grp <- ifelse(a.grp.df$group == "Fraser River", 1, 2)
-
+                            group = ifelse(round(unique(Lat), 2) == 49.12, 1, 2))
+    a.grp <- a.grp.df$group
 
     ## Get start/end for group-specific gamma series
     start.end.grp.lst <- lapply(split(sock.stan, sock.stan[[var.region]]),
@@ -1599,7 +1596,7 @@ single.stock.fit <- function(formulas, years, plot.path) {
         }
 
         i.path.f <- paste0(i.path, m.name)
-        if(!dir.exists(i.path.f)) dir.create(i.path.f)
+        if(!dir.exists(i.path.f)) dir.create(i.path.f, recursive = T)
         
         ##### Debug
         # cat(m.name, "\n")
