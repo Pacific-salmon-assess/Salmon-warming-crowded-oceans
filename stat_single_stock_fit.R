@@ -10,6 +10,16 @@
 ##  2. Determine the most appropriate hierarchical structure for the parameters
 ##  3. Explore model assumptions, e.g., normality, co-linearity, etc.
 
+## Set Species -----
+speciesFlag = "pink"
+#speciesFlag = "chum"
+#speciesFlag = "sockeye"
+
+if(speciesFlag=="pink") 
+  data_master <- pink else if(speciesFlag=="chum") 
+    data_master <- chum else if(speciesFlag=="sockeye")
+      data_master <- sock
+
 ## Make directories to save plots
 fig.dir <- here("figures", "stat", speciesFlag, "single-stock")
 fit.dir <- here("output", "models", "stat", speciesFlag, "single-stock")
