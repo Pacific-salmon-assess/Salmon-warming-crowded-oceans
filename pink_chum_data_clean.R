@@ -3,21 +3,23 @@
 ## This script cleans/processes the raw compiled Pink and Chum data. The output of
 ## this script is a master brood table for the analysis and a summary info table
 
+
+## Should R be sum of RX.X columns?!
+
+data_full <- read.csv("./data-downloaded/salmon_productivity_compilation2023-11-20.csv") 
+
+info_full <- read.csv("./data-downloaded/stock_info2023-11-20.csv")
+
 ## PINKS!!
 
 ## Read in downloaded data
-p.brood <- read.csv("./data-downloaded/pink/raw_pink_brood_table2023-09-20.csv",
-                      sep = ",",skip = 0,
-                      stringsAsFactors = FALSE, header = TRUE)
-
-p.info <- read.csv("./data-downloaded/pink/pink_info2023-10-19.csv", sep = ",",
-                     skip = 0, stringsAsFactors = FALSE, header = TRUE)
-
+p.brood <- data_full %>% dplyr::filter(species %in% c("Pink-Odd", "Pink-Even"))
+p.info <- info_full %>% dplyr::filter(species %in% c("Pink-Odd", "Pink-Even"))
 
 ## Create lat/lon table ---------------------------------
-p.info$lat[p.info$lat==447.16] <- 47.16
+p.info$lat[p.info$lat==447.16] <- 47.16 ## report this issue
 p.info$lon <- -abs(p.info$lon)
-coord.lookup <- distinct(p.info[,c("stock", "lat", "lon")])
+coord.lookup <- distinct(p.info[,c("stock.name", "lat", "lon")])
 names(coord.lookup) <- str_to_title(names(coord.lookup))
 
 
@@ -27,20 +29,11 @@ tail(p.brood)
 sapply(p.brood, class)
 nrow(p.brood)
 
-## Subset usable data points
-p.brood <- p.brood[p.brood$use == 1, ]
-head(p.brood)
-tail(p.brood)
-nrow(p.brood)
-summary(p.brood)
-
 
 bt <- data.frame(Stock.ID = p.brood$stock.id,
                  Species = "Pink",
                  Stock = p.brood$stock,
-                 Region = p.brood$region,
                  Ocean.Region2 = NA,
-                 Sub.Region = p.brood$sub.region,
                  BY = p.brood$broodyear,
                  R0.1 = p.brood$recruits,
                  R = p.brood$recruits,
@@ -49,20 +42,22 @@ bt <- data.frame(Stock.ID = p.brood$stock.id,
 bt.out.1 <- bt[!is.na(bt$S),]  # drop years with missing data
 summary(bt.out.1)
 
-bt.out.2 <- subset(bt.out.1,BY <= 2019) # currently have pink-NP data up to 2021 (+2 yr)
+bt.out.2 <- subset(bt.out.1, BY <= 2020) # currently have pink-NP data up to 2021 (+1 yr)
 
 ## check against stock.info table
-all(bt.out.2$Stock %in% p.info$stock)
+all(bt.out.2$Stock %in% p.info$stock.name)
 all(bt.out.2$Stock.ID %in% p.info$stock.id)
 
 # Join Lat/Lon to bt
-bt.out.3 <- left_join(bt.out.2, coord.lookup, by="Stock")
+bt.out.3 <- left_join(bt.out.2, coord.lookup, by=c("Stock"="Stock.name"))
 head(bt.out.3)
 
 ## Add ocean.region groupings
 bt.out.4 <- bt.out.3
-bt.out.4$Ocean.Region2 <- p.info$ocean.region[match(bt.out.3$Stock, p.info$stock)]
-bt.out.4$Ocean.Region2[bt.out.4$Sub.Region %in% c("SEAK", "BC North", "Yakutat")] <- "SEAK"
+bt.out.4$Ocean.Region2 <- p.info$ocean.basin[match(bt.out.3$Stock, p.info$stock.name)]
+# Add SEAK grouping
+bt.out.4$Ocean.Region2[bt.out.4$Ocean.Region2=="WC" & bt.out.4$Lat >= 54.09] <- "SEAK"
+#bt.out.4$Ocean.Region2[bt.out.4$Sub.Region %in% c("SEAK", "BC North", "Yakutat")] <- "SEAK"
 
 # In sockeye there is a step here to trim and add NAs for missing years
 
@@ -70,8 +65,17 @@ bt.out.4$Ocean.Region2[bt.out.4$Sub.Region %in% c("SEAK", "BC North", "Yakutat")
 bt.out.5 <- geographic.order(bt.out.4)
 bt.out.6 <- dplyr::arrange(bt.out.5, factor(Stock, levels=levels(bt.out.5$Stock)))
 
+# Simplify stock names
+bt.out.7 <- bt.out.6
+#bt.out.7$Even.Odd <- stringr::str_extract(bt.out.7$Stock, "\\w{3,4}$")
+bt.out.7$Stock <- stringr::str_remove(bt.out.7$Stock, ".\\(\\w{3,4}\\)")
+bt.out.7$Stock <- stringr::str_remove(bt.out.7$Stock, "-Pink")
+# Drop stocks (temporarily?!):
+bt.out.7 <- bt.out.7 %>% filter(Stock != "Nisqually-Odd", Stock != "S South Misc.-Odd")
+
+
 # Summary
-bt.out <- bt.out.6
+bt.out <- bt.out.7
 head(bt.out)
 tail(bt.out)
 sapply(bt.out, class)
@@ -81,11 +85,9 @@ write.csv(bt.out, "./data/pink/master_pink_brood_table.csv", row.names = FALSE)
 
 
 ## Make stock info table ------------------------------------
-p.info.brood <- ddply(bt.out.6, .(Stock.ID), plyr::summarize,
+p.info.brood <- ddply(bt.out.7, .(Stock.ID), plyr::summarize,
                       Stock = unique(Stock),
-                      Region = unique(Region),
                       Ocean.Region2 = unique(Ocean.Region2),
-                      Sub.Region = unique(Sub.Region),
                       lat = unique(Lat),
                       lon = unique(Lon),
                       na_count = sum(is.na(R)),
@@ -103,73 +105,68 @@ write.csv(p.info.brood, "./data/pink/master_pink_stock_info.csv", row.names = FA
 pink.info <- p.info.brood
 
 
-## CHUM
+## CHUM -----------------------------------------------
 
 ## Read in downloaded data
-c.brood <- read.csv("./data-downloaded/chum/raw_chum_brood_table2023-10-10.csv",
-                      sep = ",",skip = 0,
-                      na.string = c("NA", "ND", "<NA>"),
-                      stringsAsFactors = FALSE, header = TRUE, row.names=NULL)
-
-c.info <- read.csv("./data-downloaded/chum/chum_info2023-10-10.csv", sep = ",",
-                     skip = 0, stringsAsFactors = FALSE, header = TRUE, row.names=NULL)
-
+c.brood <- data_full %>% dplyr::filter(species == "Chum")
+c.info <- info_full %>% dplyr::filter(species  == "Chum")
 
 # Create Lat/Lon lookup table
 c.info$lon <- -abs(c.info$lon)
-coord.lookup <- distinct(c.info[,c("stock", "lat", "lon")])
+coord.lookup <- distinct(c.info[,c("stock.name", "lat", "lon")])
 names(coord.lookup) <- str_to_title(names(coord.lookup))
 
 
 ## Clean-up master brood table -----------------------------
+c.brood <- c.brood[,names(c.brood)!="X"]
 head(c.brood)
 tail(c.brood)
 sapply(c.brood, class)
 
-# NA values need to be replaced with 0s for years with no recruits
-# This replacement is only done for the "recruit" columns
-r.cols <- grep(".\\.[[:digit:]]", names(c.brood), value = TRUE)
-c.brood[ , r.cols][is.na(c.brood[ , r.cols])] <- 0
-head(c.brood)
-tail(c.brood)
-sapply(c.brood, class)
+
+# Remove empty "RX.X columns and rename "RX" columns to Eur naming convention
+names(c.brood)[grepl("\\w{1}\\d{1}$", names(c.brood))] <- paste0("R0.", as.numeric(str_extract(names(c.brood)[grepl("\\w{1}\\d{1}$", names(c.brood))], "\\d$"))-1)
+r.cols.old <- names(c.brood)[grepl("^r\\d", names(c.brood))]
+c.brood <- c.brood[,!names(c.brood) %in% r.cols.old]
 
 #Rename some columns
 names(c.brood) <- str_to_title(names(c.brood))
-names(c.brood)[names(c.brood) %in% c("Stock.id", "Sub.region", "Broodyear", "Use")] <- c("Stock.ID", "Sub.Region", "BY", "UseFlag")
+names(c.brood)[names(c.brood) %in% c("Broodyear", "Stock.id")] <- c("BY", "Stock.ID")
 names(c.brood)[names(c.brood) %in% c("Spawners", "Recruits")] <- c("S", "R")
-names(c.brood)[grepl("\\d$", names(c.brood))] <- paste0("R0.", as.numeric(str_extract(names(c.brood)[grepl("\\d$", names(c.brood))], "\\d$"))-1)
-
-## Subset usable data points
-c.brood.use <- c.brood[c.brood$UseFlag == 1, ]
-c.brood.use <- c.brood.use[ , names(c.brood.use) != "Age"]
-c.brood.use <- dplyr::filter(c.brood.use, Stock.ID != 366, Stock.ID != 363) # Remove 2 stocks with no recruitment detail for now
-c.brood.use$Species <- "Chum" 
-
-head(c.brood.use)
-tail(c.brood.use)
-nrow(c.brood.use)
-summary(c.brood.use)
 
 
-r.cols.new <- grep("^R\\d", names(c.brood.use), value = TRUE)
-bt = c.brood.use
-bt[,r.cols.new] <- lapply(bt[,r.cols.new], function(x) x/bt$R) # Make "R" columns proportions
+head(c.brood)
+tail(c.brood)
+nrow(c.brood)
+summary(c.brood)
+
+
+bt <- c.brood
+r.cols <- names(bt)[grepl("R0.\\d$", names(bt))]
+# Replace NAs with 0 in recruitment cols
+bt[ , r.cols][is.na(c.brood[,r.cols])] <- 0
+rowSums(bt[,r.cols]) == bt$R
+bt[,r.cols] <- lapply(bt[,r.cols], function(x) x/bt$R) # Make "R" columns proportions
 
 bt.out.1 <- bt[complete.cases(bt),]                # drop years with missing data
 bt.out.2 <- subset(bt.out.1, BY <= 2019) # currently have pink-NP data up to 2021 (+2 yr)
 
+head(bt.out.2)
+summary(bt.out.2)
+
 # join lat/lon
-all(bt.out.2$Stock %in% c.info$stock)
+all(bt.out.2$Stock %in% c.info$stock.name)
 all(bt.out.2$Stock.ID %in% c.info$stock.id)
 all(bt.out.2$Stock %in% coord.lookup$Stock)
-bt.out.3 <- left_join(bt.out.2, coord.lookup, by="Stock")
+bt.out.3 <- left_join(bt.out.2, coord.lookup, by=c("Stock"="Stock.name"))
 head(bt.out.3)
 
 # Add ocean regions
 bt.out.4 <- bt.out.3
-bt.out.4$Ocean.Region2 <- c.info$ocean.region[match(bt.out.3$Stock, c.info$stock)]
-bt.out.4$Ocean.Region2[bt.out.4$Sub.Region %in% c("SEAK", "BC North", "Yakutat")] <- "SEAK"
+bt.out.4$Ocean.Region2 <- c.info$ocean.basin[match(bt.out.4$Stock, c.info$stock.name)]
+# Add SEAK grouping
+bt.out.4$Ocean.Region2[bt.out.4$Ocean.Region2=="WC" & bt.out.4$Lat >= 54.09] <- "SEAK"
+
 
 # In sockeye there is a step here to trim and add NAs for missing years
 
@@ -177,8 +174,13 @@ bt.out.4$Ocean.Region2[bt.out.4$Sub.Region %in% c("SEAK", "BC North", "Yakutat")
 bt.out.5 <- geographic.order(bt.out.4)
 bt.out.6 <- dplyr::arrange(bt.out.5, factor(Stock, levels=levels(bt.out.5$Stock)))
 
+# Simplify stock names
+bt.out.7 <- bt.out.6
+bt.out.7$Stock <- stringr::str_remove(bt.out.7$Stock, "-Chum")
+
+
 # Summary
-bt.out <- bt.out.6
+bt.out <- bt.out.7
 head(bt.out)
 tail(bt.out)
 sapply(bt.out, class)
@@ -190,9 +192,7 @@ write.csv(bt.out, "./data/chum/master_chum_brood_table.csv", row.names = FALSE)
 ## Create stock info table ---------------------------------
 c.info.brood <- ddply(bt.out, .(Stock.ID), summarize,
                       Stock = unique(Stock),
-                      Region = unique(Region),
                       Ocean.Region2 = unique(Ocean.Region2),
-                      Sub.Region = unique(Sub.Region),
                       lat = unique(Lat),
                       lon = unique(Lon),
                       na_count = sum(is.na(R)),

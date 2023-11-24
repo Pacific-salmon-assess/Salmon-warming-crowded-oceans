@@ -25,17 +25,17 @@ bt.complete.pink <- bt.raw.pink[complete.cases(bt.raw.pink),]
 ## Climate index: SST at ocean entry point in BY+1
 ## SST during early marine life : no age weighting required
 raw.clim.pink$BY <- raw.clim.pink$Year - 1 
-early.sst.pink <- dplyr::left_join(bt.complete.pink, raw.clim.pink, by=c("Stock.ID", "BY", "Species"))
+early.sst.pink <- dplyr::left_join(bt.complete.pink, raw.clim.pink[,names(raw.clim.pink) != "Year"], by=c("Stock.ID", "BY", "Species"))
 
 ## competitor index: Pink salmon NP abundance
 ## competitors in BY+2
 raw.comp$BY <- raw.comp$Year - 2
-np.pink.sec.pink <- dplyr::left_join(bt.complete.pink[,c("Stock.ID", "BY", "Species")], raw.comp[, c("pink_numbers_np", "BY")], by= "BY")
+np.pink.sec.pink <- dplyr::left_join(bt.complete.pink[,c("Stock.ID", "BY", "Species")], raw.comp[, c("all_spp_numbers_np", "pink_numbers_np", "BY")], by= "BY")
 
 
 ## Merge datasets 
 master.pink <- dplyr::left_join(early.sst.pink, np.pink.sec.pink, by=c("BY","Stock.ID", "Species"))
-master.pink.bt_w_cov1 <- dplyr::rename(master.pink, early_sst = sst_anomaly, np_pinks_sec = pink_numbers_np)
+master.pink.bt_w_cov1 <- dplyr::rename(master.pink, early_sst = sst_anomaly, np_pinks_sec = pink_numbers_np, np_all_spp_sec = all_spp_numbers_np)
 master.pink.bt_w_cov1 <- geographic.order(master.pink.bt_w_cov1) # Ordered factor
 master.pink.bt_w_cov1[master.pink.bt_w_cov1$R==0, "R"] <- 1 # workaround to avoid -Inf values for lnR/S
 head(master.pink.bt_w_cov1)
@@ -50,6 +50,7 @@ master.pink.bt_w_cov2 <- ddply(master.pink.bt_w_cov1, .(Stock), transform,
                           lnRS = log(R/S),
                           S_stnd = scale(S)[ , 1],
                           early_sst_stnd = scale(early_sst)[ , 1], 
+                          np_all_spp_sec_stnd = scale(np_all_spp_sec)[ , 1],
                           np_pinks_sec_stnd = scale(np_pinks_sec)[ , 1])
 
 
@@ -72,7 +73,7 @@ bt.complete.chum <- bt.raw.chum[complete.cases(bt.raw.chum),]
 ## Climate index: SST at ocean entry point BY+1
 ## SST during early marine life : no age weighting required
 raw.clim.chum$BY <- raw.clim.chum$Year - 1 
-early.sst.chum <- dplyr::left_join(bt.complete.chum, raw.clim.chum, by=c("Stock.ID", "BY", "Species"))
+early.sst.chum <- dplyr::left_join(bt.complete.chum, raw.clim.chum[,names(raw.clim.chum) != "Year"], by=c("Stock.ID", "BY", "Species"))
 
 ## competitor index: pinks in BY+2
 ## competitors in second year of marine life
