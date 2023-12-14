@@ -23,7 +23,7 @@ competitors <- read.csv(here("data-downloaded/competitor_indices_2023_05_16.csv"
 #break df into biomass only then overwrite w/ effective density
 eff_dens <- filter(competitors, metric == "biomass") |>
   mutate(metric = "eff.dens.",
-         value = ((value)^(1/3))^2) #eff dens calculation
+         value = ((value)^(1/3))^2) #eff dens calculation - correct but dumb - just a transformation, that wont affect model 
 
 #make it into one object
 competitors_long <- bind_rows(competitors, eff_dens)
@@ -36,4 +36,6 @@ ggplot(competitors_long, aes(Year, value, color = species)) +
   geom_line() +
   facet_grid(metric~area, scales = "free_y") +
   theme_bw() +
-  labs(x = "year", title = "Competitor indicies")
+  labs(x = "year", title = "Competitor indicies") +
+  scale_color_manual(values = c("darkgrey", "salmon")) +
+  theme(legend.position = "bottom")
