@@ -1,11 +1,6 @@
-## (6) Exploratory graphics and summaries for sockeye and covariate data ## 
-## --------------------------------------------------------------------- ##
+## Exploratory graphics and summaries for salmon and covariate data 
 
-## Set Species -----
-speciesFlag = "pink"
-#speciesFlag = "chum"
-#speciesFlag = "sockeye"
-
+# Species
 if(speciesFlag=="pink") {
   data_master <- pink
   info_master <- pink.info} else if(speciesFlag=="chum") {

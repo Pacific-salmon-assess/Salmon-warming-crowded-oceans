@@ -1,12 +1,7 @@
 ## Fit stationary hierarchical Bayesian models ##
 ## -------------------------------- ##
-## A simplified version including only the model: np pinks + early sst (NO interaction)
 
-## Set Species -----
-speciesFlag = "pink"
-#speciesFlag = "chum"
-#speciesFlag = "sockeye"
-
+# Species
 if(speciesFlag=="pink") {
   data_master <- pink
   info_master <- pink.info} else if(speciesFlag=="chum") {
@@ -14,6 +9,7 @@ if(speciesFlag=="pink") {
    info_master <- chum.info } else if(speciesFlag=="sockeye"){
       data_master <- sock
       info_master <- sock.info }
+
     
 # Set paths to output locations - dependent on species 
 fig.dir <- here("figures", "stat", speciesFlag, "hbm_fit") # place to store figures generated in this script
@@ -42,21 +38,22 @@ pars.gen.quant <- c("log_lik", "yhat", "yrep", "yresid") ## Generated quantities
 stan.dat.all <- stan_data_stat(data_master,
                             scale.x1 = TRUE,
                             var.x2 = "early_sst_stnd",
-                            var.x3 = "np_all_spp_sec_stnd", 
-                            var.region = "Ocean.Region2")
+                            var.x3 = "np_pinks_sec_stnd", # comp = pink abundance
+                            var.region = "Ocean.Region2",
+                            alpha.group = FALSE) # set to TRUE for sockeye
 stat_a <- rstan::stan(file = "./stan/hbm_stat_2c.stan",
                      data = stan.dat.all,
                      pars = c(pars.stat, pars.gen.quant),
                      warmup = 1000,
                      iter = 2000,
                      cores = 4,
-                     chains = 4,
+                     chains = 1,
                      seed = 123,
                      control = list(adapt_delta = 0.99,
                                     max_treedepth = 20)) # increased treedepth
 save(stat_a, file = here(fit.dir, "stat_a.RData"))
 
-## Diagnostic plots
+ ## Diagnostic plots
 pdf(here(fig.dir, "stat_a_diag.pdf"), width = 7, height = 5)
     coda_neff(get_neff(stat_a, pars = pars.stat), total_draws(stat_a))
     coda_rhat(get_rhat(stat_a, pars = pars.stat))
@@ -64,9 +61,6 @@ pdf(here(fig.dir, "stat_a_diag.pdf"), width = 7, height = 5)
 dev.off()
 
 plot_post_pc(stat_a, stan.dat.all$y, pdf.path = here(fig.dir, "stat_a_yrep.pdf")) # Working again?
-pairs.wc <- mcmc_pairs(stat_a, pars=c("sigma_gamma[1]", "mu_gamma[1]", "mu_kappa[1]", "sigma_kappa[1]"))
-pairs.seak <- mcmc_pairs(stat_a, pars=c("sigma_gamma[2]", "mu_gamma[2]", "mu_kappa[2]", "sigma_kappa[2]"))
-
 
 loo.stat_a <- rstan::loo(stat_a, cores = 4)
 save(loo.stat_a, file = here(diag.dir, "loo_stat_a.RData"))
@@ -200,7 +194,7 @@ if(speciesFlag == "Sockeye") {
 
 
 ## Check pathology ----------------------------------------- 
-rstan::check_hmc_diagnostics(stat_a) # not outputting anything?
+rstan::check_hmc_diagnostics(stat_a) # not outputting anything
 rstan::check_hmc_diagnostics(stat_tr)
 if(speciesFlag=="sockeye") rstan::check_hmc_diagnostics(stat_ctrl)
 

@@ -1,12 +1,9 @@
-## (8) Recreate the tables and figures in the 2020 publication, plus more ##
-## ------------------------------------------------------ ##
-
-## Species = species in last run of stat_hbm_fit -----
-speciesFlag = tolower(unique(data_master$Species))
+## Stationary Bayesian Model inference
+## Produces figures
 
 # Set directory paths
-fit.dir <- here::here("output", "models", "stat", speciesFlag) # place to store model fits
-fig.dir <- here::here("figures", "stat", speciesFlag, "hbm_inf") # place to store figures generated in this script
+fit.dir <- here("output", "models", "stat", speciesFlag) # place to store model fits
+fig.dir <- here("figures", "stat", speciesFlag, "hbm_inf") # place to store figures generated in this script
 
 # Create destination folder if it doesn't exist
 if(!dir.exists(fig.dir)) dir.create(fig.dir, recursive = T)
@@ -15,11 +12,11 @@ if(!dir.exists(fig.dir)) dir.create(fig.dir, recursive = T)
 # Load model fits if not just run
 if(!exists("stat_a")){
   for(i in list.files(path = fit.dir, pattern = "*.RData$")) {
-    load(here::here(fit.dir, i), verbose=T)
+    load(here(fit.dir, i), verbose=T)
         }
 }
 
-#load(here::here(fit.dir, "single-stock", "single_stock_lms.Rdata", verbose=T)) # add back in when we have these fits
+load(here(fit.dir, "single-stock", "single_stock_lms.Rdata"), verbose=T) # add back in when we have these fits
 
 
 ## Define colors
@@ -66,6 +63,26 @@ for (n in 1:length(fit.list)){
   
 }
 
+## Plot timeseries length (R/S) 
+prod_dat <- ocean_region_lab(data_master)
+g <- ggplot(prod_dat) + 
+  geom_vline(xintercept=c(1976,1988), color = "grey50", linetype = 2, linewidth = 0.25) +
+  geom_line(aes(x=BY, y=lnRS, col=ocean_region_lab)) + 
+  facet_grid(rows=vars(Stock), switch ="y", scales="free_y", as.table=F) + 
+  scale_colour_manual(values=col.region) +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        strip.text.y.left = element_text(angle=0, hjust=0, margin=margin(l=0, r=0)),
+        strip.background = element_rect(fill="transparent", colour="transparent"),
+        strip.text = element_text(size=7, ),
+        panel.spacing.y = unit(0, unit="cm"),
+        panel.background = element_rect(fill="white"),
+        legend.position = "none") +
+  labs(y="", x="Brood Year")
+
+pdf(here(fig.dir, "ts_length.pdf"), width=4, height=6)
+print(g)
+dev.off()
 
 ## stat_a -----------------------------------------------------
 
@@ -159,7 +176,7 @@ g <- ggplot(df.dot) +
        color = "",
        shape = "") +
   facet_wrap( ~ var) +
-  scale_x_continuous(breaks=c(-0.25,0,0.25))+
+  scale_x_continuous(breaks=c(-0.25,0,0.25), limits=c(-0.7, 0.7))+
   theme_sleek(base_size = 10) +
   theme(legend.justification = c(0, 0),
         legend.position = c(0.01, 0.87),
@@ -178,7 +195,7 @@ if(exists("ss.all.yrs")) {
   ss.dat <- ss.all.yrs$coef$model4a %>% 
     dplyr::filter(variable %in% c("early_sst_stnd", "np_pinks_sec_stnd")) %>% 
     dplyr::mutate(var = ifelse(variable == "early_sst_stnd", "SST", "Comp"))
-  ss.dat$Stock <- factor(ss.dat$Stock, levels=levels(sock$Stock), ordered = T)
+  ss.dat$Stock <- factor(ss.dat$Stock, levels=levels(data_master$Stock))
   ss.dat$var <- factor(ss.dat$var, levels=c("SST", "Comp"))
   df.dot.ss <- dplyr::left_join(df.dot, ss.dat, by=c("Stock", "var"))
   
@@ -194,15 +211,14 @@ if(exists("ss.all.yrs")) {
               alpha = 0.2) +
     geom_point(aes(x=value, y=Stock, colour=ocean_region_lab, shape=ocean_region_lab), fill="transparent") +
     col.scale.reg +
-    scale_shape_manual(values = shp.reg, guide = "legend") +
+    scale_shape_manual(values = rev(c(23, 21, 24, 22)), guide = "legend") +
     scale_fill_manual(values = col.region, guide="none") +
-    guides(shape = guide_legend(override.aes = list(shape=c(15, 16, 17, 18)))) +
     labs(x = "Coefficient",
          y = "",
          color = "",
          shape = "") +
     facet_wrap( ~ var) +
-    scale_x_continuous(breaks=c(-0.25,0,0.25))+
+    scale_x_continuous(breaks=c(-0.25,0,0.25), limits=c(-0.7, 0.7))+
     theme_sleek(base_size = 10) +
     theme(legend.justification = c(0, 0),
           legend.position = c(0.01, 0.87),
@@ -214,6 +230,7 @@ if(exists("ss.all.yrs")) {
   pdf(here::here(fig.dir, "coef_dot_ss_stat_a.pdf"), width = 6.5, height = 6.0)
   print(g)
   dev.off()
+  
 }
 
 ## stat_tr -----------------------------------------------------
