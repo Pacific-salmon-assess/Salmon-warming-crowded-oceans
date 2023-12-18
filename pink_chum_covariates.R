@@ -37,7 +37,6 @@ np.pink.sec.pink <- dplyr::left_join(bt.complete.pink[,c("Stock.ID", "BY", "Spec
 master.pink <- dplyr::left_join(early.sst.pink, np.pink.sec.pink, by=c("BY","Stock.ID", "Species"))
 master.pink.bt_w_cov1 <- dplyr::rename(master.pink, early_sst = sst_anomaly, np_pinks_sec = pink_numbers_np, np_all_spp_sec = all_spp_numbers_np)
 master.pink.bt_w_cov1 <- geographic.order(master.pink.bt_w_cov1) # Ordered factor
-master.pink.bt_w_cov1[master.pink.bt_w_cov1$R==0, "R"] <- 1 # workaround to avoid -Inf values for lnR/S
 head(master.pink.bt_w_cov1)
 summary(master.pink.bt_w_cov1)
 unique(master.pink.bt_w_cov1$Stock.ID)

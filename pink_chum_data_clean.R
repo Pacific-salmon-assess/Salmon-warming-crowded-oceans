@@ -70,10 +70,12 @@ bt.out.7 <- bt.out.6
 #bt.out.7$Even.Odd <- stringr::str_extract(bt.out.7$Stock, "\\w{3,4}$")
 bt.out.7$Stock <- stringr::str_remove(bt.out.7$Stock, ".\\(\\w{3,4}\\)")
 bt.out.7$Stock <- stringr::str_remove(bt.out.7$Stock, "-Pink")
+
 # Drop stocks (temporarily?!):
-bt.out.7 <- bt.out.7 %>% filter(Stock != "Nisqually-Odd", Stock != "S South Misc.-Odd")
-
-
+bt.out.7[bt.out.7$R==0, "R"] # check for zero recruits
+bt.out.7[bt.out.7$S==0, "S"] # check for zero spawners
+bt.out.7 <- bt.out.7 %>% filter(!Stock.ID %in% c(148, 149)) # remove Nisqually and S. South Misc temporarily
+bt.out.7 <- bt.out.7 %>% filter(!Stock.ID %in% c(202, 203, 214, 204, 209)) # remove Haida Gwaii stocks & Homathko
 # Summary
 bt.out <- bt.out.7
 head(bt.out)
