@@ -84,7 +84,6 @@ hb05_density_df <- function(stanfit, ocean.regions = 3) {
 
   # this function has been modified a lot to fit specific purposes but needs work
   # to make it more generally applicable
-  
   # Get stanfit name 
   fitnam <- deparse(substitute(stanfit))
   
@@ -302,7 +301,7 @@ hb05_density_df <- function(stanfit, ocean.regions = 3) {
 
 
 ## era_density_df -----------------------------------------
-era_density_df <- function(stanfit, par, region.var="Ocean.Region2", mu = FALSE, percent.change=FALSE, neras=3, info=sock.info){
+era_density_df <- function(stanfit, par, region.var="Ocean.Region2", mu = FALSE, percent.change=FALSE, neras=3, info=info_master){
   
   if(mu){ ## regional mean df
     mu.parxera <- paste0(rep(paste0("mu_", par), each=neras), 1:neras)
@@ -814,7 +813,7 @@ hb_param_df <- function(stanfit, par, region.var, var = NULL, info = info_master
     ##
     ## stanfit = stanfit object,
     ## par = parameter name
-    ## region.var = column name in sock.info of region variable
+    ## region.var = column name in info table of region variable
     ## var = optional variable name, add as column "var" to output data.frame
 
     probs <- c(0.025, 0.05, 0.10, 0.50, 0.90, 0.95, 0.975)
@@ -835,7 +834,7 @@ hb_param_df <- function(stanfit, par, region.var, var = NULL, info = info_master
 }
 
 
-era_hb_param_df <- function(stanfit, par, mu = FALSE, region.var = "Ocean.Region2", neras = 3, info = sock.info){
+era_hb_param_df <- function(stanfit, par, mu = FALSE, region.var = "Ocean.Region2", neras = 3, info = info_master){
   
   ## Parameter posteriors from Eras models, wrangle into dataframe
   
@@ -983,7 +982,8 @@ stan_data_stat <- function(data,
                       var.x3 = "np_pinks_stnd",
                       var.region = "Ocean.Region2",
                       scale.x1 = FALSE,
-                      priors.only = FALSE) {
+                      priors.only = FALSE,
+                      alpha.group = TRUE) {
     ## Get list of data for input to Stan for stationary models 
     ##
     ## data = data.frame of salmon data
@@ -1011,9 +1011,13 @@ stan_data_stat <- function(data,
                           group = unique(OC_REGION_DUMMY))
     g.grp <- as.numeric(factor(grp.df$group, levels = unique(grp.df$group)))
 
-    a.grp.df <- plyr::ddply(sock.stan, .(Stock), plyr::summarize,
-                            group = ifelse(round(unique(Lat), 2) == 49.12, 1, 2))
-    a.grp <- a.grp.df$group
+    if(alpha.group){
+      a.grp.df <- plyr::ddply(sock.stan, .(Stock), plyr::summarize,
+                              group = ifelse(round(unique(Lat), 2) == 49.12, 1, 2))
+      a.grp <- a.grp.df$group
+    } else {
+      a.grp <- rep(1, n_distinct(sock.stan$Stock))
+    }
 
     ## Get start/end for group-specific gamma series
     start.end.grp.lst <- lapply(split(sock.stan, sock.stan[[var.region]]),
@@ -1077,7 +1081,8 @@ stan_data_dyn <- function(data,
                       var.region = "Ocean.Region2",
                       prior.sigma.gamma = c(df = 3, mu = 0, sd = 0.5),
                       prior.sigma.kappa = c(df = 3, mu = 0, sd = 0.5),
-                      priors.only = FALSE) {
+                      priors.only = FALSE,
+                      alpha.group = TRUE) {
   ## Get list of data for input to Stan 'dynamic' models (i.e. random walk and era)
   ##
   ## data = data.frame of salmon data
@@ -1108,9 +1113,13 @@ stan_data_dyn <- function(data,
                         group = unique(OC_REGION_DUMMY))
   g.grp <- as.numeric(factor(grp.df$group, levels = unique(grp.df$group)))
   
-  a.grp.df <- plyr::ddply(sock.stan, .(Stock), plyr::summarize,
-                          group = unique(Region))
-  a.grp <- ifelse(a.grp.df$group == "Fraser River", 1, 2)
+  if(alpha.group){
+    a.grp.df <- plyr::ddply(sock.stan, .(Stock), plyr::summarize,
+                            group = ifelse(round(unique(Lat), 2) == 49.12, 1, 2))
+    a.grp <- a.grp.df$group   
+  } else {
+    a.grp <- rep(1, n_distinct(sock.stan$Stock))
+  }
   
   
   ## Get start/end for group-specific gamma series
@@ -1590,13 +1599,13 @@ single.stock.fit <- function(formulas, years, plot.path) {
         m.name <- names(mod.list)[i]
         g.sub <- paste0(m.name, ": ", gsub("  ", "", paste(deparse(m.formula), collapse = "")))
         i.path <- paste0(plot.path, "/")
-#browser()
+# browser()
         if(!dir.exists(i.path)) {
             dir.create(i.path, recursive = TRUE)
         }
 
         i.path.f <- paste0(i.path, m.name)
-        if(!dir.exists(i.path.f)) dir.create(i.path.f, recursive = T)
+        if(!dir.exists(i.path.f)) dir.create(i.path.f)
         
         ##### Debug
         # cat(m.name, "\n")
