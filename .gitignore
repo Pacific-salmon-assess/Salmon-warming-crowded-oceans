@@ -9,8 +9,10 @@ data-downloaded/sst_raw
 figures
 output
 pub
+#folder for messing around
+hannahland
 archive/**/*
 !archive/**/*.stan #ignore all archived items except stan models
 #scripts
-/explore.R
 /covar_explore.R
+
