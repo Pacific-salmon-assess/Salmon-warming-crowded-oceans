@@ -68,7 +68,7 @@ dev.off()
 ## Plot the average cross correlation of the specified covariate indices. The
 ## correlations are computed for each stock and then averaged across all stocks.
 
-## specify covar names in `sock`
+## specify covar names in data
 covars <- c("early_sst",
             "np_pinks_sec")
 
@@ -188,6 +188,27 @@ g <- xyplot(lnRS ~ S | Stock, data = data_master,
                 panel.abline(lm(y ~ x))
             })
 print(g)
+dev.off()
+
+
+## Detailed R/S plots for checking data quality ------------------
+require(ggforce)
+
+# add missing years as NAs 
+dataq <- fill.time.series(data_master)
+# make high R/S rule, i.e. points >50 get highlighted
+dataq <- dataq %>% group_by(Stock) %>% 
+  mutate(outlier = ifelse(RS>50, RS, NA))
+# get right number of pages to put plots on
+pg <- ceiling(nlevels(data_master$Stock)/18)
+
+pdf(here(fig.dir, "productivity_detail.pdf"))
+for(i in 1:pg){
+g<- ggplot(dataq) + geom_line(aes(x=BY, y=RS)) + 
+    geom_point(aes(x=BY, y=outlier), col="red") +
+    ggforce::facet_wrap_paginate(vars(Stock), scales="free_y", nrow=6, ncol=3, page=i) + theme_sleek()
+print(g)
+}
 dev.off()
 
 
