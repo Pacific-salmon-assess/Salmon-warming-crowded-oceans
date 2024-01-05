@@ -448,228 +448,69 @@ dev.off()
 } # end if (stat_ctrl) loop
 
 
-## Fig: Map + covars ---------------------------------------
+## Fig: Map + covars (Hannah's version) --------------------
 
-# 4 ocean regions
-pdf(here::here(fig.dir, "fig_map_covars.pdf"),
-    width = 5, height = 6.0)
+# Downlad map and convert to sp
+cl <- rnaturalearth::ne_states(country = c("United States of America", "Canada"))
+na_map <- sf::st_as_sf(cl)
 
-## hi-res map
-cl <- rnaturalearth::ne_states(country = c("United States of America",
-                                           "Mexico",
-                                           "Canada"))
-namerica.state.sp <- sp::spTransform(cl, sp::CRS("EPSG:4326"))
+axes <- list( xlims=c(-165.5, -121), 
+              ylims=c(47, 61),
+              xbreaks=seq(-160,-120,10), 
+              xlabels=as.character(seq(-160,-120,10)),
+              seq(45, 65, 5), 
+              ybreaks=seq(50, 60, 5),
+              ylabels=as.character(seq(50,60,5)))
 
+#make map data
+map.info <- info_master %>% select(Stock, lon, lat, ocean_region_lab) %>% 
+  mutate(stock.no = 1:nrow(info_master)) %>% 
+  dplyr::summarize(n.stk = n_distinct(Stock),
+                   first.stk = first(stock.no),
+                   last.stk = last(stock.no),
+                   .by= c("lat", "lon", "ocean_region_lab")) #%>%
+#filter(!(first.stk %in% c(54:56))) # remove some overlapping points
+map.info[map.info$first.stk %in% c(52:56, 41:45), c("first.stk", "last.stk")] <- NA
+map.info <- map.info %>% mutate(num = ifelse(first.stk == last.stk, first.stk, paste(first.stk, last.stk, sep="-")))
+misc.lab <- data.frame(x=c(-157.9, -152.5), y=c(59.5, 57.25), label=c("52-56", "41-45"))
 
-## Define graphic layout
-m <- rbind(c(1, 1, 1, 1, 1, 1, 1, 1),
-           c(1, 1, 1, 1, 1, 1, 1, 1),
-           c(1, 1, 1, 1, 1, 1, 1, 1),
-           c(2, 2, 3, 3, 4, 4, 5, 5),
-           c(6, 6, 7, 7, 8, 8, 9, 9),
-           c(10, 10, 11, 11, 12, 12, 13, 13))
-layout(m)
-# print(m)
-#layout.show(13)
+map <- ggplot(map.info) + 
+  geom_sf(data=na_map, color="grey30", fill="white", linewidth=0.1, ) + 
+  ggspatial::geom_spatial_point(aes(x=lon, y=lat, col=ocean_region_lab, shape=ocean_region_lab, fill=ocean_region_lab), 
+                                crs=4326, size=1, stroke=1.75, alpha=0.7) +
+  #geom_text(aes(x=lon, y=lat, label=num), vjust=1.4, col="gray20", size=3) +
+  ggrepel::geom_text_repel(aes(x=lon, y=lat, label=num), col="gray20", size=2.5, min.segment.length = 0.25, box.padding=0.1) +
+  geom_text(data=misc.lab, aes(x, y, label=label), col="gray20", size=2.5) +
+  coord_sf(xlim=axes$xlims, ylim=axes$ylims) +
+  scale_x_continuous(breaks=axes$xbreaks, labels=axes$xlabels) +
+  scale_y_continuous(breaks=axes$ybreaks, labels=axes$ylabels) +
+  scale_colour_manual(values=col.region, name="Ocean Region Grouping") + 
+  scale_fill_manual(values=col.dk, name="Ocean Region Grouping") + 
+  scale_shape_manual(values=c(22, 24, 21, 23), name="Ocean Region Grouping") +
+  labs(x="Longitude (°E)", y="Latitude (°N)") +
+  theme_sleek() + 
+  theme(panel.grid = element_blank(),
+        plot.title = element_text(hjust=0.5),
+        legend.position = c(0.25,0.25)
+  )
 
+## Make dataframe of covariate info
+covar.dat.st <- data_master %>% select(Stock, BY, Ocean.Region2, early_sst, np_pinks_sec) %>% tidyr::pivot_longer(cols=c(early_sst, np_pinks_sec), names_to = "covar") %>% mutate(covar_nam = ifelse(covar=="early_sst", "SST Index", "Competitor Index"))
+covar.dat.st <- ocean_region_lab(covar.dat.st)
+covar.dat.reg <- dplyr::summarize(.data=covar.dat.st, mean_covar = mean(value), .by = c("BY", "ocean_region_lab", "covar_nam"))
 
-## Set colors
-col.lt <- rev(chroma::qpal(7)[c(1, 3, 5, 7)])
-col.dk <- rev(chroma::qpal(7, luminance = 30)[c(1, 3, 5, 7)])
-col.stk <- rev(chroma::qpal(7, alpha=0.4)[c(1, 3, 5, 7)])
+covar <- ggplot(covar.dat.st) + 
+  geom_vline(xintercept=c(1976,1988), color = "grey50", linetype = 2, linewidth = 0.25) +
+  geom_line(aes(x=BY, y=value, group=Stock, colour=ocean_region_lab), linewidth=0.5, alpha=0.4) +
+  #geom_line(data=covar.dat.reg, aes(x=BY, y=mean_covar, col=ocean_region_lab), linewidth=0.5) +
+  facet_grid(rows=vars(covar_nam), cols=vars(ocean_region_lab), scales="free_y") +
+  scale_colour_manual(values=col.region) +
+  scale_y_continuous(n.breaks=4) +
+  theme_sleek() + theme(legend.position="none") +
+  labs(x= "Brood Year", y="")
 
+cowplot::plot_grid(map, covar, nrow=2, rel_heights=c(3,2), rel_widths = c(2,2), labels="auto")
 
-oc.reg     <- unique(info_master$Ocean.Region2)
-rep.stocks <- c("Chilko", "Copper", "Wood")
-p.title    <- c("West Coast", "Southeast Alaska", "Gulf of Alaska", "Bering Sea")
-f.ind      <- 1
-
-par(ps = 8,
-    mar = c(0,0,0,0),
-    oma = c(4, 4, 0.8, 0.5))
-
-
-## ~~~~~~~~~~~~~~~~~~~~~~
-## Map
-## ~~~~~~~~~~~~~~~~~~~~~~
-
-# Ignoring stock # labels for now
-
-## Plot map
-pch <- c(21, 22, 24, 25)
-par(mar = c(5, 0, 0, 0))
-plot(info_master$lon, info_master$lat,
-     type = "n",
-     xlab = "",
-     ylab = "",
-     xlim = c(-165, -120),
-     ylim = c(47, 65),
-     col = "red",
-     axes = FALSE)
-box(col = "grey65", lwd = 0.6)
-axis(side = 1, lwd = 0, lwd.tick = 1, col = "grey65",
-     padj = -1.9, tck = -0.02)
-axis(side = 2, lwd = 0, lwd.tick = 1, las = 1, col = "grey65",
-     hadj = 0.3, tck = -0.02)
-mtext(expression(paste("Longitude (", degree, "E)")),
-      side = 1, line = 1.8, cex = 1.0, col = "grey25")
-mtext(expression(paste("Latitude (", degree, "N)")),
-      side = 2, line = 1.8, cex = 1.0, col = "grey25")
-sp::plot(namerica.state.sp, add = TRUE, border = "grey50", lwd = 0.5)
-#add.label("a", font = 2, cex = 2, xfrac = -0.1, yfrac = 0, xpd = NA)
-
-
-## Plot stock points
-regs <- unique(info_master$Ocean.Region2)
-for(i in seq_along(regs)) {
-  points(info_master$lon[info_master$Ocean.Region2 == regs[i]],
-         info_master$lat[info_master$Ocean.Region2 == regs[i]],
-         pch = pch[i], col = col.dk[i], bg = col.lt[i],
-         cex = 1.5, lwd = 2)
-}
-
-#text(x = labs$x, y = labs$y, cex = 0.9, labels = labs$lab)
-## text(x = labs$lon + labs$x.off, y = labs$lat + labs$y.off, cex = 0.9,
-##      labels = labs$lab)
-
-legend(x = -159, y = 53,
-       legend = rev(p.title),
-       pch = rev(pch), col = rev(col.dk), pt.bg = rev(col.lt),
-       bty = "n", cex = 1.4)
-
-## reset mar
-par(mar = c(0, 0, 0, 0))
-f.ind <- f.ind + 1
-
-
-## ~~~~~~~~~~~~~~~~~~~~~~
-## Smolt Age-1
-## ~~~~~~~~~~~~~~~~~~~~~~
-if(speciesFlag == "sockeye") {
-    for(i in rev(seq_along(oc.reg))) {
-      
-      dat.i <- data_master[data_master$Ocean.Region2 == oc.reg[i], ]
-      age.mean <- plyr::ddply(dat.i, .(BY), summarize,
-                              mean = mean(ocean_1, na.rm = TRUE))
-      plot(0, type = "n",
-           ylim = c(0, 1),
-           xlim = c(1950, 2015),
-           ylab = "",
-           xlab = "",
-           axes = FALSE)
-      mtext(p.title[i], col = "grey25")
-      abline(v=1975,lty=2,col=" dark grey",lwd=1)
-      if(i == 4) {
-        mtext("Smolt age-1",
-              side = 2, line = 2, cex = 1.0, col = "grey25")
-        axis(side = 2, lwd = 0, lwd.tick = 1, col = "grey65", las = 1, hadj = 0.3, tck = -0.04)
-        #add.label("b", font = 2, cex = 2, xfrac = -0.3, yfrac = -0.1, xpd = NA)
-      }
-      box(col = "grey65", lwd = 0.6)
-      
-      x <- lapply(split(dat.i, dat.i$Stock), function(x) {
-        lines(x$BY, x$ocean_1, col = col.stk[i])
-      })
-      lines(age.mean$BY, age.mean$mean, col = col.dk[i], lwd = 2)
-      f.ind <- f.ind + 1
-    }
-} 
-
-## ~~~~~~~~~~~~~~~~~~~~~~
-## Covariates
-## ~~~~~~~~~~~~~~~~~~~~~~
-covars <- c("np_pinks_sec", "early_sst")
-scale <- c(100, 1)
-at <- list(c(0, 2, 4, 6), -1:1)
-ind <- 1
-for(k in 1:2 ) {  ## loop over covars
-  
-  for(i in rev(seq_along(oc.reg))) {  ## loop over regions
-    dat.i <- data_master[data_master$Ocean.Region2 == oc.reg[i], ]
-    mm <- plyr::ddply(dat.i, .(BY), function(x) {
-      min  <- min(x[ , covars[k]] / scale[k], na.rm = TRUE)
-      max  <- max(x[ , covars[k]] / scale[k], na.rm = TRUE)
-      mean <- mean(x[ , covars[k]] / scale[k], na.rm = TRUE)
-      data.frame(min = min, max = max, mean = mean)
-    })
-    if(k == 1)
-      ylim <- c(0, max(data_master[ , covars[k]] / scale[k], na.rm = TRUE))
-    if(k == 2)
-      ylim <- range(data_master[ , covars[k]] / scale[k], na.rm = TRUE)
-    plot(0, type = "n",
-         xlim = c(1950, 2015),
-         ylim = ylim,
-         axes = FALSE)
-    abline(v=1975,lty=2,col="dark grey",lwd=1)
-    if(i == 4) {
-      axis(side = 2, lwd = 0, lwd.tick = 1, las = 1,
-           col = "grey65", at = at[[k]], hadj = 0, tck = -0.04)
-    }
-    if(k == 2) {
-      axis(side = 1, lwd = 0, lwd.tick = 1, las = 1, col = "grey65",
-           at = c(1960, 1980, 2000), padj = -1.9, tck = -0.04)
-    }
-    if(ind == 6) {
-      mtext("Brood year", side = 1, line = 1.8, cex = 1.0, col = "grey25")
-    }
-    if(ind == 1) {
-      mtext("Pink index", side = 2, line = 2, cex = 1.0, col = "grey25")
-    }
-    if(ind == 5) {
-      mtext("SST index", side = 2, line = 2, cex = 1.0, col = "grey25")
-    }
-    box(col = "grey65", lwd = 0.6)
-    
-    x <- lapply(split(dat.i, dat.i$Stock), function(x) {
-      lines(x$BY, x[ , covars[k]] / scale[k], col = col.stk[i])
-    })
-    if(k == 1) {
-      x <- lapply(split(dat.i, dat.i$Stock), function(x) {
-        lines(x$BY, x[ , "np_pinks_sec"] / scale[k], col = col.stk[i], lty = 2)
-      })
-      ph <- plyr::ddply(dat.i, .(BY), function(x) {
-        min  <- min(x[ , "np_pinks_sec"] / scale[k], na.rm = TRUE)
-        max  <- max(x[ , "np_pinks_sec"] / scale[k], na.rm = TRUE)
-        mean <- mean(x[ , "np_pinks_sec"] / scale[k], na.rm = TRUE)
-        data.frame(min = min, max = max, mean = mean)
-      })
-      lines(ph$BY, ph$mean, col = col.dk[i], lwd = 1, lty = 2)
-    }
-    lines(mm$BY, mm$mean, col = col.dk[i], lwd = 1)
-    ind <- ind + 1
-    f.ind <- f.ind + 1
-  }
-}
-
-
-
-## ~~~~~~~~~~~~~~~~~~~~~~
-## Inset map
-## ~~~~~~~~~~~~~~~~~~~~~~
-# c(x_left, x_right, y_bottom, y_top)
-par(fig=c(0.78, 0.99, 0.85, 0.99), mar = c(0,0,0,0), new = TRUE)
-plot(1, 1,
-     xlim = c(-180, -57),
-     ylim = c(12.5, 80),
-     col  = "white",
-     xlab = "",
-     ylab = "",
-     axes = FALSE)
-inc.cont <- c("United States of America",
-              "Canada",
-              "Mexico",
-              "Guatemala",
-              "Honduras",
-              "Nicaragua",
-              "Costa Rica",
-              "Panama")
-plot(countriesLow[countriesLow$ADMIN %in% inc.cont, ],
-     col = "grey55", border = "grey55", add = TRUE)
-rect(xleft = -165, ybottom = 47, xright = -120, ytop = 61,
-     lwd = 2, border = 1)
-
-
-dev.off()
 
 
 ## --- Remove large model fits (saved in stat_hbm_fit)
