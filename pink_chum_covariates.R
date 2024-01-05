@@ -6,6 +6,7 @@
 raw.clim <- read.csv(file="data/sst_yr_1_stock_anomalies.csv", header=TRUE)
 head(raw.clim)
 
+
 ## Pink competition
 raw.comp <- read.csv(file="data-downloaded/competitor_indices_2023_05_16.csv", header = TRUE)
 head(raw.comp)
@@ -16,7 +17,7 @@ head(raw.comp)
 
 ### PINK
 
-## Master brood table
+## Data
 raw.clim.pink <- filter(raw.clim, Species=="Pink")
 bt.raw.pink <- read.csv("./data/pink/master_pink_brood_table.csv", header=T)
 bt.complete.pink <- bt.raw.pink[complete.cases(bt.raw.pink),]

@@ -1,14 +1,14 @@
 ## Pink & Chum data cleaning
 
-## This script cleans/processes the raw compiled Pink and Chum data. The output of
-## this script is a master brood table for the analysis and a summary info table
+## This script cleans/processes the raw compiled Pink and Chum data
+## The output is a master brood table for the analysis and a summary info table
 
 
 ## Should R be sum of RX.X columns?!
 
-data_full <- read.csv("./data-downloaded/salmon_productivity_compilation2023-11-20.csv") 
+data_full <- read.csv("./data-downloaded/salmon_productivity_compilation2023-12-28.csv") 
 
-info_full <- read.csv("./data-downloaded/stock_info2023-11-20.csv")
+info_full <- read.csv("./data-downloaded/stock_info2023-12-28.csv")
 
 ## PINKS!!
 

@@ -30,7 +30,7 @@ write.csv(sst.anom, "data/sst_raw_anomalies.csv", row.names=F)
 
 # (1) Sockeye
 ## Read in population summary table 
-sock_summary_table <- read.csv("data/sockeye/master_stock_info.csv", header=T)
+sock_summary_table <- read.csv("data/sockeye/master_sockeye_stock_info.csv", header=T)
 head(sock_summary_table)
 
 ## Calculate average SST anomaly within area where stock spends first few months of marine life 
@@ -49,7 +49,7 @@ colnames(pink_sst_yr_1_stock_anomalies) <- c("Year","sst_raw","sst_anomaly","Sto
 pink_sst_yr_1_stock_anomalies$Species <- "Pink"
 
 # (3) Chum
-chum_summary_table <- read.csv("data/chum/master_stock_info.csv", header=T)
+chum_summary_table <- read.csv("data/chum/master_chum_stock_info.csv", header=T)
 head(chum_summary_table)
 
 ## Calculate average SST anomaly within area where stock spends first few months of marine life 
@@ -90,7 +90,7 @@ write.csv(sst.anom, "data/sst_raw_anomalies_extend.csv", row.names=F)
 
 # (1) Sockeye
 ## Read in population summary table 
-sock_summary_table <- read.csv("data/sockeye/master_stock_info.csv", header=T)
+sock_summary_table <- read.csv("data/sockeye/master_sockeye_stock_info.csv", header=T)
 head(sock_summary_table)
 
 ## Calculate average SST anomaly within area where stock spends first few months of marine life 
@@ -109,7 +109,7 @@ colnames(pink_sst_yr_1_stock_anomalies) <- c("Year","sst_raw","sst_anomaly","Sto
 pink_sst_yr_1_stock_anomalies$Species <- "Pink"
 
 # (3) Chum
-chum_summary_table <- read.csv("data/chum/master_stock_info.csv", header=T)
+chum_summary_table <- read.csv("data/chum/master_chum_stock_info.csv", header=T)
 head(chum_summary_table)
 
 ## Calculate average SST anomaly within area where stock spends first few months of marine life 
