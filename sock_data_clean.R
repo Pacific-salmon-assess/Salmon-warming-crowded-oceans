@@ -6,8 +6,9 @@
 ## this script is a master brood table for the analysis and a summary info table
 
 ## Read in downloaded data
-data_full <- read.csv("./data-downloaded/salmon_productivity_compilation2023-11-20.csv", row.names=1) 
-info_full <- read.csv("./data-downloaded/stock_info2023-11-20.csv", row.names=1)
+data_full <- read.csv("./data-downloaded/salmon_productivity_compilation2023-12-28.csv", row.names=1) 
+info_full <- read.csv("./data-downloaded/stock_info2023-12-28.csv", row.names=1)
+# Data source: https://github.com/Pacific-salmon-assess/dfo_salmon_compilation
 
 ## Filter for Sockeye
 s.brood <- data_full %>% dplyr::filter(species == "Sockeye")
@@ -20,20 +21,23 @@ tail(s.brood)
 sapply(s.brood, class)
 summary(s.brood)
 
-# NA values need to be replaced with 0s for years with no recruits
-# This replacement is only done for the "recruit" columns
-r.cols.old <- grep("^r[[:digit:]]\\.[[:digit:]]", names(s.brood), value = TRUE)
-s.brood[ , r.cols.old][is.na(s.brood[ , r.cols.old])] <- 0
-if(!"R2.5" %in% names(s.brood)) {
-  s.brood$r2.5 <- 0 }
+# NAs in 'RX.X' columns need to be replaced with 0s
+# Ragged ends have been dealt with in data compilation
+r.cols <- grep("^r[[:digit:]]\\.[[:digit:]]", names(s.brood), value = TRUE)
+s.brood[ , r.cols][is.na(s.brood[ , r.cols])] <- 0
+
+# Remove 'RX' columns for Sockeye
+r.cols.drop <- grep("^r[[:digit:]]{1}$", names(s.brood))
+s.brood <- s.brood[, -r.cols.drop]
+
 head(s.brood)
 tail(s.brood)
 sapply(s.brood, class)
 
 #Rename some columns
 names(s.brood) <- str_to_title(names(s.brood))
-names(s.brood)[names(s.brood) %in% c("Broodyear", "Stock.id")] <- c("BY", "Stock.ID")
-#names(s.brood)[names(s.brood) %in% c("Spawners", "Recruits")] <- c("S", "R")
+s.brood <- dplyr::rename(s.brood, "BY" = "Broodyear", "Stock.ID"="Stock.id", 
+                         "R" = "Recruits", "S" = "Spawners")
 head(s.brood)
 
 
@@ -50,10 +54,9 @@ s.brood <- left_join(s.brood, coord.lookup, by=c("Stock"="Stock.name"))
 head(s.brood)
 
 
-# Shorten Stock names
+# Remove species from Stock names
 s.brood$Stock <- stringr::str_remove(s.brood$Stock, "-Sockeye")
-# temporarily remove stock with duplicated BYs:
-s.brood <- s.brood %>% filter(Stock!="Sustut")
+s.info$stock.name <- stringr::str_remove(s.info$stock.name, "-Sockeye")
 
 
 ## Create data frame with estimates of recruits, spawners and proportion of
@@ -61,90 +64,61 @@ s.brood <- s.brood %>% filter(Stock!="Sustut")
  # Use detailed recruit info if it exists, and average proportions if not
 r.cols <- grep("^R[[:digit:]]\\.[[:digit:]]", names(s.brood), value = TRUE)
 
-source("recruitment_means.R")
+# add flag indicating if there is recruitment detail (i.e. age structured)
+s.brood <- s.brood %>% dplyr::mutate(detailFlag = if_else(rowSums(.[r.cols])==0, 0, 1))
 
-bt <- ddply(s.brood, c("Stock.ID", "BY"),function(x) {
-  DetailFlag <- ifelse(all(x[r.cols]==0), 0, 1)
-  if(nrow(x) > 1) print("Duplicates present!", x) 
-  cond <- DetailFlag == 1
-	R <- if_else(cond, sum(x[ , grep("^R[[:digit:]]\\.[[:digit:]]", names(x))], na.rm = TRUE), 
-	             x$Recruits) # keep total recruits as is if no detail, otherwise sum recruits
-	S <- x$Spawners # spawners
-	ocean_0 <- ifelse(cond, sum(x[,grep("^R0\\.", names(x))],na.rm=T)/R, 
-	                  lifehist$prop_age0[match(x$Stock, lifehist$Stock)])
-	ocean_1 <- ifelse(cond, sum(x[,grep("^R1\\.", names(x))],na.rm=T)/R, 
-	                  lifehist$prop_age1[match(x$Stock, lifehist$Stock)])
-	ocean_2 <- ifelse(cond, sum(x[,grep("^R2\\.", names(x))],na.rm=T)/R, 
-	                  lifehist$prop_age2[match(x$Stock, lifehist$Stock)])
-	ocean_3 <- ifelse(cond, sum(x[,grep("^R3\\.", names(x))],na.rm=T)/R, 
-	                  lifehist$prop_age3[match(x$Stock, lifehist$Stock)])
-	ocean_4 <- ifelse(cond, sum(x[,grep("^R4\\.", names(x))],na.rm=T)/R, 
-	                  lifehist$prop_age4[match(x$Stock, lifehist$Stock)])
-    data.frame(Species="Sockeye",
-               Stock = x$Stock,
-               Lat = x$Lat,
-               Lon = x$Lon,
-               R, S, ocean_0, ocean_1, ocean_2, ocean_3, ocean_4, x$R0.1, x$R0.2, x$R0.3, x$R0.4, x$R0.5, x$R1.1, x$R1.2, x$R1.3, x$R1.4, x$R1.5, x$R2.1, x$R2.2, x$R2.3, x$R2.4, x$R2.5, x$R3.1, x$R3.2, x$R3.3, x$R3.4, x$R4.1, x$R4.2, x$R4.3, stringsAsFactors = FALSE)
-	}) 
+# make Recruits the sum of RX.X cols (if populated)
+s.brood.2 <- s.brood
+s.brood.2[s.brood.2$detailFlag==1, "R"] <- rowSums(s.brood.2[s.brood.2$detailFlag==1, r.cols]) 
+summary(s.brood$R - s.brood.2$R)
 
-## Need to figure out what to do with new sockeye data in the above
+# Call function to calculate proportion entering ocean at age 0, 1, ...4
+# These are calculated differently for stocks with recruitment detail (detailFlag==1) and without.
+bt <- get_ocean_entry_prop(s.brood.2, r.cols=r.cols)
 
-bt[,r.cols] <- lapply(bt[,r.cols], function(x) x/bt$R) # Make "R" columns proportions
-
-
-
+# Make all "R" columns proportions
+bt[,r.cols] <- lapply(bt[,r.cols], function(x) x/bt$R)
 ## Check that all Rx.x columns were included
-r1 <- grep("^R[[:digit:]]\\.[[:digit:]]", names(s.brood.use), value = TRUE)
+r1 <- grep("^R[[:digit:]]\\.[[:digit:]]", names(s.brood), value = TRUE)
 r2 <- grep("^R[[:digit:]]\\.[[:digit:]]", names(bt), value = TRUE)
 all.equal(sort(r1), sort(r2))
 
+
+# More cleaning steps 
 bt.out.1 <- bt[complete.cases(bt),]                # drop years with missing data
-bt.out.2 <- subset(bt.out.1, !(Stock %in% c("Osoyoos", "Frazer", "Washington"))) # post hoc removal of stocks:
-    # Frazer -hatchery influence, Oosoyoos -unk ocean entry coords, Washington - ?
-bt.out.2 <- subset(bt.out.2, !(Stock == "Nushagak" & BY < 1985)) # Nushagak unreliable <1985
-bt.out.3 <- subset(bt.out.2,BY <= 2015) # currently have pink-NP data up to 2021 (+6 yr)
-bt.out.4 <- subset(bt.out.3,BY > 1949)        # do this because pre 1950 data is very sparse
-
-## Add alternate (now MAIN) ocean.region grouping
-bt.out.4$Ocean.Region2 <- bt.out.4$Ocean.Region
-bt.out.4$Ocean.Region2 <- ifelse(bt.out.4$Region %in% c("SEAK", "BC North"), "SEAK", bt.out.4$Ocean.Region2)
-
-## Fill in missing years that fall w/in min and max BY for each stock
-bt.out.5 <- fill.time.series(bt.out.4) # this adds NAs and is supposed to! 
+(nrow(bt) - nrow(bt.out.1)) # how many rows dropped
+bt.out.2 <- subset(bt.out.1, !(Stock %in% c("Osoyoos", "Frazer", "Washington", "Sustut"))) # remove stocks:
+    # Frazer -hatchery influence, Oosoyoos -unk ocean entry coords, Washington - ?, Sustut-duplicated
+bt.out.3 <- subset(bt.out.2,BY > 1949)        # do this because pre 1950 data is very sparse
+bt.out.4 <- subset(bt.out.3, BY<=2015) #- currently have pink-NP data up to 2021 (+6 yr)
 
 
-## Trim time series of NA values by selecting the longest
-## string of consecutive brood years for stocks with NA values.
-bt.out.6 <- ddply(bt.out.5, .(Stock.ID), function(i) {
-                        BY <- i$BY
-                        R  <- i$R
-                        BY.na <- ifelse(is.na(R), NA, BY)
-                        ind <- consec_years(BY.na)
-                        return(i[i$BY %in% ind, ])
-                       })
+# Add ocean regions
+bt.out.4$Ocean.Region2 <- s.info$ocean.basin[match(bt.out.4$Stock, s.info$stock.name)]
+# Add SEAK grouping
+bt.out.4$Ocean.Region2[bt.out.4$Ocean.Region2=="WC" & bt.out.4$Lat >= 54.09] <- "SEAK"
+
+# A step for infilling then re-trimming missing values was removed here. If timeseries gaps are an issue, can be added back.
 
 ## Order stocks geographically to make plotting easier
-bt.out.6 <- geographic.order(bt.out.6)
-bt.out.7 <- dplyr::arrange(bt.out.6, factor(Stock, levels=levels(bt.out.6$Stock)))
+bt.out.5 <- geographic.order(bt.out.4)
+bt.out.6 <- dplyr::arrange(bt.out.5, factor(Stock, levels=levels(bt.out.5$Stock)))
 
 # Summary
-bt.out <- bt.out.7
+bt.out <- bt.out.6
 head(bt.out)
 tail(bt.out)
 sapply(bt.out, class)
 summary(bt.out)
 
-write.csv(bt.out, "./data/sockeye/master_brood_table.csv", row.names = FALSE)
+write.csv(bt.out, "./data/sockeye/master_sockeye_brood_table.csv", row.names = FALSE)
 
 
 
 ## Create stock info table ---------------------------------
 s.info.brood <- ddply(bt.out, .(Stock.ID), summarize,
                             Stock = unique(Stock),
-                            Region = unique(Region),
-                            Ocean.Region = unique(Ocean.Region),
                             Ocean.Region2 = unique(Ocean.Region2),
-                            Sub.Region = unique(Sub.Region),
                             lat = unique(Lat),
                             lon = unique(Lon),
                             na_count = sum(is.na(R)),
@@ -152,7 +126,6 @@ s.info.brood <- ddply(bt.out, .(Stock.ID), summarize,
                             yr_start = min(BY),
                             yr_end = max(BY))
 
-s.info.brood$alpha_region <- ifelse(s.info.brood$Region == "Fraser River", "FR", "AK")
 s.info.brood <- ocean_region_lab(s.info.brood)
 
 ## Order stocks geographically to make comparison easier
@@ -160,7 +133,7 @@ s.info.brood <- geographic.order(s.info.brood)
 s.info.brood <- dplyr::arrange(s.info.brood, factor(Stock, levels=levels(s.info.brood$Stock)))
 
 
-write.csv(s.info.brood, "./data/sockeye/master_stock_info.csv", row.names = FALSE)
+write.csv(s.info.brood, "./data/sockeye/master_sockeye_stock_info.csv", row.names = FALSE)
 
 sock.info <- s.info.brood
 

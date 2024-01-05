@@ -7,15 +7,18 @@
 ##   Load necessary data
 
 ## Master brood table
-bt.raw <- read.csv("./data/sockeye/master_brood_table.csv", header=T)
+bt.raw <- read.csv("./data/sockeye/master_sockeye_brood_table.csv", header=T)
 bt.complete <- bt.raw[complete.cases(bt.raw),]
+nrow(bt.raw)-nrow(bt.complete) # observations removed
 head(bt.complete)
 tail(bt.complete)
 sapply(bt.complete, class)
 
 ## 1st year climate var 
 raw.clim <- read.csv(file="data/sst_yr_1_stock_anomalies.csv",header=TRUE)
-head(raw.clim)
+raw.clim.sock <- filter(raw.clim, Species=="Sockeye")
+head(raw.clim.sock)
+
 
 ## Pink competition
 raw.comp <- read.csv(file="data-downloaded/competitor_indices_2023_05_16.csv", header = TRUE)
@@ -26,7 +29,7 @@ head(raw.comp)
 
 ## SST during early marine life 
 early.sst <- clim.wgt.avg(brood.table = bt.complete,
-                          env.data = raw.clim,
+                          env.data = raw.clim.sock,
                           env.covar = "sst_anomaly",
                           type = "first_year",
                           out.covar = "early_sst")
@@ -65,9 +68,10 @@ master.bt_w_cov2 <- ddply(master.bt_w_cov1, .(Stock), transform,
 
 
 ## Fill in missing years that fall w/in min and max BY for each stock
-master.bt_w_cov3 <- fill.time.series(master.bt_w_cov2)
+master.bt_w_cov3 <- fill.time.series(master.bt_w_cov2) # Why?
 
 # Export to output
 sock <- master.bt_w_cov3
-write.csv(sock, "data/sockeye/master_brood_table_covar.csv", row.names=FALSE)
+sock <- sock[, names(sock)!="detailFlag"] # remove the detail index column
+write.csv(sock, "data/sockeye/master_sockeye_brood_table_covar.csv", row.names=FALSE)
 

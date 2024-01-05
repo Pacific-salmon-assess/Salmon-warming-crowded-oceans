@@ -1,6 +1,141 @@
 ## Functions for analysis ##
 ## ---------------------- ##
 
+## get_ocean_entry_prop -------------------------------------
+
+get_ocean_entry_prop <- function(data=s.brood, r.cols=r.cols){
+  
+  ## This function takes a sockeye brood table (data) and calculates the 
+  # proportion of recruits entering the ocean at age 0, 1, ... 4
+  # under three potential data scenarios (for a given stock)
+  
+  # 1. There is only total recruits data, not broken down by age class ('detailed')
+  # 2. There is detailed recruitment data for some years, but missing at beginning or end of timeseries
+  # 3. There is full detailed recruitment data available (e.g. 'RX.X' columns contain data)
+
+  # It accepts data with columns 'RX.X', 'Recruits' as age-specific and total recruits, respectively
+  # It returns the dataframe with cols 'ocean_X' , proportion of recruits entering ocean at year X for a given brood yr
+  # It also makes the 'Recruits' column the sum of all age classes if available, or does not change Recruits if RX.X cols are empty
+  
+  # load skeena age proportions
+  skeena_lh <- read.csv("./data-downloaded/skeena_sockeye_lifehistory_prop.csv")
+  
+  # create Ocean_X columns
+  ocean.cols <- paste("ocean", 0:4, sep="_")
+  data[, ocean.cols] <- NA
+  
+  data.out <- ddply(data, .(Stock), function(x){
+    
+    if(all(x$detailFlag==0)) { # if the whole timeseries is missing age data (Skeena)
+      
+      if(unique(x$Stock) %in% skeena_lh$hh_stock_names){ # if there is estimate for it
+        p1 <- skeena_lh$prop_age1[skeena_lh$hh_stock_names == unique(x$Stock)]
+        p2 <- skeena_lh$prop_age2[skeena_lh$hh_stock_names == unique(x$Stock)]
+        out <- mutate(x, ocean_1 = p1,
+                      ocean_2 = p2)
+      } else {
+        skeena_lh_norep <- unique(skeena_lh[,1:3])
+        mu_p1 <- mean(skeena_lh_norep$prop_age1)
+        mu_p2 <- mean(skeena_lh_norep$prop_age2)
+        out <- mutate(x, ocean_1 = mu_p1,
+                      ocean_2 = mu_p2)
+      }
+      
+    } else if(length(unique(x$detailFlag))==2) { ## if only PART of the timeseries is missing age data
+      
+      # fill ocean_x columns
+      x <- x %>% dplyr::mutate(ocean_0 = rowSums(.[grep("^R0\\.", names(.), value=T)],na.rm=T)/R,
+                               ocean_1 = rowSums(.[grep("^R1\\.", names(.), value=T)],na.rm=T)/R,
+                               ocean_2 = rowSums(.[grep("^R2\\.", names(.), value=T)],na.rm=T)/R,
+                               ocean_3 = rowSums(.[grep("^R3\\.", names(.), value=T)],na.rm=T)/R,
+                               ocean_4 = rowSums(.[grep("^R4\\.", names(.), value=T)],na.rm=T)/R)
+      
+      # years without detail
+      nd_yrs <- x$BY[x$detailFlag==0]
+      
+      # if no detail at the start of the timeseries, use the average of the first 10 years with age comp detail
+      if(min(x$BY) %in% nd_yrs){
+        
+        x$ocean_0[x$detailFlag==0] <- mean(head(x$ocean_0[x$detailFlag==1], 10))
+        x$ocean_1[x$detailFlag==0] <- mean(head(x$ocean_1[x$detailFlag==1], 10))
+        x$ocean_2[x$detailFlag==0] <- mean(head(x$ocean_2[x$detailFlag==1], 10))
+        x$ocean_3[x$detailFlag==0] <- mean(head(x$ocean_3[x$detailFlag==1], 10))
+        x$ocean_4[x$detailFlag==0] <- mean(head(x$ocean_4[x$detailFlag==1], 10))
+        
+        out <- x
+        
+      } else if(max(x$BY) %in% nd_yrs){       # if no detail at the end, use the average of the last 10 years
+        
+        x$ocean_0[x$detailFlag==0] <- mean(tail(x$ocean_0[x$detailFlag==1], 10))
+        x$ocean_1[x$detailFlag==0] <- mean(tail(x$ocean_1[x$detailFlag==1], 10))
+        x$ocean_2[x$detailFlag==0] <- mean(tail(x$ocean_2[x$detailFlag==1], 10))
+        x$ocean_3[x$detailFlag==0] <- mean(tail(x$ocean_3[x$detailFlag==1], 10))
+        x$ocean_4[x$detailFlag==0] <- mean(tail(x$ocean_4[x$detailFlag==1], 10))
+        
+        out <- x
+      }
+      
+    } else { # If whole timeseries has recruitment detail
+      # fill ocean_x columns
+      x <- x %>% dplyr::mutate(ocean_0 = rowSums(.[grep("^R0\\.", names(.), value=T)],na.rm=T)/R,
+                               ocean_1 = rowSums(.[grep("^R1\\.", names(.), value=T)],na.rm=T)/R,
+                               ocean_2 = rowSums(.[grep("^R2\\.", names(.), value=T)],na.rm=T)/R,
+                               ocean_3 = rowSums(.[grep("^R3\\.", names(.), value=T)],na.rm=T)/R,
+                               ocean_4 = rowSums(.[grep("^R4\\.", names(.), value=T)],na.rm=T)/R)
+      out <- x
+    }
+    
+    # set remaining NAs in ocean.cols to 0
+    out[ocean.cols][is.na(out[ocean.cols])] <- 0
+    return(out)
+  })
+  
+}
+
+
+
+## trim.era.ts ----------------------
+trim.era.ts <- function(data=data_master, info=info_master, 
+                        breakpoint1 = 1989, breakpoint2 = NULL){
+  ## This trims time series to be more compatible with 'era' models
+  ## by removing short periods of overlap (<5 years) with an era
+  # outputs dataframe with 'tail' years removed.
+  # requires 'data' table with columns Stock, BY
+  # requires 'info' table with columns yr_end, yr_start
+  
+  
+  # Get eras
+  era1 <- min(info$yr_start):(breakpoint1-1)
+  era2 <- if(is.null(breakpoint2)) (breakpoint1):max(info$yr_end) else breakpoint1:(breakpoint2-1)
+  era3 <- if(is.null(breakpoint2)) NULL else breakpoint2:max(info$yr_end)
+  
+  # How many years of data in each era by Stock
+  yr_split <- plyr::ddply(data, .(Stock), plyr::summarize,
+                          n_era1 = sum(BY %in% era1),
+                          n_era2 = sum(BY %in% era2),
+                          n_era3 = sum(BY %in% era3))
+  
+  # Stocks to trim in each era 
+  trim_1 <- yr_split$Stock[yr_split$n_era1 %in% 1:4]
+  trim_2 <- yr_split$Stock[yr_split$n_era2 %in% 1:4]
+  trim_3 <- if(!is.null(breakpoint2)) yr_split$Stock[yr_split$n_era3 %in% 1:4]
+  
+  # Trim necessary timeseries and stitch together
+  data_out <- plyr::ddply(data, .(Stock), function(x){
+    if(unique(x$Stock) %in% trim_1) x <- x[x$BY >= breakpoint1, ]
+    if(unique(x$Stock) %in% trim_2) x <- x[x$BY >= breakpoint2 | x$BY< breakpoint1, ]
+    if(!is.null(trim_3)){
+      if(unique(x$Stock) %in% trim_3) x <- x[x$BY < breakpoint2, ] }
+    
+    return(x)
+  } )
+  
+  return(data_out)
+  
+}
+
+
+
 ## stock.plot.lab -------------------------------------------
 stock.plot.lab <- function(data, var="Stock", numbered=TRUE){
   ## Add stock plot labels column to data.frame
@@ -60,10 +195,10 @@ geographic.order <- function(x) {
   
   
   WC_stk$geo_id <- data.table::frankv(WC_stk, cols=wc.ind, ties.method = "first")
-  SEAK_stk$geo_id <- nrow(WC_stk) + data.table::frankv(SEAK_stk, cols=seak.ind, order=-1L, ties.method = "first")
+  SEAK_stk$geo_id <- nrow(WC_stk) + data.table::frankv(SEAK_stk, cols=seak.ind, ties.method = "first")
   GOA_stk$geo_id <- nrow(WC_stk) + nrow(SEAK_stk) + data.table::frankv(GOA_stk, cols=goa.ind, order=-1L, ties.method = "first")
   BS_stk$geo_id <- nrow(WC_stk) + nrow(SEAK_stk) + nrow(GOA_stk) + data.table::frankv(BS_stk, cols=bs.ind, ties.method="first")
-  
+
   #combine them
   geo.id <-  rbind(WC_stk[, c("Stock", "geo_id")], SEAK_stk[, c("Stock", "geo_id")], GOA_stk[, c("Stock", "geo_id")], BS_stk[, c("Stock", "geo_id")])
   geo.id <- geo.id[order(geo.id$geo_id), ] # sort in ascending order
@@ -1150,7 +1285,7 @@ stan_data_dyn <- function(data,
   if(is.null(breakpoint2)) {
     era1 <- ifelse(sock.stan$BY < breakpoint1, 1, 0)
     era2 <- ifelse(sock.stan$BY >= breakpoint1, 1, 0)
-    era3 <- NULL
+    era3 <- rep(0, length(sock.stan$BY))
   } else {
     era1 <- ifelse(sock.stan$BY < breakpoint1, 1, 0)
     era2 <- ifelse(sock.stan$BY >= breakpoint1 &
@@ -1321,7 +1456,6 @@ clim.wgt.avg <- function(brood.table,
     ## 	type = c("first_year", "second_year")
     ## out.covar = name of column for new covar in output data.frame
 
-
     if("year" %in% names(env.data))
         names(env.data)[names(env.data) == "year"] <- "Year"
 
@@ -1341,8 +1475,8 @@ clim.wgt.avg <- function(brood.table,
                     brood$ocean_0[brood$BY == j] * climate[climate$Year == j+1, env.covar] +
                     brood$ocean_1[brood$BY == j] * climate[climate$Year == j+2, env.covar] +
                     brood$ocean_2[brood$BY == j] * climate[climate$Year == j+3, env.covar] 
-                    #brood$ocean_3[brood$BY == j] * climate[climate$Year == j+4, env.covar] 
-                    #brood$ocean_4[brood$BY == j] * climate[climate$Year == j+5, env.covar]
+                    brood$ocean_3[brood$BY == j] * climate[climate$Year == j+4, env.covar] 
+                    brood$ocean_4[brood$BY == j] * climate[climate$Year == j+5, env.covar]
             }
             if(type == "second_year") {
                 env.mat[as.character(j),as.character(i)] <-
@@ -1435,15 +1569,14 @@ pink.wgt.avg <- function(brood.table,
         pink.covar <- rep(pink.covar, 4)
         names(pink.covar) <- unique(brood.table$Ocean.Region2)
     }
-
+    
     for (i in unique(brood.table$Stock.ID)){
         brood <- subset(brood.table, Stock.ID == i)
         for (j in unique(brood$BY)){
-
             if(type == "second_year") {
                 reg_i <- as.vector(unique(brood.table$Ocean.Region2[brood.table$Stock.ID == i]))
 
-                  if(brood$DetailFlag[brood$BY == j] ==1){ # HH added detail condition to accommodate new stocks that don't have detailed recruit information 
+                  if(brood$detailFlag[brood$BY == j] ==1){ # HH added detail condition to accommodate new stocks that don't have detailed recruit information 
                     np.pink[as.character(j),as.character(i)] <-
                       (brood$R0.1[brood$BY == j] * 0) +
                       (brood$R0.2[brood$BY == j] * pink.data[pink.data$Year == j+3, pink.covar[reg_i]]) +
@@ -1978,12 +2111,14 @@ fill.time.series <- function(data) {
     ## the time series for a particular salmon stocks also get removed if `use`
     ## is set to 0. This function adds back in those data points, setting them
     ## to NA.
-  
-    id <- unique(data$Stock.ID)
+
+      id <- unique(data$Stock.ID)
     lst <- vector("list", length(id))
+    sp <- unique(data$Species)
     for(i in seq_along(id)) {
         sub <- data[data$Stock.ID == id[i], ]
-        BY <- min(sub$BY):max(sub$BY)
+        BY <- if(sp == "Pink") seq(min(sub$BY), max(sub$BY), by=2) else 
+                     min(sub$BY):max(sub$BY)
         Stock.ID <- unique(sub$Stock.ID)
         Stock <- unique(sub$Stock)
         df <- data.frame(Stock.ID = Stock.ID, Stock = Stock, BY = BY,
@@ -1994,8 +2129,8 @@ fill.time.series <- function(data) {
 
     ## Don't want NA in these columns
     out <- plyr::ddply(df, .(Stock), transform,
-                       Region = unique(na.omit(Region)),
-                       Sub.Region = unique(na.omit(Sub.Region)),
+                       #Region = unique(na.omit(Region)),
+                       #Sub.Region = unique(na.omit(Sub.Region)),
                        Ocean.Region2 = unique(na.omit(Ocean.Region2)),
                        Lat = unique(na.omit(Lat)),
                        Lon = unique(na.omit(Lon)))
