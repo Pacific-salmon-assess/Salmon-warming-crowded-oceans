@@ -1,4 +1,4 @@
-## Fit Nonstationary hierarchical Bayesian models ("Era" and Random walk)
+## Fit Nonstationary hierarchical Bayesian models ('Era' and Random walk)
 # This is adapted from: https://github.com/michaelmalick/sockeye-nonstationary
 
 # Species
@@ -87,3 +87,60 @@ save(dyn.2c, file = here(fit.dir, "hbm_dyn_2c.Rdata"))
 
 
 
+## Diagnostics -----------------------------------------
+
+## Check pathology 
+
+rstan::check_hmc_diagnostics(era.2c)
+rstan::check_hmc_diagnostics(dyn.2c)
+
+neff_lowest(era.2c, pars = pars_era_2c)
+neff_lowest(dyn.2c, pars = pars_era_2c)
+
+rhat_highest(era.2c, pars = pars_era_2c)
+rhat_highest(dyn.2c, pars = pars_dyn_2c)
+
+# pairs_lowest(era.2c, pars = pars_era_2c)
+# pairs_lowest(dyn.2c, pars = pars_dyn_2c)
+
+rstan::get_elapsed_time(era.2c)
+rstan::get_elapsed_time(dyn.2c)
+
+## MCMC diagnostics
+
+pdf(here(diag.dir, "era_2c_diag.pdf"), width = 7, height = 5)
+coda_neff(get_neff(era.2c, pars = pars_era_2c), total_draws(era.2c))
+coda_rhat(get_rhat(era.2c, pars = pars_era_2c))
+coda_diag(As.mcmc.list(era.2c, pars = pars_era_2c))
+dev.off()
+
+
+pdf(here(diag.dir, "dyn_2c_diag.pdf"), width = 7, height = 5)
+coda_neff(get_neff(dyn.2c, pars = pars_dyn_2c), total_draws(dyn.2c))
+coda_rhat(get_rhat(dyn.2c, pars = pars_dyn_2c))
+coda_diag(As.mcmc.list(dyn.2c, pars = pars_dyn_2c))
+dev.off()
+
+
+## Posterior predictive checks
+plot_post_pc(era.2c, stan.dat.2c$y, pdf.path = here(diag.dir, "era_2c_yrep.pdf"))
+plot_post_pc(dyn.2c, stan.dat.2c$y, pdf.path = here(diag.dir, "dyn_2c_yrep.pdf"))
+
+## LOOIC
+
+loo.era.2c <- rstan::loo(era.2c, cores = 4)
+loo.dyn.2c <- rstan::loo(dyn.2c, cores = 4)
+
+save(loo.era.2c, file = here(diag.dir, "loo_era_2c.RData"))
+save(loo.dyn.2c, file = here(diag.dir, "loo_dyn_2c.RData"))
+
+sum(pareto_k_values(loo.era.2c) > 0.7)
+sum(pareto_k_values(loo.dyn.2c) > 0.7)
+
+pdf(here(diag.dir, "era_2c_loo.pdf"), width = 7, height = 5)
+plot(loo.era.2c, label_points = TRUE)
+dev.off()
+
+pdf(here(diag.dir, "dyn_2c_loo.pdf"), width = 7, height = 5)
+plot(loo.dyn.2c, label_points = TRUE)
+dev.off()
