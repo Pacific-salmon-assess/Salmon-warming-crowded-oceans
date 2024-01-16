@@ -1,5 +1,5 @@
 "Stock.ID","Stock","Ocean.Region2","lat","lon","na_count","n_years","yr_start","yr_end","ocean_region_lab"
-140,"Nisqually-Odd","WC",47.101,-122.706,0,31,1959,2019,"West Coast"
+140,"Nisqually-Odd","WC",47.101,-122.706,0,27,1959,2019,"West Coast"
 141,"S South Misc.-Odd","WC",47.16,-122.91,0,31,1959,2019,"West Coast"
 133,"Puyallup-Odd","WC",47.26972,-122.4272,0,31,1959,2019,"West Coast"
 134,"Hood Canal-Odd","WC",47.5644,-122.9956,0,31,1959,2019,"West Coast"
