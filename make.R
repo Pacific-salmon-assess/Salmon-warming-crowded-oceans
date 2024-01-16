@@ -42,8 +42,8 @@ source("dyn_hbm_fit.R")
 source("dyn_hbm_inf.R") 
 
 # 6. Hidden Markov Models (optional)
-source("hmm_single_stock_fit.R") 
-source("hmm_single_stock_inf.R") 
+#source("hmm_single_stock_fit.R") 
+#source("hmm_single_stock_inf.R") 
 
 
 time.run <- proc.time() - time.start
