@@ -31,7 +31,7 @@ names(shp.reg) <- unique(info_master$ocean_region_lab)
 
 # Coefficient table
 fitnam <- strsplit(list.files(path = fit.dir, pattern = "*.RData$"), ".RData")
-fit.list <- if("stat_ctrl" %in% fitnam) list(stat_a, stat_tr, stat_ctrl) else list(stat_a, stat_tr) 
+fit.list <- list(stat_a, stat_tr) 
 
 for (n in 1:length(fit.list)){
   
@@ -39,8 +39,7 @@ for (n in 1:length(fit.list)){
   
   gamma <- rstan::summary(fit.list[[n]], pars = "mu_gamma")$summary
   kappa <- rstan::summary(fit.list[[n]], pars = "mu_kappa")$summary
-  reg   <- if(fitnam[[n]] == "stat_ctrl") c("West Coast", "Gulf of Alaska", "Bering Sea") else
-    c("West Coast", "Southeast Alaska", "Gulf of Alaska", "Bering Sea")
+  reg   <- c("West Coast", "Southeast Alaska", "Gulf of Alaska", "Bering Sea")
   
   tab.g <- data.frame(reg = reg,
                       coef = "SST",
@@ -59,7 +58,7 @@ for (n in 1:length(fit.list)){
   names(tab.coef) <- c("Ecosystem", "Coefficient", "Lower 95% CI", "Mean",
                        "Upper 95% CI", "Mean % change in R/S")
   
-  write.csv(tab.coef, file = here::here(fig.dir, paste0("model_coefficients_", fitnam[[n]], ".csv")))
+  write.csv(tab.coef, file = here(fig.dir, paste0("model_coefficients_", fitnam[[n]], ".csv")))
   
 }
 
@@ -137,7 +136,7 @@ g <- ggplot(m.df) +
         strip.background = element_blank(),
         strip.text.x = element_blank())
 
-pdf(here::here(fig.dir, "dens_stat_a.pdf"), width = 4, height = 6)
+pdf(here(fig.dir, "dens_stat_a.pdf"), width = 4, height = 6)
 print(g)
 dev.off()
 
@@ -185,7 +184,7 @@ g <- ggplot(df.dot) +
         legend.text = element_text(size = 8),
         panel.spacing.x = unit(-0.5, "pt"))
 
-pdf(here::here(fig.dir, "coef_dot_stat_a.pdf"), width = 6.5, height = 6.0)
+pdf(here(fig.dir, "coef_dot_stat_a.pdf"), width = 6.5, height = 6.0)
 print(g)
 dev.off()
 
@@ -227,7 +226,7 @@ if(exists("ss.all.yrs")) {
           legend.text = element_text(size = 8),
           panel.spacing.x = unit(-0.5, "pt"))
   
-  pdf(here::here(fig.dir, "coef_dot_ss_stat_a.pdf"), width = 6.5, height = 6.0)
+  pdf(here(fig.dir, "coef_dot_ss_stat_a.pdf"), width = 6.5, height = 6.0)
   print(g)
   dev.off()
   
@@ -286,7 +285,7 @@ g <- ggplot(m.df) +
         strip.background = element_blank(),
         strip.text.x = element_blank())
 
-pdf(here::here(fig.dir, "dens_stat_tr.pdf"), width = 4, height = 6)
+pdf(here(fig.dir, "dens_stat_tr.pdf"), width = 4, height = 6)
 print(g)
 dev.off()
 
@@ -334,121 +333,18 @@ g <- ggplot(df.dot) +
         legend.text = element_text(size = 8),
         panel.spacing.x = unit(-0.5, "pt"))
 
-pdf(here::here(fig.dir, "coef_dot_stat_tr.pdf"), width = 6.5, height = 6.0)
+pdf(here(fig.dir, "coef_dot_stat_tr.pdf"), width = 6.5, height = 6.0)
 print(g)
 dev.off()
 
 
 
-## stat_ctrl -----------------------------------------------------
-  if("stat_ctrl" %in% fitnam){
-  ## Fig: Posterior percent change density ------------------- 
-  lst <- hb05_density_df(stat_ctrl, ocean.regions = 3)
-  s.df <- lst$stock
-  m.df <- lst$region
-  m.df$region <- factor(m.df$region, levels = c("West Coast", "Gulf of Alaska", "Bering Sea"))
-  
-  ## Covariate labels
-  vars <- data.frame(var = levels(m.df$var))
-  vars$lab <- paste0("(", letters[1:nrow(vars)], ") ", vars$var)
-  vars$var <- factor(vars$var, levels = c("SST", "Comp", "SST + Comp"))
-  
-  g <- ggplot(m.df) +
-    geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
-    geom_path(data = s.df[s.df$region == "West Coast", ],
-              aes(x = x, y = y, group = stock), color = col.region.3[1], alpha=0.3,
-              na.rm = TRUE) +
-    geom_path(data = s.df[s.df$region == "Gulf of Alaska", ],
-              aes(x = x, y = y, group = stock), color = col.region.3[2], alpha=0.3,
-              na.rm = TRUE) +
-    geom_path(data = s.df[s.df$region == "Bering Sea", ],
-              aes(x = x, y = y, group = stock), color = col.region.3[3], alpha=0.3,
-              na.rm = TRUE) +
-    geom_path(aes(x = x, y = y, color = region), linewidth = 1, alpha=1, 
-              na.rm = TRUE) +
-    scale_color_manual(values = col.region.3) +
-    labs(x = "Percent change in R/S",
-         y = "Posterior density",
-         color = "") +
-    scale_x_continuous(limits = c(-50, 50), expand = c(0, 0)) +
-    scale_y_continuous(breaks=NULL) +
-    geom_text(data = vars,
-              aes(x = -48.1,
-                  y = max(m.df$y) - 0.008,
-                  label = lab),
-              hjust = 0,
-              size = 2.7,
-              color = "grey30") +
-    facet_wrap( ~ var, ncol = 1) +
-    theme_sleek(base_size = 9) +
-    theme(legend.justification = c(0, 0),
-          legend.position = c(0.7, 0.91),
-          legend.key.size = unit(10, "pt"),
-          legend.background = element_blank(),
-          legend.text = element_text(size = 8),
-          panel.spacing.y = unit(-0.5, "pt"),
-          strip.background = element_blank(),
-          strip.text.x = element_blank())
-  
-  pdf(here::here(fig.dir, "dens_stat_ctrl.pdf"), width = 4, height = 6)
-  print(g)
-  dev.off()
-  
-  
-  
-  ## Fig: dot + density main --------------------------------- 
-  gamma.stock <- hb_param_df(stat_ctrl, "gamma", "Ocean.Region", "SST", info = info_master[info_master$Stock %in% ctrl_dat$Stock,])
-  kappa.stock <- hb_param_df(stat_ctrl, "kappa", "Ocean.Region", "Comp", info = info_master[info_master$Stock %in% ctrl_dat$Stock,])
-  df.dot <- rbind(gamma.stock, kappa.stock ) # , chi.stock)
-  df.dot <- ocean_region_lab(df.dot, "region", FALSE)
-  df.dot$Stock <- factor(df.dot$Stock, levels = unique(ctrl_dat$Stock))
-  df.dot$var <- factor(df.dot$var, levels = c("SST", "Comp" )) # ,"SST x Comp"))
-  df.mu <- plyr::ddply(df.dot, .(region, var), summarize,
-                       mu_mean = unique(mu_mean),
-                       mu_2.5 = unique(`mu_2.5%`),
-                       mu_97.5 = unique(`mu_97.5%`),
-                       ocean_region_lab = unique(ocean_region_lab),
-                       ystart = Stock[1],
-                       yend = Stock[length(Stock)])
-  
-  g <- ggplot(df.dot) +
-    geom_vline(xintercept = 0, color = "grey50", linetype = 2, size = 0.25) +
-    geom_point(aes(x = mean, y = Stock, color = ocean_region_lab, shape = ocean_region_lab)) +
-    geom_segment(aes(y = Stock, yend = Stock, x = `2.5%`, xend = `97.5%`,
-                     color = ocean_region_lab), linewidth = 0.25) +
-    geom_segment(data = df.mu, aes(y = ystart, yend = yend, x = mu_mean, xend = mu_mean,
-                                   color = ocean_region_lab), linewidth = 0.25) +
-    geom_rect(data = df.mu, aes(xmin = mu_2.5, xmax = mu_97.5, ymin = ystart,
-                                ymax = yend, fill = ocean_region_lab),
-              alpha = 0.2) +
-    scale_color_manual(values = col.region.3) +
-    scale_shape_manual(values = shp.reg) +
-    scale_fill_manual(values = col.region.3, guide="none") +
-    labs(x = "Coefficient",
-         y = "",
-         color = "",
-         shape = "") +
-    facet_wrap( ~ var) +
-    scale_x_continuous(breaks=c(-0.25,0,0.25))+
-    theme_sleek(base_size = 10) +
-    theme(legend.justification = c(0, 0),
-          legend.position = c(0.01, 0.87),
-          legend.key.size = unit(10, "pt"),
-          legend.background = element_blank(),
-          legend.text = element_text(size = 8),
-          panel.spacing.x = unit(-0.5, "pt"))
-  
-  pdf(here::here(fig.dir, "coef_dot_stat_ctrl.pdf"), width = 6.5, height = 6.0)
-  print(g)
-  dev.off()
-  
-  ## Fig: Dot + density main with single stock estimates overlaid
-  # N/A
-
-} # end if (stat_ctrl) loop
-
-
 ## Fig: Map + covars (Hannah's version) --------------------
+
+# colours 
+col.dk <- rev(chroma::qpal(7, luminance = 20)[c(1, 3, 5, 7)])
+names(col.dk) <- unique(info_master$ocean_region_lab)
+
 
 # Downlad map and convert to sp
 cl <- rnaturalearth::ne_states(country = c("United States of America", "Canada"))
@@ -509,10 +405,11 @@ covar <- ggplot(covar.dat.st) +
   theme_sleek() + theme(legend.position="none") +
   labs(x= "Brood Year", y="")
 
-cowplot::plot_grid(map, covar, nrow=2, rel_heights=c(3,2), rel_widths = c(2,2), labels="auto")
-
+pdf(here(fig.dir, "fig_map_covars.pdf"))
+g <- cowplot::plot_grid(map, covar, nrow=2, rel_heights=c(3,2), rel_widths = c(2,2), labels="auto")
+print(g)
+dev.off()
 
 
 ## --- Remove large model fits (saved in stat_hbm_fit)
 rm(list = c("stat_a", "stat_tr"))
-if(exists("stat_ctrl")) rm("stat_ctrl")

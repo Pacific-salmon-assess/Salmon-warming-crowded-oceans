@@ -40,7 +40,7 @@ stan.dat.all <- stan_data_stat(data_master,
                             var.x2 = "early_sst_stnd",
                             var.x3 = "np_pinks_sec_stnd", # comp = pink abundance
                             var.region = "Ocean.Region2",
-                            alpha.group = FALSE) # set to TRUE for sockeye
+                            alpha.group = ifelse(speciesFlag=="sockeye", TRUE, FALSE)) # set to TRUE for sockeye
 stat_a <- rstan::stan(file = "./stan/hbm_stat_2c.stan",
                      data = stan.dat.all,
                      pars = c(pars.stat, pars.gen.quant),
@@ -88,7 +88,8 @@ stan.dat.tr <- stan_data_stat(data_master[data_master$BY >= 1975, ],
                              scale.x1 = TRUE,
                              var.x2 = "early_sst_stnd",
                              var.x3 = "np_pinks_sec_stnd",
-                             var.region = "Ocean.Region2")
+                             var.region = "Ocean.Region2",
+                             alpha.group = ifelse(speciesFlag=="sockeye", TRUE, FALSE))
 stat_tr <- rstan::stan(file = "./stan/hbm_stat_2c.stan",
                       data = stan.dat.tr,
                       pars = c(pars.stat, pars.gen.quant),
@@ -129,92 +130,22 @@ plot_hbm_resids(stat_tr, data_master[data_master$BY >= 1975,])
 dev.off()
 
 
-## stat_ctrl ----------------------------------------------
-## 'control': replicates the main analysis from Connors et al. 2020
-# ONLY for sockeye.
-
-if(speciesFlag == "Sockeye") {
-    
-  info_2020 <- read.csv("./data/master_stock_info_2020.csv", header=T)
-  ctrl_dat <- dplyr::filter(data_master, Stock %in% info_2020$Stock)
-  ctrl_dat <- ddply(ctrl_dat, .(Stock), function(x) {
-       df <- dplyr::filter(x, 
-                           BY >= info_2020$yr_start[info_2020$Stock == unique(x$Stock)],
-                           BY <= info_2020$yr_end[info_2020$Stock == unique(x$Stock)])
-              return(df)
-              } )
-  
-  ## Run MCMC
-  stan.dat.ctrl <- stan_data_stat(ctrl_dat,
-                              scale.x1 = TRUE,
-                              var.x2 = "early_sst_stnd",
-                              var.x3 = "np_pinks_sec_stnd",
-                              var.region = "Ocean.Region")
-  stat_ctrl <- rstan::stan(file = "./stan/hbm_stat_2c.stan",
-                       data = stan.dat.ctrl,
-                       pars = c(pars.stat, pars.gen.quant),
-                       warmup = 1000,
-                       iter = 4000,
-                       cores = 4,
-                       chains = 4,
-                       thin = 2,
-                       seed = 123,
-                       control = list(adapt_delta = 0.95,
-                                      max_treedepth = 10))
-  save(stat_ctrl, file = here(fit.dir, "stat_ctrl.RData"))
-  
-  ## Diagnostic plots 
-  pdf(here(fig.dir, "stat_ctrl_diag.pdf"), width = 7, height = 5)
-  coda_neff(get_neff(stat_ctrl, pars = pars.stat), total_draws(stat_ctrl))
-  coda_rhat(get_rhat(stat_ctrl, pars = pars.stat))
-  coda_diag(As.mcmc.list(stat_ctrl, pars = pars.stat))
-  dev.off()
-  
-  plot_post_pc(stat_ctrl, stan.dat.ctrl$y, data = data_master[data_master$BY %in% c.by & data_master$Stock %in% c.stk, ],
-               pdf.path = here(fig.dir, "stat_ctrl_yrep.pdf"))
-
-  
-  loo.stat_ctrl <- rstan::loo(stat_ctrl, cores = 4)
-  save(loo.stat_ctrl, file = here(diag.dir, "loo_stat_ctrl.RData"))
-  waic.stat_ctrl <- loo::waic(loo::extract_log_lik(stat_ctrl, "log_lik"))
-  save(waic.stat_ctrl, file = here(diag.dir, "waic_stat_ctrl.RData"))
-  pdf(here(fig.dir, "stat_ctrl_loo.pdf"), width = 7, height = 5)
-  plot(loo.stat_ctrl, label_points = TRUE)
-  dev.off()
-  
-  # r2.stat_ctrl <- bayes_R2(data_master$lnRS[data_master$BY %in% c.by & data_master$Stock %in% c.stk, ], as.matrix(stat_ctrl, pars = "yhat")) # BC: not working, incorrect dimensions error
-  
-  #save(r2.stat_ctrl, file = here(diag.dir, "r2_stat_ctrl.RData"))
-  
-  pdf(here(fig.dir, "stat_ctrl_resid.pdf"), width = 8, height = 8)
-  plot_hbm_resids(stat_ctrl, ctrl_dat)
-  dev.off()
-
-} # end if(sockeye)
-
-
 ## Check pathology ----------------------------------------- 
 rstan::check_hmc_diagnostics(stat_a) # not outputting anything
 rstan::check_hmc_diagnostics(stat_tr)
-if(speciesFlag=="sockeye") rstan::check_hmc_diagnostics(stat_ctrl)
 
 rstan::get_elapsed_time(stat_a)
 rstan::get_elapsed_time(stat_tr)
-if(speciesFlag=="sockeye") rstan::get_elapsed_time(stat_ctrl)
 
 summary(stat_a, pars = pars.stat)$summary
 summary(stat_tr, pars = pars.stat)$summary
-if(speciesFlag=="sockeye") summary(stat_ctrl, pars = pars.stat)$summary
 
 neff_lowest(stat_a, pars = pars.stat)
 neff_lowest(stat_tr, pars = pars.stat)
-if(speciesFlag=="sockeye") neff_lowest(stat_ctrl, pars = pars.stat)
 
 rhat_highest(stat_a, pars = pars.stat)
 rhat_highest(stat_tr, pars = pars.stat)
-if(speciesFlag=="sockeye") rhat_highest(stat_ctrl, pars = pars.stat)
 
 pairs_lowest(stat_a, pars = pars.stat) # can ignore 'warning: not a graphical parameter'
 pairs_lowest(stat_tr, pars = pars.stat)
-if(speciesFlag=="sockeye") pairs_lowest(stat_ctrl, pars = pars.stat)
 
