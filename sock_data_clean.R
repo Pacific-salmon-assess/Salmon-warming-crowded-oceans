@@ -6,8 +6,8 @@
 ## this script is a master brood table for the analysis and a summary info table
 
 ## Read in downloaded data
-data_full <- read.csv("./data-downloaded/salmon_productivity_compilation2023-12-28.csv", row.names=1) 
-info_full <- read.csv("./data-downloaded/stock_info2023-12-28.csv", row.names=1)
+data_full <- read.csv("./data-downloaded/salmon_productivity_compilation2024-01-12.csv", row.names=1) 
+info_full <- read.csv("./data-downloaded/stock_info2024-01-12.csv", row.names=1)
 # Data source: https://github.com/Pacific-salmon-assess/dfo_salmon_compilation
 
 ## Filter for Sockeye
@@ -87,8 +87,8 @@ all.equal(sort(r1), sort(r2))
 # More cleaning steps 
 bt.out.1 <- bt[complete.cases(bt),]                # drop years with missing data
 (nrow(bt) - nrow(bt.out.1)) # how many rows dropped
-bt.out.2 <- subset(bt.out.1, !(Stock %in% c("Osoyoos", "Frazer", "Washington", "Sustut"))) # remove stocks:
-    # Frazer -hatchery influence, Oosoyoos -unk ocean entry coords, Washington - ?, Sustut-duplicated
+bt.out.2 <- subset(bt.out.1, !(Stock.ID %in% c(7, 55, 30, 35, 52, 44, 50))) # remove stocks:
+    # 7 Frazer -hatchery influence, Sustut-duplicated, 30,35,52,44,50 too short or gappy 
 bt.out.3 <- subset(bt.out.2,BY > 1949)        # do this because pre 1950 data is very sparse
 bt.out.4 <- subset(bt.out.3, BY<=2015) #- currently have pink-NP data up to 2021 (+6 yr)
 
@@ -96,7 +96,7 @@ bt.out.4 <- subset(bt.out.3, BY<=2015) #- currently have pink-NP data up to 2021
 # Add ocean regions
 bt.out.4$Ocean.Region2 <- s.info$ocean.basin[match(bt.out.4$Stock, s.info$stock.name)]
 # Add SEAK grouping
-bt.out.4$Ocean.Region2[bt.out.4$Ocean.Region2=="WC" & bt.out.4$Lat >= 54.09] <- "SEAK"
+bt.out.4$Ocean.Region2[bt.out.4$Lat >= 54.09 & bt.out.4$Lon > -140] <- "SEAK"
 
 # A step for infilling then re-trimming missing values was removed here. If timeseries gaps are an issue, can be added back.
 
@@ -116,7 +116,7 @@ write.csv(bt.out, "./data/sockeye/master_sockeye_brood_table.csv", row.names = F
 
 
 ## Create stock info table ---------------------------------
-s.info.brood <- ddply(bt.out, .(Stock.ID), summarize,
+s.info.brood <- ddply(bt.out, .(Stock.ID), plyr::summarize,
                             Stock = unique(Stock),
                             Ocean.Region2 = unique(Ocean.Region2),
                             lat = unique(Lat),

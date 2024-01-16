@@ -16,7 +16,7 @@ sapply(bt.complete, class)
 
 ## 1st year climate var 
 raw.clim <- read.csv(file="data/sst_yr_1_stock_anomalies.csv",header=TRUE)
-raw.clim.sock <- filter(raw.clim, Species=="Sockeye")
+raw.clim.sock <- dplyr::filter(raw.clim, Species=="Sockeye")
 head(raw.clim.sock)
 
 
@@ -48,8 +48,7 @@ np.pink.sec <- pink.wgt.avg(brood.table = bt.complete,
 ## Merge datasets 
 master <- dplyr::left_join(bt.complete, early.sst, by=c("BY","Stock.ID"))
 master <- dplyr::left_join(master, np.pink.sec, by=c("BY","Stock.ID"))
-master.bt_w_cov1 <- master
-master.bt_w_cov1 <- geographic.order(master.bt_w_cov1) # Ordered factor
+master.bt_w_cov1 <- geographic.order(master) # Ordered factor
 head(master.bt_w_cov1)
 tail(master.bt_w_cov1)
 summary(master.bt_w_cov1)
@@ -67,11 +66,8 @@ master.bt_w_cov2 <- ddply(master.bt_w_cov1, .(Stock), transform,
                                 np_pinks_sec_stnd = scale(np_pinks_sec)[ , 1])
 
 
-## Fill in missing years that fall w/in min and max BY for each stock
-master.bt_w_cov3 <- fill.time.series(master.bt_w_cov2) # Why?
-
 # Export to output
-sock <- master.bt_w_cov3
+sock <- master.bt_w_cov2
 sock <- sock[, names(sock)!="detailFlag"] # remove the detail index column
 write.csv(sock, "data/sockeye/master_sockeye_brood_table_covar.csv", row.names=FALSE)
 

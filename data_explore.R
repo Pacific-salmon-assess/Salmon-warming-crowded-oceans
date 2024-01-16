@@ -29,12 +29,14 @@ length(unique(data_master$Stock))
 min(data_master$BY)
 max(data_master$BY)
 
-plyr::ddply(data_master, .(Stock), summarize,
-            min.yr = min(BY),
-            max.yr = max(BY),
-            n.total = length(BY),
-            n.na = sum(is.na(R)),
-            n.data  = sum(!is.na(R)))
+data_fill <- fill.time.series(data_master)
+stk.summary <- plyr::ddply(data_fill, .(Stock), summarize,
+                stock.id = unique(Stock.ID),           
+                min.yr = min(BY),
+                max.yr = max(BY),
+                n.total = length(BY),
+                n.na = sum(is.na(R)),
+                n.data  = sum(!is.na(R)))
 
 
 
@@ -42,7 +44,7 @@ plyr::ddply(data_master, .(Stock), summarize,
 ## Plot the average correlation of between productivity and the covariates
 ## grouping by ocean region.
 
-cor.stock <- plyr::ddply(data_master, .(Stock.ID), summarize,
+cor.stock <- plyr::ddply(data_master, .(Stock.ID), plyr::summarize,
                          Ocean.Region2 = unique(Ocean.Region2),
                          early_sst = cor(lnRS, early_sst, use = "pairwise.complete.obs"),
                          np_pinks_sec = cor(lnRS, np_pinks_sec, use = "pairwise.complete.obs"))
@@ -192,19 +194,18 @@ dev.off()
 
 
 ## Detailed R/S plots for checking data quality ------------------
+
 require(ggforce)
 
-# add missing years as NAs 
-dataq <- fill.time.series(data_master)
 # make high R/S rule, i.e. points >50 get highlighted
-dataq <- dataq %>% group_by(Stock) %>% 
+data_fill <- data_fill %>% group_by(Stock) %>% 
   mutate(outlier = ifelse(RS>50, RS, NA))
 # get right number of pages to put plots on
 pg <- ceiling(nlevels(data_master$Stock)/18)
 
 pdf(here(fig.dir, "productivity_detail.pdf"))
 for(i in 1:pg){
-g<- ggplot(dataq) + geom_line(aes(x=BY, y=RS)) + 
+g<- ggplot(data_fill) + geom_line(aes(x=BY, y=RS)) + 
     geom_point(aes(x=BY, y=outlier), col="red") +
     ggforce::facet_wrap_paginate(vars(Stock), scales="free_y", nrow=6, ncol=3, page=i) + theme_sleek()
 print(g)

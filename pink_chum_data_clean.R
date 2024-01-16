@@ -6,9 +6,9 @@
 
 ## Should R be sum of RX.X columns?!
 
-data_full <- read.csv("./data-downloaded/salmon_productivity_compilation2023-12-28.csv") 
+data_full <- read.csv("./data-downloaded/salmon_productivity_compilation2024-01-12.csv") 
 
-info_full <- read.csv("./data-downloaded/stock_info2023-12-28.csv")
+info_full <- read.csv("./data-downloaded/stock_info2024-01-12.csv")
 
 ## PINKS!!
 
@@ -17,7 +17,6 @@ p.brood <- data_full %>% dplyr::filter(species %in% c("Pink-Odd", "Pink-Even"))
 p.info <- info_full %>% dplyr::filter(species %in% c("Pink-Odd", "Pink-Even"))
 
 ## Create lat/lon table ---------------------------------
-p.info$lat[p.info$lat==447.16] <- 47.16 ## report this issue
 p.info$lon <- -abs(p.info$lon)
 coord.lookup <- distinct(p.info[,c("stock.name", "lat", "lon")])
 names(coord.lookup) <- str_to_title(names(coord.lookup))
@@ -56,10 +55,7 @@ head(bt.out.3)
 bt.out.4 <- bt.out.3
 bt.out.4$Ocean.Region2 <- p.info$ocean.basin[match(bt.out.3$Stock, p.info$stock.name)]
 # Add SEAK grouping
-bt.out.4$Ocean.Region2[bt.out.4$Ocean.Region2=="WC" & bt.out.4$Lat >= 54.09] <- "SEAK"
-#bt.out.4$Ocean.Region2[bt.out.4$Sub.Region %in% c("SEAK", "BC North", "Yakutat")] <- "SEAK"
-
-# In sockeye there is a step here to trim and add NAs for missing years
+bt.out.4$Ocean.Region2[bt.out.4$Lat >= 54.09 & bt.out.4$Lon > -140] <- "SEAK" 
 
 ## Order stocks geographically to make plotting easier
 bt.out.5 <- geographic.order(bt.out.4)
@@ -169,8 +165,6 @@ bt.out.4$Ocean.Region2 <- c.info$ocean.basin[match(bt.out.4$Stock, c.info$stock.
 # Add SEAK grouping
 bt.out.4$Ocean.Region2[bt.out.4$Ocean.Region2=="WC" & bt.out.4$Lat >= 54.09] <- "SEAK"
 
-
-# In sockeye there is a step here to trim and add NAs for missing years
 
 ## Order stocks geographically to make plotting easier
 bt.out.5 <- geographic.order(bt.out.4)

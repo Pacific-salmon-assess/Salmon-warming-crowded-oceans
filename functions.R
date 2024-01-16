@@ -177,7 +177,8 @@ geographic.order <- function(x) {
   # Returns Stock as an ordered factor appropriate for plotting
       # i.e. 1 is southmost stk on WC, max is northmost in BS, and 
                                 # GOA are ordered E->W 
-
+  x$Stock <- as.character(x$Stock)
+  
   wc.ind <- bs.ind <- seak.ind <- which(names(x) %in% c("Stock", "Lat", "lat")) # WC and BS stocks organized by latitude
   goa.ind <- which(names(x) %in% c("Stock", "Lon", "lon")) # GOA stocks organized by longitude
 
@@ -1118,7 +1119,7 @@ stan_data_stat <- function(data,
                       var.region = "Ocean.Region2",
                       scale.x1 = FALSE,
                       priors.only = FALSE,
-                      alpha.group = TRUE) {
+                      alpha.group = FALSE) {
     ## Get list of data for input to Stan for stationary models 
     ##
     ## data = data.frame of salmon data
@@ -1474,8 +1475,8 @@ clim.wgt.avg <- function(brood.table,
                 env.mat[as.character(j),as.character(i)] <-
                     brood$ocean_0[brood$BY == j] * climate[climate$Year == j+1, env.covar] +
                     brood$ocean_1[brood$BY == j] * climate[climate$Year == j+2, env.covar] +
-                    brood$ocean_2[brood$BY == j] * climate[climate$Year == j+3, env.covar] 
-                    brood$ocean_3[brood$BY == j] * climate[climate$Year == j+4, env.covar] 
+                    brood$ocean_2[brood$BY == j] * climate[climate$Year == j+3, env.covar] +
+                    brood$ocean_3[brood$BY == j] * climate[climate$Year == j+4, env.covar] +
                     brood$ocean_4[brood$BY == j] * climate[climate$Year == j+5, env.covar]
             }
             if(type == "second_year") {
@@ -1656,11 +1657,12 @@ pink.wgt.avg <- function(brood.table,
 
         } # end j loop
     } # end i loop
-
+  
     long.df <- reshape2::melt(np.pink,
                               measure.vars=c((min(brood.table $BY):max(brood.table $BY)),
                                              unique(brood.table$Stock.ID)))
     colnames(long.df) <- c("BY","Stock.ID",out.covar)
+    long.df <- long.df[complete.cases(long.df), ]
     return(long.df)
 }
 
@@ -2112,9 +2114,9 @@ fill.time.series <- function(data) {
     ## is set to 0. This function adds back in those data points, setting them
     ## to NA.
 
-      id <- unique(data$Stock.ID)
+    id <- unique(data$Stock.ID)
     lst <- vector("list", length(id))
-    sp <- unique(data$Species)
+    sp <- unique(data$Species[!is.na(data$Species)])
     for(i in seq_along(id)) {
         sub <- data[data$Stock.ID == id[i], ]
         BY <- if(sp == "Pink") seq(min(sub$BY), max(sub$BY), by=2) else 

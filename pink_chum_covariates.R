@@ -54,9 +54,6 @@ master.pink.bt_w_cov2 <- ddply(master.pink.bt_w_cov1, .(Stock), transform,
                           np_pinks_sec_stnd = scale(np_pinks_sec)[ , 1])
 
 
-## Fill in missing years that fall w/in min and max BY for each stock
-#master.pink.bt_w_cov3 <- fill.time.series(master.pink.bt_w_cov2) # don't use - why was this here for sockeye?
-
 # Export to output
 pink <- master.pink.bt_w_cov2
 write.csv(pink, "data/pink/master_pink_brood_table_covar.csv", row.names=FALSE)
@@ -98,9 +95,6 @@ master.chum.bt_w_cov2 <- ddply(master.chum.bt_w_cov1, .(Stock), transform,
                                S_stnd = scale(S)[ , 1],
                                early_sst_stnd = scale(early_sst)[ , 1], 
                                np_pinks_sec_stnd = scale(np_pinks_sec)[ , 1])
-
-## Fill in missing years that fall w/in min and max BY for each stock
-#master.chum.bt_w_cov3 <- fill.time.series(master.chum.bt_w_cov2) # don't
 
 
 # Export to output
