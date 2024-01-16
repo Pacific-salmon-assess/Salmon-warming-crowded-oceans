@@ -33,7 +33,7 @@ stan.dat.2c <- stan_data_dyn(data_master,
                              breakpoint2 = 1989,
                              var.region="Ocean.Region2", 
                              scale.x1 = TRUE,
-                             alpha.group = FALSE)
+                             alpha.group = ifelse(speciesFlag=="sockeye", TRUE, FALSE))
 
 
 ## Set pars to monitor -------------------------------------
@@ -95,7 +95,7 @@ rstan::check_hmc_diagnostics(era.2c)
 rstan::check_hmc_diagnostics(dyn.2c)
 
 neff_lowest(era.2c, pars = pars_era_2c)
-neff_lowest(dyn.2c, pars = pars_era_2c)
+neff_lowest(dyn.2c, pars = pars_dyn_2c)
 
 rhat_highest(era.2c, pars = pars_era_2c)
 rhat_highest(dyn.2c, pars = pars_dyn_2c)
