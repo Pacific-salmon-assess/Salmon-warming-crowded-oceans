@@ -151,12 +151,22 @@ df.dyn.st.2c <- ocean_region_lab(df.dyn.st.2c)
 
 # Summarized dataframe (regional-level)
 # gamma/kappa are series-specific; no mu output. Summarize stocks instead
-df.dyn.reg.2c <- dplyr::summarize(df.dyn.st.2c, 
-                                  reg_mean=mean(mu, na.rm=T), 
+if(speciesFlag=="pink"){
+df.dyn.reg.2c <- df.dyn.st.2c %>% 
+  mutate(even_odd = ifelse(grepl("Even$", Stock), "Even", "Odd")) %>% 
+  dplyr::summarize(reg_mean=mean(mu, na.rm=T), 
                                   n_stk=n_distinct(Stock),
                                   lower_10=quantile(mu, 0.1), 
                                   upper_90=quantile(mu, 0.9), 
-                                  .by=c(Ocean.Region2, BY, varnam))
+                                  .by=c(Ocean.Region2, BY, varnam, even_odd))
+} else {
+  df.dyn.reg.2c <- dplyr::summarize(df.dyn.st.2c, 
+                     reg_mean=mean(mu, na.rm=T), 
+                     n_stk=n_distinct(Stock),
+                     lower_10=quantile(mu, 0.1), 
+                     upper_90=quantile(mu, 0.9), 
+                     .by=c(Ocean.Region2, BY, varnam))
+}
 df.dyn.reg.2c <- ddply(df.dyn.reg.2c, .(Ocean.Region2), dplyr::filter, n_stk >= max(n_stk)*0.1) # remove years with less than 10% of stocks observed
 df.dyn.reg.2c <- ocean_region_lab(df.dyn.reg.2c)
 
@@ -165,12 +175,18 @@ df.dyn.reg.2c <- ocean_region_lab(df.dyn.reg.2c)
 # Grouped gamma timeseries : 2-covar
 g <- ggplot(df.dyn.reg.2c) +
   geom_line(data= df.dyn.st.2c, aes(x=BY, y=mu, group=Stock, col=ocean_region_lab), alpha=0.2) +
-  geom_line(aes(x=BY, y=reg_mean, col=ocean_region_lab), linewidth=1) +
-  geom_ribbon(aes(x=BY, y=reg_mean, ymin=lower_10, ymax=upper_90, fill=Ocean.Region2), alpha=0.2) +
   facet_grid(rows=vars(ocean_region_lab), cols=vars(varnam)) + 
   ylim(c(-1,1)) + 
   scale_colour_manual(values=col.region, aesthetics=c("colour", "fill")) +
   theme_minimal()
+
+if(speciesFlag=="pink"){
+  g <- g + geom_line(aes(x=BY, y=reg_mean, group=even_odd, col=ocean_region_lab), linewidth=1) + geom_ribbon(aes(x=BY, y=reg_mean, ymin=lower_10, ymax=upper_90, fill=ocean_region_lab, group=even_odd), alpha=0.2)
+
+} else {
+  g <- g + geom_line(aes(x=BY, y=reg_mean, col=ocean_region_lab), linewidth=1) + geom_ribbon(aes(x=BY, y=reg_mean, ymin=lower_10, ymax=upper_90, fill=ocean_region_lab), alpha=0.2)
+}
+
 pdf(here(fig.dir, "dyn_2c_grouped.pdf"))
 print(g)
 dev.off()
@@ -184,8 +200,6 @@ df.era.reg.2c <- df.era.reg.2c %>% mutate(xstart = case_when(era=="Early" ~ 1950
                                                            era=="Late" ~ 2019))
 g <- ggplot(df.dyn.reg.2c) +
   geom_line(data= df.dyn.st.2c, aes(x=BY, y=mu, group=Stock, col=ocean_region_lab), alpha=0.2) +
-  geom_line(aes(x=BY, y=reg_mean, col=ocean_region_lab), linewidth=1) +
-  geom_ribbon(aes(x=BY, y=reg_mean, ymin=lower_10, ymax=upper_90, fill=ocean_region_lab), alpha=0.2) +
   geom_segment(data=df.era.reg.2c, aes(x=xstart, xend=xend, y=reg_mean, yend=reg_mean), col="gray40", linetype="dashed") +
   facet_grid(rows=vars(ocean_region_lab), cols=vars(varnam)) + 
   ylim(c(-1,1)) + 
@@ -193,6 +207,13 @@ g <- ggplot(df.dyn.reg.2c) +
   scale_y_continuous(limits=c(-.75,.75), breaks=c(-0.5, 0, 0.5), oob=scales::squish) +
   theme_sleek() +
   theme(legend.position = "none") + labs(x="Brood Year", y="Mean covariate effects")
+
+if(speciesFlag=="pink"){
+  g <- g + geom_line(aes(x=BY, y=reg_mean, group=even_odd, col=ocean_region_lab), linewidth=1) + geom_ribbon(aes(x=BY, y=reg_mean, ymin=lower_10, ymax=upper_90, fill=ocean_region_lab, group=even_odd), alpha=0.2)
+} else {
+  g <- g + geom_line(aes(x=BY, y=reg_mean, col=ocean_region_lab), linewidth=1) + + geom_ribbon(aes(x=BY, y=reg_mean, ymin=lower_10, ymax=upper_90, fill=ocean_region_lab), alpha=0.2)
+}
+
 pdf(here(fig.dir, "dyn_era_2c.pdf"))  
 print(g)
 dev.off()
