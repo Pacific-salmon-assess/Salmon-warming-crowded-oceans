@@ -25,7 +25,7 @@ A work in progress summary of methods and results to date is [here](https://paci
 
 - `pink_chum_covariates.R`: create stock-specific covariates used in Pink and Chum analyses.
 
-- `sock_explore.R`:  exploratory graphics and summaries of sockeye and covariate data.
+- `data_explore.R`:  exploratory graphics and summaries of salmon and covariate data.
 
 - `stat_single_stock_fit.R`:  exploratory single-stock generalized Ricker models.
 
@@ -40,5 +40,3 @@ A work in progress summary of methods and results to date is [here](https://paci
 - `hmm_single_stock_fit.R`: fit single stock hidden Markov models. 
 
 - `hmm_single_stock_inf.R`: generate figures from hidden Markov models.
-
-- `recruitment_means.R`: script for estimating age @ ocean entry proportions for stocks without detailed age composition data
