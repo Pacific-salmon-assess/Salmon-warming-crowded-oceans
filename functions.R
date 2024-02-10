@@ -103,14 +103,13 @@ trim.era.ts <- function(data=data_master, info=info_master,
   # requires 'data' table with columns Stock, BY
   # requires 'info' table with columns yr_end, yr_start
   
-  
   # Get eras
   era1 <- min(info$yr_start):(breakpoint1-1)
   era2 <- if(is.null(breakpoint2)) (breakpoint1):max(info$yr_end) else breakpoint1:(breakpoint2-1)
   era3 <- if(is.null(breakpoint2)) NULL else breakpoint2:max(info$yr_end)
   
   # How many years of data in each era by Stock
-  yr_split <- plyr::ddply(data, .(Stock), plyr::summarize,
+  yr_split <- plyr::ddply(data, .(Stock), dplyr::summarize,
                           n_era1 = sum(BY %in% era1),
                           n_era2 = sum(BY %in% era2),
                           n_era3 = sum(BY %in% era3))
@@ -139,9 +138,11 @@ trim.era.ts <- function(data=data_master, info=info_master,
 ## stock.plot.lab -------------------------------------------
 stock.plot.lab <- function(data, var="Stock", numbered=TRUE){
   ## Add stock plot labels column to data.frame
+  # Stocks should be in the desired order on input
   ##
   ## data = a data.frame with a "Stock" column
   ## Returns original dataframe with a new factor column, 'stock_lab'
+  
   
   stock <- as.character(unique(data[[var]]))
 
@@ -151,6 +152,7 @@ stock.plot.lab <- function(data, var="Stock", numbered=TRUE){
   lab <- gsub(" Lake", " Lk", lab)
   lab <- gsub("River", "R.", lab)
   lab <- gsub("Type", "", lab)
+  lab <- gsub("Strait", "Str.", lab)
 
   if(numbered){
     lab <- paste0(1:length(lab), ". ", lab)
@@ -163,7 +165,7 @@ stock.plot.lab <- function(data, var="Stock", numbered=TRUE){
   data.out <- dplyr::left_join(data, lab.df, by=c(var))
   
   # Convert back to factors 
-  data.out[[var]] <- factor(data.out[[var]], levels=levels(data[[var]]))
+  data.out[[var]] <- factor(data.out[[var]], levels=unique(data.out$Stock))
   data.out$stock_lab <- factor(data.out$stock_lab, levels=unique(data.out$stock_lab))
   
   return(data.out)
@@ -216,9 +218,9 @@ geographic.order <- function(x) {
 
 
 ## hb05_density_df -----------------------------------------
-hb05_density_df <- function(stanfit, ocean.regions = 3) {
+hb05_density_df <- function(stanfit, ocean.regions = 3, info_master=info_master, data_master=data_master) {
 
-  # this function has been modified a lot to fit specific purposes but needs work
+    # this function has been modified a lot to fit specific purposes but needs work
   # to make it more generally applicable
   # Get stanfit name 
   fitnam <- deparse(substitute(stanfit))
@@ -506,6 +508,28 @@ era_density_df <- function(stanfit, par, region.var="Ocean.Region2", mu = FALSE,
   }
 }
 
+
+## era_lab ------------------------------------------------
+era_lab <- function(data, data_master=data_master, breakpoint1=1989, breakpoint2=NULL) {
+  
+  era.names <- list(type="vector")
+  era.names[1] <- paste(min(data_master$BY), breakpoint1-1, sep="-")
+  if(!is.null(breakpoint2)) {
+    era.names[2] <- paste(breakpoint1, breakpoint2-1, sep="-") 
+    era.names[3] <- paste(breakpoint2, max(data_master$BY), sep="-")
+  } else {
+    era.names[2] <- paste(breakpoint1, max(data_master$BY), sep="-") }
+    
+  data <- dplyr::mutate(data, 
+              era_lab = factor(case_when(
+              era=="Early" ~ era.names[1],
+              era=="Middle" ~ era.names[2],
+              era=="Late" ~ era.names[3]), 
+              levels=era.names))
+  
+  return(data)
+
+}
 
 
 ## hmm_param_df ------------------------------------------
@@ -1273,6 +1297,7 @@ stan_data_dyn <- function(data,
     year <- year.lst[[1]]
   } else {
     year <- c(year.lst$WC, year.lst$GOA + max(year.lst$WC))
+    year <- c(year, year.lst$SEAK + max(year))
     year <- c(year, year.lst$BS + max(year))
   }
   
@@ -2187,7 +2212,7 @@ if(FALSE) {
 
 
 ## sst.averager --------------------------------------------
-sst.averager <- function(info, sst, distance = 400) {
+sst.averager <- function(info, sst, distance = 400, all.months=F) {
 
     ## This function takes as input a data.frame of sst data output from the
     ## sst.anomaly() function and computes sst averages for each stock only
@@ -2235,7 +2260,7 @@ sst.averager <- function(info, sst, distance = 400) {
 
         cells.sub <- cells[which(dist <= distance), ]
         sst.sub   <- sst[sst$id %in% cells.sub$id, ]
-
+        
         if(stock.id.i <= 137)
             months <- 4:7  ## WA, BC, SEAK
 

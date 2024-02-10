@@ -29,8 +29,8 @@ if(!dir.exists(diag.dir))
 stan.dat.2c <- stan_data_dyn(data_master, 
                              var.x2 = "early_sst_stnd",
                              var.x3 = "np_pinks_sec_stnd",
-                             breakpoint1 = 1977,
-                             breakpoint2 = 1989,
+                             breakpoint1 = 1989,
+                             breakpoint2 = 2011,
                              var.region="Ocean.Region2", 
                              scale.x1 = TRUE,
                              alpha.group = ifelse(speciesFlag=="sockeye", TRUE, FALSE))

@@ -10,9 +10,6 @@ figures
 output
 pub
 #folder for messing around
-hannahland
-archive/**/*
 !archive/**/*.stan #ignore all archived items except stan models
-#scripts
-/covar_explore.R
+
 

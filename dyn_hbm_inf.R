@@ -120,7 +120,8 @@ g <- ggplot(dens.df.st.2c) +
   facet_grid(rows=vars(era), cols=vars(varnam)) + 
   coord_cartesian(xlim=c(-1, 1)) +
   theme_minimal() + labs(x="covariate effect", y="", col="Ocean Region") +
-  theme(axis.text.y=element_blank())
+  theme(axis.text.y=element_blank(),
+        legend.position = "bottom")
 pdf(here(fig.dir, "eras_2c_dens.pdf"))
 print(g)
 dev.off()
