@@ -10,6 +10,7 @@ figures
 output
 pub
 #folder for messing around
+hannahland
 !archive/**/*.stan #ignore all archived items except stan models
 
 
