@@ -1,0 +1,827 @@
+---
+title: "project-winter-update"
+author: "H. Hunter"
+date: '`r format(Sys.time(), "%d %B, %Y")`'
+output:  
+  bookdown::html_document2:
+    collapsed: no
+    fig_caption: yes
+    highlight: espresso
+    number_sections: yes
+    smooth_scroll: yes
+    theme: sandstone
+    toc: yes
+    toc_float: yes
+---
+```{=html}
+<style type="text/css">
+
+body{ /* Normal  */
+      font-size: 13px;
+  }
+td {  /* Table  */
+  font-size: 13px;
+}
+h1.title {
+  font-size: 24px;
+  color: Black;
+}
+h1 { /* Header 1 */
+  font-size: 19px;
+  color: Black;
+}
+h2 { /* Header 2 */
+  font-size: 15px;
+  color: Black;
+}
+h3 { /* Header 3 */
+  font-size: 15px;
+  color: Black;
+}
+</style>
+```
+
+```{r setup, include=FALSE}
+
+# global settings
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, cache=FALSE, include=TRUE, dpi=300)
+options(scipen=1, digits=4)
+
+# functions
+source("../functions.R")
+
+# libraries
+source("../load.R")
+library(plotly)
+library(stringr)
+
+# read brood table data
+sock <- read.csv("../data/sockeye/master_sockeye_brood_table_covar.csv", stringsAsFactors = F)
+pink <- read.csv("../data/pink/master_pink_brood_table_covar.csv", stringsAsFactors = F)
+chum <- read.csv("../data/chum/master_chum_brood_table_covar.csv", stringsAsFactors = F)
+# read info tables
+sock.info <- read.csv("../data/sockeye/master_sockeye_stock_info.csv", stringsAsFactors = F)
+pink.info <- read.csv("../data/pink/master_pink_stock_info.csv", stringsAsFactors = F)
+chum.info <- read.csv("../data/chum/master_chum_stock_info.csv", stringsAsFactors = F)
+
+# everything crumbles if they aren't ordered factors
+sock <- geographic.order(sock)
+sock.info <- geographic.order(sock.info)
+pink <- geographic.order(pink)
+pink.info <- geographic.order(pink.info)
+chum <- geographic.order(chum)
+chum.info <- geographic.order(chum.info)
+
+# remove the data_master and data_info that functions rely on
+rm("data_master")
+rm("info_master")
+
+
+# figure specifications
+bayesplot::bayesplot_theme_set(new = theme_sleek())
+col.region <- rev(chroma::qpal(7, luminance = 40)[c(1, 3, 5, 7)]) # region colours
+col.dk <- rev(chroma::qpal(7, luminance = 20)[c(1, 3, 5, 7)]) # darker region colours
+names(col.region) <- names(col.dk) <- unique(sock.info$ocean_region_lab) #name
+shp.reg <- c(18, 16, 17, 15) # region shapes
+names(shp.reg) <- unique(sock.info$ocean_region_lab) # name
+sp.col <- c("seagreen4", "palevioletred3", "orangered4") # species colours 
+names(sp.col) <- c("Chum", "Pink", "Sockeye") # name
+
+```
+
+# Purpose
+
+This document summarizes the results of new additions and edits to the initial analyses presented [here](https://pacific-salmon-assess.github.io/Salmon-warming-crowded-oceans/Rmd/project-fall-update.html). Notably, our analysis now includes Pink and Chum salmon stocks (N = 67, N = 48) from across the North Pacific Ocean, as well as newly added Sockeye stocks (N = 77).
+
+
+# Methods
+
+We aim to characterize relationships between ocean conditions (SST and abundance of potential competitors) and salmon productivity (R/S) over space and time. There have been minor changes to our modelling approach since our [last update](https://pacific-salmon-assess.github.io/Salmon-warming-crowded-oceans/Rmd/project-fall-update.html#2_Methods). 
+
+
+## Data
+
+We have compiled spawner-recruitment time series for all five species of Pacific salmon - [available here](https://github.com/Pacific-salmon-assess/dfo_salmon_compilation). The analyses presented here include 192 of these populations of Sockeye, Pink, and Chum salmon originating from Washington to the Bering Sea.
+
+### Map 
+
+Clicking on the legend items on the right hand side of the plot below will allow you to toggle between species.
+
+```{r Ocean entry map, out.width="100%"}
+# specify output size or plotly makes it huge
+
+#p <- plotly(username="hhunter", key="fishpass")
+# don't think I need this?
+
+# Downlad map and convert to sp
+na_map <- rnaturalearth::ne_states(country = c("United States of America", "Canada"), returnclass='sf')
+
+axes <- list( xlims=c(-171, -121), 
+              ylims=c(46, 67),
+              xbreaks=seq(-170,-120,10), 
+              xlabels=as.character(seq(-170,-120,10)),
+              seq(45, 65, 5), 
+              ybreaks=seq(45, 65, 5),
+              ylabels=as.character(seq(45,65,5)))
+
+#make map data
+sock.info$Species <- "Sockeye"
+chum.info$Species <- "Chum"
+pink.info$Species <- "Pink"
+map.info <- rbind(sock.info, chum.info, pink.info)
+
+
+map <- ggplot(map.info) + 
+  geom_sf(data=na_map, color="grey40", fill="white", linewidth=0.1) + 
+  ggspatial::geom_spatial_point(aes(x=lon, y=lat, col=Species, shape=Species, group=Stock), 
+                                crs=4326, size=2.5, alpha=0.8, position=position_jitter(w=0.2, h=0.2)) +
+  coord_sf(xlim=axes$xlims, ylim=axes$ylims) +
+  scale_x_continuous(breaks=axes$xbreaks, labels=axes$xlabels) +
+  scale_y_continuous(breaks=axes$ybreaks, labels=axes$ylabels) +
+  scale_colour_manual(values=sp.col) +
+  scale_shape_manual(values=c(15,16,17)) +
+  labs(x="Longitude (°E)", y="Latitude (°N)") +
+  theme_sleek() + 
+  theme(panel.grid = element_blank(),
+        plot.title = element_text(hjust=0.5),
+        legend.position = c(0.4,0.25),
+        legend.background = element_rect(colour="grey75")
+        # , aspect.ratio = 0.65
+  )
+
+ggplotly(map, tooltip=c("group"))
+
+```
+**Figure 1**. Ocean entry locations of Sockeye (n=77), Pink (n=67), and Chum (n=48) salmon stocks included in analyses (total N=192).
+
+
+### Time Series Length {.tabset}
+
+Productivity (log[R/S]) time series of all stocks are shown below to illustrate the length and relative number of time series among regions and species. Vertical dashed lines represent breakpoints in 'Era' models and illustrate the coverage of data over periods of interest.
+
+#### Sockeye
+
+```{r Sockeye time series, fig.height=6.5}
+prod_dat <- ocean_region_lab(sock)
+prod_dat <- stock.plot.lab(prod_dat, numbered = F)
+
+ggplot(prod_dat) + 
+  geom_vline(xintercept=c(1989,2011), color = "grey50", linetype = 2, linewidth = 0.25) +
+  geom_line(aes(x=BY, y=lnRS, col=ocean_region_lab)) + 
+  facet_grid(rows=vars(stock_lab), switch ="y", scales="free_y", as.table=F) + 
+  scale_colour_manual(values=col.region) +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        strip.text.y.left = element_text(angle=0, hjust=0, margin=margin(l=0, r=0)),
+        strip.background = element_rect(fill="transparent", colour="transparent"),
+        strip.text = element_text(size=7, ),
+        panel.spacing.y = unit(0, unit="cm"),
+        panel.background = element_rect(fill="white"),
+        legend.position = "none") +
+  labs(y="", x="Brood Year")
+
+
+```
+**Figure 2**. Productivity (log[R/S]) time series of Sockeye stocks (n=77) with vertical dashed lines indicating proposed ocean regime shifts.
+
+#### Pink
+
+- add proposed regime shifts to plots below
+
+```{r Pink time series}
+prod_dat <- ocean_region_lab(pink)
+prod_dat <- stock.plot.lab(prod_dat, numbered = F)
+
+# should also show gaps!
+# is there a way to show which series are included in each model type?
+# figure out whether trimmed era model should be used...
+# if so show the trim
+
+ggplot(prod_dat) + 
+  geom_vline(xintercept=c(1989,2011), color = "grey50", linetype = 2, linewidth = 0.25) +
+  geom_line(aes(x=BY, y=lnRS, col=ocean_region_lab)) + 
+  facet_grid(rows=vars(stock_lab), switch ="y", scales="free_y", as.table=F) + 
+  scale_colour_manual(values=col.region) +
+  scale_x_continuous(breaks=seq(1950, 2020, 10)) +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        strip.text.y.left = element_text(angle=0, hjust=0, margin=margin(l=0, r=0)),
+        strip.background = element_rect(fill="transparent", colour="transparent"),
+        strip.text = element_text(size=7, ),
+        panel.spacing.y = unit(0, unit="cm"),
+        panel.background = element_rect(fill="white"),
+        legend.position = "none") +
+  labs(y="", x="Brood Year")
+
+```
+**Figure 3**. Productivity (log[R/S]) time series of Pink stocks (n=67) with vertical dashed lines indicating proposed ocean regime shifts.
+
+#### Chum 
+
+
+```{r Chum time series}
+prod_dat <- ocean_region_lab(chum)
+prod_dat <- stock.plot.lab(prod_dat, numbered = F)
+
+ggplot(prod_dat) + 
+  geom_vline(xintercept=c(1989,2011), color = "grey50", linetype = 2, linewidth = 0.25) +
+  geom_line(aes(x=BY, y=lnRS, col=ocean_region_lab)) + 
+  facet_grid(rows=vars(stock_lab), switch ="y", scales="free_y", as.table=F) + 
+  scale_colour_manual(values=col.region) +
+  scale_x_continuous(breaks=seq(1950, 2020, 10)) +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        strip.text.y.left = element_text(angle=0, hjust=0, margin=margin(l=0, r=0)),
+        strip.background = element_rect(fill="transparent", colour="transparent"),
+        strip.text = element_text(size=7, ),
+        panel.spacing.y = unit(0, unit="cm"),
+        panel.background = element_rect(fill="white"),
+        legend.position = "none") +
+  labs(y="", x="Brood Year")
+
+```
+**Figure 4**. Productivity (log[R/S]) time series of Chum stocks (n=48) with vertical dashed lines indicating proposed ocean regime shifts.
+
+## Models
+
+We use 3(4) classes of generalized spawner-recruitment models:
+
+1. Stationary models (e.g. [Connors et al. 2020](https://cdnsciencepub.com/doi/full/10.1139/cjfas-2019-0422)), which estimate time-invariant relationships. These have not changed other than the addition of new data.
+
+2. 'Era' models (e.g., [Malick 2020](https://onlinelibrary.wiley.com/doi/10.1111/fog.12469)), which allow relationships to vary among pre-defined periods that represent hypothesized shifts in NP Ocean processes and relationships. The 1976/77 'regime shift' is no longer modelled following feedback from our last update, which brought to light that this shift from a cold to warm PDO phase is not a true 'regime shift'. New iterations of these models consider a second potential regime shift at the onset of the ~2013 marine heatwave ('the blob').
+Currently, we consider brood years >= 2011 to have interacted with the marine heatwave regardless of the species and stock. In future analyses, the timing can be altered to better reflect the diverse life histories of populations in the analysis.
+
+3. Random walk models (e.g., [Malick 2020](https://onlinelibrary.wiley.com/doi/10.1111/fog.12469)), which allow relationships to evolve gradually through time. These have not changed other than the addition of new data, however, a version that estimates ocean basin-scale trends in relationships is currently in development.
+
+4. Hidden Markov models, which allow relationships to vary according to latent states, are not included in this update. They may be revisited in the future.
+
+Details of each model class and our Bayesian model fitting procedure can be found [here](https://pacific-salmon-assess.github.io/Salmon-warming-crowded-oceans/Rmd/project-fall-update.html#23_Era_models).
+
+
+## Covariate analyses
+
+We continue to focus on:
+
+1. Sea surface temperature (SST) at juvenile salmon ocean entry points, indexing local ocean conditions early in marine life when temperature is hypothesized to be most influential to marine survival ([Mueter et al. 2002](https://cdnsciencepub.com/doi/abs/10.1139/f02-020?casa_token=KzFFwc9QXhAAAAAA:HXYklBNRVXs_o5_C-B74arVwNRHeyiexXRK3hPV_EbL63t8k-VwrTOFmdClLehivIPFuVrNw03sU)).
+
+The resolution of SST data is currently 2 x 2 degrees ([ERSST](https://www.ncei.noaa.gov/products/extended-reconstructed-sst)). SST at ocean entry points are averaged spatially across 400 square km, and temporally across a 3-month period immediately following ocean entry for most stocks, to get a simple index of SST. Future analyses of SST may include:
+
+- Sensitivity analysis of spatial averaging of SST over smaller (200 sq. km) or broader (800 sq. km) areas, to test alternative hypotheses about the distance over which initial ocean temperatures affect juvenile salmon as they migrate; 
+- Sensitivity analysis of temporal SST averaging windows, including spring, summer, and winter of the first year at sea, to test alternative hypotheses about the time at which juvenile salmon are most affected by temperature;
+- Inclusion of high-resolution SST data.
+However, these will remain consistent with the general hypothesis that juvenile salmon are impacted by temperature in the first year of marine life, and finer-scale analyses of SST conditions remain outside the scope of this project.
+
+
+2. The abundance of salmon in the North Pacific potentially competing directly or indirectly for food. 
+
+( Brendan to fill in more about competitor analyses)
+
+
+# Results
+
+
+## Stationary models {.tabset}
+
+
+### Sockeye
+
+```{r Sockeye stationary}
+
+# Load model fit
+load("../output/models/stat/sockeye/stat_a.Rdata")
+
+# Get data
+lst <- hb05_density_df(stat_a, ocean.regions = 4, info_master=sock.info, data_master=sock)
+s.df <- lst$stock
+m.df <- lst$region
+m.df$region <- factor(m.df$region, levels = c("West Coast", "Gulf of Alaska", "Southeast Alaska", "Bering Sea"))
+
+## Covariate labels
+vars <- data.frame(var = levels(m.df$var))
+vars$lab <- gsub("Comp", "Competitors", vars$var)
+vars$var <- factor(vars$var, levels = c("SST", "Comp", "SST + Comp"))
+
+# I think I could shorten this 
+ggplot(m.df) +
+  geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
+  geom_path(data = s.df[s.df$region == "West Coast", ],
+            aes(x = x, y = y, group = stock), color = col.region[["West Coast"]], alpha=0.3,
+            na.rm = TRUE) +
+  geom_path(data = s.df[s.df$region == "Southeast Alaska", ],
+            aes(x = x, y = y, group = stock), color = col.region[["Southeast Alaska"]], alpha=0.3,
+            na.rm = TRUE) +
+  geom_path(data = s.df[s.df$region == "Gulf of Alaska", ],
+            aes(x = x, y = y, group = stock), color = col.region[["Gulf of Alaska"]], alpha=0.3,
+            na.rm = TRUE) +
+  geom_path(data = s.df[s.df$region == "Bering Sea", ],
+            aes(x = x, y = y, group = stock), color = col.region[["Bering Sea"]], alpha=0.3,
+            na.rm = TRUE) +
+  geom_path(aes(x = x, y = y, color = region), linewidth = 1, alpha=1, 
+            na.rm = TRUE) +
+  scale_colour_manual(name = "Ocean Region", values=col.region, guide="legend") +
+  labs(x = "Percent change in R/S",
+       y = "Posterior density",
+       color = "") +
+  scale_x_continuous(limits = c(-50, 50), expand = c(0, 0)) +
+  scale_y_continuous(breaks=NULL) +
+  geom_text(data = vars,
+            aes(x = -48.1,
+                y = max(m.df$y) - 0.008,
+                label = lab),
+            hjust = 0,
+            size = 2.7,
+            color = "grey30") +
+  facet_wrap( ~ var, ncol = 1) +
+  theme_sleek(base_size = 9) +
+  theme(legend.justification = c(0, 0),
+        legend.position = c(0.83, 0.4),
+        legend.key.size = unit(10, "pt"),
+        legend.background = element_blank(),
+        legend.text = element_text(size = 8),
+        panel.spacing.y = unit(-0.5, "pt"),
+        strip.background = element_blank(),
+        strip.text.x = element_blank())
+
+
+```
+**Figure 5**. Posterior probability distributions of the predicted effect of SST (top), competitor abundance (middle), and the combined effect (bottom) on Sockeye productivity (R/S). Faint lines show stock-specific effects while bold lines show regional effects from hierarchical model. X-axis values represent the percent change in productivity per standard deviation unit increase in the covariate.
+
+### Pink
+```{r Pink stationary}
+
+# Load model fit
+load("../output/models/stat/pink/stat_a.Rdata")
+
+# Get data
+lst <- hb05_density_df(stat_a, ocean.regions = 4, info_master=pink.info, data_master=pink)
+s.df <- lst$stock
+m.df <- lst$region
+m.df$region <- factor(m.df$region, levels = c("West Coast", "Gulf of Alaska", "Southeast Alaska", "Bering Sea"))
+
+## Covariate labels
+vars <- data.frame(var = levels(m.df$var))
+vars$lab <- gsub("Comp", "Competitors", vars$var)
+vars$var <- factor(vars$var, levels = c("SST", "Comp", "SST + Comp"))
+
+# I think I could shorten this sometime
+ggplot(m.df) +
+  geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
+  geom_path(data = s.df[s.df$region == "West Coast", ],
+            aes(x = x, y = y, group = stock), color = col.region[["West Coast"]], alpha=0.3,
+            na.rm = TRUE) +
+  geom_path(data = s.df[s.df$region == "Southeast Alaska", ],
+            aes(x = x, y = y, group = stock), color = col.region[["Southeast Alaska"]], alpha=0.3,
+            na.rm = TRUE) +
+  geom_path(data = s.df[s.df$region == "Gulf of Alaska", ],
+            aes(x = x, y = y, group = stock), color = col.region[["Gulf of Alaska"]], alpha=0.3,
+            na.rm = TRUE) +
+  geom_path(data = s.df[s.df$region == "Bering Sea", ],
+            aes(x = x, y = y, group = stock), color = col.region[["Bering Sea"]], alpha=0.3,
+            na.rm = TRUE) +
+  geom_path(aes(x = x, y = y, color = region), linewidth = 1, alpha=1, 
+            na.rm = TRUE) +
+  scale_colour_manual(name = "Ocean Region", values=col.region, guide="legend") +
+  labs(x = "Percent change in R/S",
+       y = "Posterior density",
+       color = "") +
+  scale_x_continuous(limits = c(-50, 100), expand = c(0, 0)) +
+  scale_y_continuous(breaks=NULL) +
+  geom_text(data = vars,
+            aes(x = -48.1,
+                y = max(m.df$y) - 0.008,
+                label = lab),
+            hjust = 0,
+            size = 2.7,
+            color = "grey30") +
+  facet_wrap( ~ var, ncol = 1) +
+  theme_sleek(base_size = 9) +
+  theme(legend.justification = c(0, 0),
+        legend.position = c(0.83, 0.4),
+        legend.key.size = unit(10, "pt"),
+        legend.background = element_blank(),
+        legend.text = element_text(size = 8),
+        panel.spacing.y = unit(-0.5, "pt"),
+        strip.background = element_blank(),
+        strip.text.x = element_blank())
+        
+```
+**Figure 6**. Posterior probability distributions of the predicted effect of SST (top), competitor abundance (middle), and the combined effect (bottom) on Pink salmon productivity (R/S). Faint lines show stock-specific effects while bold lines show regional effects from hierarchical model. X-axis values represent the percent change in productivity per standard deviation unit increase in the covariate.
+
+### Chum
+
+```{r Chum stationary}
+
+# Load model fit
+load("../output/models/stat/chum/stat_a.Rdata")
+
+# Get data
+lst <- hb05_density_df(stat_a, ocean.regions = 4, info_master=chum.info, data_master=chum)
+s.df <- lst$stock
+m.df <- lst$region
+m.df$region <- factor(m.df$region, levels = c("West Coast", "Gulf of Alaska", "Southeast Alaska", "Bering Sea"))
+
+## Covariate labels
+vars <- data.frame(var = levels(m.df$var))
+vars$lab <- gsub("Comp", "Competitors", vars$var)
+vars$var <- factor(vars$var, levels = c("SST", "Comp", "SST + Comp"))
+
+# I think I could shorten this sometime
+ggplot(m.df) +
+  geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
+  geom_path(data = s.df[s.df$region == "West Coast", ],
+            aes(x = x, y = y, group = stock), color = col.region[["West Coast"]], alpha=0.3,
+            na.rm = TRUE) +
+  geom_path(data = s.df[s.df$region == "Southeast Alaska", ],
+            aes(x = x, y = y, group = stock), color = col.region[["Southeast Alaska"]], alpha=0.3,
+            na.rm = TRUE) +
+  geom_path(data = s.df[s.df$region == "Gulf of Alaska", ],
+            aes(x = x, y = y, group = stock), color = col.region[["Gulf of Alaska"]], alpha=0.3,
+            na.rm = TRUE) +
+  geom_path(data = s.df[s.df$region == "Bering Sea", ],
+            aes(x = x, y = y, group = stock), color = col.region[["Bering Sea"]], alpha=0.3,
+            na.rm = TRUE) +
+  geom_path(aes(x = x, y = y, color = region), linewidth = 1, alpha=1, 
+            na.rm = TRUE) +
+  scale_colour_manual(name = "Ocean Region", values=col.region, guide="legend") +
+  labs(x = "Percent change in R/S",
+       y = "Posterior density",
+       color = "") +
+  scale_x_continuous(limits = c(-50, 50), expand = c(0, 0)) +
+  scale_y_continuous(breaks=NULL) +
+  geom_text(data = vars,
+            aes(x = -48.1,
+                y = max(m.df$y) - 0.008,
+                label = lab),
+            hjust = 0,
+            size = 2.7,
+            color = "grey30") +
+  facet_wrap( ~ var, ncol = 1) +
+  theme_sleek(base_size = 9) +
+  theme(legend.justification = c(0, 0),
+        legend.position = c(0.83, 0.4),
+        legend.key.size = unit(10, "pt"),
+        legend.background = element_blank(),
+        legend.text = element_text(size = 8),
+        panel.spacing.y = unit(-0.5, "pt"),
+        strip.background = element_blank(),
+        strip.text.x = element_blank())
+
+```
+**Figure 7**. Posterior probability distributions of the predicted effect of SST (top), competitor abundance (middle), and the combined effect (bottom) on Chum salmon productivity (R/S). Faint lines show stock-specific effects while bold lines show regional effects from hierarchical model. X-axis values represent the percent change in productivity per standard deviation unit increase in the covariate.
+
+
+## Era models {.tabset}
+
+
+```{r SST anomaly plot, include=FALSE}
+## IGNORED for now
+
+## Played with versions of SST plots to show marine heatwave period but all looked bad and left me with more questions than answers
+
+sst.dat <- read.csv("../data/sst_yr_1_stock_anomalies.csv")
+sst.raw <- read.csv("../data/sst_raw_anomalies.csv")
+  
+sst.dat.rm <- sst.dat[!duplicated(sst.dat[,c("Year", "sst_anomaly")]),] # removing duplicates in a hack way
+
+# a better way:
+all.info <- rbind(sock.info, pink.info, chum.info)
+all.info <- all.info %>% dplyr::mutate(species = case_when(
+      Stock.ID %in% seq(range(sock.info$Stock.ID)[1], range(sock.info$Stock.ID)[2]) ~ "sockeye",
+      Stock.ID %in% seq(range(chum.info$Stock.ID)[1], range(chum.info$Stock.ID)[2]) ~ "chum",
+      Stock.ID %in% seq(range(pink.info$Stock.ID)[1], range(pink.info$Stock.ID)[2]) ~ "pink")) %>%
+  mutate(Stock = paste(Stock, species, sep="-"))
+all.info.geo <- geographic.order(all.info)
+all.info.geo$geo.id <- 1:nrow(all.info.geo)
+
+sst.join <- left_join(sst.dat, all.info.geo[,c("Stock.ID", "lat", "lon", "geo.id")], by="Stock.ID")
+sst.distinct <- sst.join[!duplicated(sst.join[,c("Year", "lat", "lon")]),]
+sst.distinct <- left_join(sst.distinct, all.info[,c("ocean_region_lab", "Stock.ID")], by="Stock.ID")
+# Plotting monthly data instead would be interesting
+
+ggplot(sst.distinct) + geom_line(aes(x=Year, y=sst_anomaly, group=Stock.ID, col=geo.id), alpha=0.2) +
+  geom_hline(yintercept=0, linetype="dashed") + 
+  geom_rect(aes(xmin=2013, xmax=2015, ymin=-3, ymax=3), alpha=0.005, fill="orangered4") +
+  coord_cartesian(xlim=c(2000, 2022), ylim=c(-3,3)) +
+  viridis::scale_colour_viridis() +
+  theme_sleek() 
+
+# or use region colours but this just looks purple
+ggplot(sst.distinct) + 
+  geom_line(aes(x=Year, y=sst_anomaly, group=Stock.ID, col=ocean_region_lab), alpha=0.2) +
+  geom_hline(yintercept=0, linetype="dashed") + 
+  geom_rect(aes(xmin=2013, xmax=2015, ymin=-3, ymax=3), alpha=0.005, fill="orangered4") +
+  coord_cartesian(xlim=c(2000, 2022), ylim=c(-3,3)) +
+  scale_colour_manual(values=col.region) +
+  theme_sleek() 
+
+# Or use the one we had before (our actual SST index)
+
+# first get the data
+all.brood <- bind_rows(fill.time.series(sock), fill.time.series(chum), fill.time.series(pink))
+covar.dat.st <- all.brood %>% select(Stock, BY, Species, Ocean.Region2, early_sst, np_pinks_sec) %>% tidyr::pivot_longer(cols=c(early_sst), names_to = "covar") %>% mutate(covar_nam = "SST Index")
+covar.dat.st <- ocean_region_lab(covar.dat.st)
+covar.dat.reg <- dplyr::summarize(.data=covar.dat.st, mean_covar = mean(value), .by = c("BY", "ocean_region_lab", "covar_nam"))
+
+ggplot(covar.dat.st) + 
+  #geom_vline(xintercept=c(1976,1988), color = "grey50", linetype = 2, linewidth = 0.25) +
+  geom_line(aes(x=BY, y=value, group=Stock, colour=ocean_region_lab), linewidth=0.5, alpha=0.1) +
+  #geom_line(data=covar.dat.reg, aes(x=BY, y=mean_covar, col=ocean_region_lab), linewidth=0.5) +
+  facet_grid(rows=NULL, cols=vars(ocean_region_lab), scales="free_y") +
+  geom_rect(aes(xmin=2013, xmax=2015, ymin=-3, ymax=3), alpha=0.005, fill="orangered4") +
+  scale_colour_manual(values=col.region) +
+  coord_cartesian(xlim=c(2000, 2020)) +
+  theme_sleek() + theme(legend.position="none") +
+  labs(x= "Brood Year", y="")
+# the above not very interesting at the moment but maybe to show marine heatwave windows at some point in future...
+
+```
+
+
+### Sockeye
+```{r Sockeye eras}
+load("../output/models/dyn/sockeye/hbm_era_2c_3.RData")
+
+## Data
+# Density dataframe - by stock
+dens.df.st.2c <- era_density_df(era.2c, par=c("gamma", "kappa"), percent.change = T, neras=3, info=sock.info)
+dens.df.st.2c <- ocean_region_lab(dens.df.st.2c)
+dens.df.st.2c <- era_lab(dens.df.st.2c, data_master=sock, breakpoint2=2011)
+
+# Density dataframe (regional lvl)
+dens.df.reg.2c <- era_density_df(era.2c, par=c("gamma", "kappa"), mu=T, percent.change=T, neras=3)
+dens.df.reg.2c <- ocean_region_lab(dens.df.reg.2c)
+dens.df.reg.2c <- era_lab(dens.df.reg.2c, data_master=sock, breakpoint2=2011)
+
+
+
+## Figures
+ggplot(dens.df.st.2c) + 
+  geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
+  geom_path(aes(x=x, y=dens, group=stock, col=ocean_region_lab), alpha=0.2) + 
+  geom_path(data=dens.df.reg.2c, aes(x=x, y=dens, col=ocean_region_lab), alpha=0.85, linewidth=1) +
+  scale_colour_manual(values=col.region) +
+  facet_grid(rows=vars(era_lab), cols=vars(factor(varnam, levels=c("SST", "Competitors")))) + 
+  coord_cartesian(xlim=c(-50,50)) +
+  theme_sleek() + labs(x="Percent change in R/S", y="", col="Ocean Region") +
+  theme(axis.text.y=element_blank(),
+        legend.key.size = unit(10, "pt"),
+        legend.position=c(0.9, 0.2),
+        legend.background = element_blank(),
+        legend.text = element_text(size = 8),
+        legend.title = element_text(size=9),
+        panel.spacing.y = unit(-0.5, "pt"),
+        axis.ticks.y=element_blank()) 
+
+
+```
+**Figure 8**. Posterior probability distributions of the predicted effect of SST and competitors on Sockeye productivity over three pre-defined time periods/eras (earliest in top panel). Regional mean effects are shown by bold lines and individual stocks’ distributions by light lines.
+
+
+### Pink
+```{r Pink eras}
+
+load("../output/models/dyn/pink/hbm_era_2c_3.RData")
+
+## Data
+# Density dataframe - by stock
+dens.df.st.2c <- era_density_df(era.2c.3, par=c("gamma", "kappa"), percent.change = T, neras=3, info=pink.info)
+dens.df.st.2c <- ocean_region_lab(dens.df.st.2c)
+dens.df.st.2c <- era_lab(dens.df.st.2c, data_master=pink, breakpoint2=2011)
+dens.df.st.2c <- dplyr::filter(dens.df.st.2c, !(Ocean.Region2 %in% c("BS", "GOA") & era=="Late"))
+
+# Density dataframe (regional lvl)
+dens.df.reg.2c <- era_density_df(era.2c.3, par=c("gamma", "kappa"), mu=T, percent.change=T, neras=3, info=pink.info)
+dens.df.reg.2c <- ocean_region_lab(dens.df.reg.2c)
+dens.df.reg.2c <- era_lab(dens.df.reg.2c, data_master=pink, breakpoint2=2011)
+dens.df.reg.2c <- dplyr::filter(dens.df.reg.2c, !(Ocean.Region2 %in% c("BS", "GOA") & era=="Late"))
+
+
+
+## Figures
+ggplot(dens.df.st.2c) + 
+  geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
+  geom_path(aes(x=x, y=dens, group=stock, col=ocean_region_lab), alpha=0.2) + 
+  geom_path(data=dens.df.reg.2c, aes(x=x, y=dens, col=ocean_region_lab), alpha=0.85, linewidth=1) +
+  scale_colour_manual(values=col.region) +
+  facet_grid(rows=vars(era_lab), cols=vars(factor(varnam, levels=c("SST", "Competitors")))) + 
+  coord_cartesian(xlim=c(-50,100)) +
+  theme_sleek() + labs(x="Percent change in R/S", y="", col="Ocean Region") +
+  theme(axis.text.y=element_blank(),
+        legend.key.size = unit(10, "pt"),
+        legend.position=c(0.9, 0.2),
+        legend.background = element_blank(),
+        legend.text = element_text(size = 8),
+        legend.title = element_text(size=9),
+        panel.spacing.y = unit(-0.5, "pt"),
+        axis.ticks.y=element_blank()) 
+
+```
+**Figure 9**. Posterior probability distributions of the predicted effect of SST and competitors on Pink salmon productivity over three pre-defined time periods/eras (earliest in top panel). Regional mean effects are shown by bold lines and individual stocks’ distributions by light lines. Note that data from Alaska for the most recent time period are needed (Figure 3).
+
+### Chum
+```{r Chum eras}
+load("../output/models/dyn/chum/hbm_era_2c_3.RData")
+
+
+## Data
+# Density dataframe - by stock
+dens.df.st.2c <- era_density_df(era.2c.3, par=c("gamma", "kappa"), percent.change = T, neras=3, info=chum.info)
+dens.df.st.2c <- ocean_region_lab(dens.df.st.2c)
+dens.df.st.2c <- era_lab(dens.df.st.2c, data_master=chum, breakpoint2=2011)
+dens.df.st.2c <- dplyr::filter(dens.df.st.2c, !(Ocean.Region2 %in% c("BS", "GOA", "SEAK") & era=="Late"))
+
+# Density dataframe (regional lvl)
+dens.df.reg.2c <- era_density_df(era.2c.3, par=c("gamma", "kappa"), mu=T, percent.change=T, neras=3, info=chum.info)
+dens.df.reg.2c <- ocean_region_lab(dens.df.reg.2c)
+dens.df.reg.2c <- era_lab(dens.df.reg.2c, data_master=chum, breakpoint2=2011)
+dens.df.reg.2c <- dplyr::filter(dens.df.reg.2c, !(Ocean.Region2 %in% c("BS", "GOA", "SEAK") & era=="Late"))
+
+
+
+## Figures
+ggplot(dens.df.st.2c) + 
+  geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
+  geom_path(aes(x=x, y=dens, group=stock, col=ocean_region_lab), alpha=0.2) + 
+  geom_path(data=dens.df.reg.2c, aes(x=x, y=dens, col=ocean_region_lab), alpha=0.85, linewidth=1) +
+  scale_colour_manual(values=col.region) +
+  facet_grid(rows=vars(era_lab), cols=vars(factor(varnam, levels=c("SST", "Competitors")))) + 
+  coord_cartesian(xlim=c(-50,100)) +
+  theme_sleek() + labs(x="Percent change in R/S", y="", col="Ocean Region") +
+  theme(axis.text.y=element_blank(),
+        legend.key.size = unit(10, "pt"),
+        legend.position=c(0.9, 0.2),
+        legend.background = element_blank(),
+        legend.text = element_text(size = 8),
+        legend.title = element_text(size=9),
+        panel.spacing.y = unit(-0.5, "pt"),
+        axis.ticks.y=element_blank()) 
+
+# probably worth combining Chum-SEAK with another region in future analyses
+
+```
+**Figure 10**. Posterior probability distributions of the predicted effect of SST and competitors on Chum salmon productivity over three pre-defined time periods/eras (earliest in top panel). Regional mean effects are shown by bold lines and individual stocks’ distributions by light lines. Note that data from Alaska for the most recent time period are needed, and data in the Southeast Alaska region are sparse across all time periods (Figure 4).
+
+
+## Random Walk models {.tabset}
+
+### Sockeye
+```{r sockeye random walk, warning=FALSE}
+load("../output/models/dyn/sockeye/hbm_dyn_2c.RData")
+
+
+# Stock specific dataframe
+probs <- c(0.025, 0.10, 0.50, 0.90, 0.975)
+summ <- rstan::summary(dyn.2c, pars = c("gamma", "kappa"), probs = probs)$summary
+df.dyn.st.2c <- data.frame(Stock = sock$Stock,
+                   Ocean.Region2 = sock$Ocean.Region2,
+                   BY = sock$BY,
+                   mu = summ[, "mean"],
+                   se = summ[, "se_mean"],
+                   lower_10 = summ[, "10%"],
+                   upper_90 = summ[ , "90%"],
+                   var = str_extract(rownames(summ), "[a-z]+"),
+                   varnam = case_when(grepl("^gamma", rownames(summ)) ~ "SST",
+                                      grepl("^kappa", rownames(summ)) ~ "Competitors")
+                   )
+df.dyn.st.2c <- ocean_region_lab(df.dyn.st.2c)
+
+# Summarize at regional lvl
+df.dyn.reg.2c <- dplyr::summarize(df.dyn.st.2c, 
+                           reg_mean=mean(mu, na.rm=T), 
+                           n_stk=n_distinct(Stock),
+                           lower_10=quantile(mu, 0.1), 
+                           upper_90=quantile(mu, 0.9), 
+                           .by=c(Ocean.Region2, BY, varnam))
+df.dyn.reg.2c <- ddply(df.dyn.reg.2c, .(Ocean.Region2), dplyr::filter, n_stk >= 4)
+df.dyn.reg.2c <- ocean_region_lab(df.dyn.reg.2c)
+
+
+# Figures
+ggplot(df.dyn.reg.2c) +
+  geom_hline(yintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +  
+  geom_line(data= df.dyn.st.2c, aes(x=BY, y=mu, group=Stock, col=ocean_region_lab), alpha=0.2) +
+  geom_line(aes(x=BY, y=reg_mean, col=ocean_region_lab), linewidth=1) +
+  geom_ribbon(aes(x=BY, y=reg_mean, ymin=lower_10, ymax=upper_90, fill=ocean_region_lab), alpha=0.2) +
+  facet_grid(cols=vars(factor(ocean_region_lab, levels=rev(levels(ocean_region_lab)))), rows=vars(factor(varnam, levels=c("SST", "Competitors")))) + 
+  scale_y_continuous(limits=c(-1, 1), breaks=seq(-1,1,0.5)) + 
+  scale_colour_manual(values=col.region, aesthetics=c("colour", "fill")) +
+  theme_sleek() + theme(legend.position="none") +
+   labs(x="Brood Year", y="Mean covariate effects")
+
+# take out the scale squish, and revise 4-stock rule
+```
+**Figure 11**. Time-varying posterior mean estimates of SST and Competitor covariate effects on Sockeye productivity, modelled as a random walk. Individual stock estimates are in faint lines, while regional means and 80% CI are represented by bold lines and shaded areas. Region-wide means and CI are post-hoc calculations, rather than resulting from hierarchical model structures as in the stationary and era models.
+
+### Pink
+```{r pink random walk, warning=FALSE}
+load("../output/models/dyn/pink/hbm_dyn_2c.RData")
+
+# Stock specific dataframe
+probs <- c(0.025, 0.10, 0.50, 0.90, 0.975)
+summ <- rstan::summary(dyn.2c, pars = c("gamma", "kappa"), probs = probs)$summary
+df.dyn.st.2c <- data.frame(Stock = pink$Stock,
+                   Ocean.Region2 = pink$Ocean.Region2,
+                   BY = pink$BY,
+                   mu = summ[, "mean"],
+                   se = summ[, "se_mean"],
+                   lower_10 = summ[, "10%"],
+                   upper_90 = summ[ , "90%"],
+                   var = str_extract(rownames(summ), "[a-z]+"),
+                   varnam = case_when(grepl("^gamma", rownames(summ)) ~ "SST",
+                                      grepl("^kappa", rownames(summ)) ~ "Competitors"),
+                   even_odd = ifelse(grepl("Even$", pink$Stock), "Even", "Odd")
+                   )
+df.dyn.st.2c <- ocean_region_lab(df.dyn.st.2c)
+
+# Summarize at regional lvl
+df.dyn.reg.2c <- dplyr::summarize(df.dyn.st.2c,
+                                  reg_mean=mean(mu, na.rm=T), 
+                                  n_stk=n_distinct(Stock),
+                                  lower_10=quantile(mu, 0.1), 
+                                  upper_90=quantile(mu, 0.9), 
+                                  .by=c(Ocean.Region2, BY, varnam, even_odd))
+df.dyn.reg.2c <- ddply(df.dyn.reg.2c, .(Ocean.Region2), dplyr::filter, n_stk >= 4)
+df.dyn.reg.2c <- ocean_region_lab(df.dyn.reg.2c)
+
+
+# Figures
+ggplot(df.dyn.reg.2c) +
+  geom_hline(yintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +  
+  geom_line(data= df.dyn.st.2c, aes(x=BY, y=mu, group=Stock, col=ocean_region_lab), alpha=0.2) +
+  geom_line(aes(x=BY, y=reg_mean, col=ocean_region_lab, linetype=even_odd), linewidth=1) +
+  geom_ribbon(aes(x=BY, y=reg_mean, ymin=lower_10, ymax=upper_90, fill=ocean_region_lab, group=even_odd), alpha=0.2) +
+  geom_line(data=dplyr::filter(df.dyn.st.2c, Ocean.Region2=="WC" & even_odd=="Even"), aes(x=BY, y=mu, group=Stock, col=ocean_region_lab), linetype="twodash", alpha=0.7) +
+  facet_grid(cols=vars(factor(ocean_region_lab, levels=rev(levels(ocean_region_lab)))), rows=vars(factor(varnam, levels=c("SST", "Competitors")))) + 
+  scale_linetype_manual(values=c("Odd" = "solid", "Even" = "twodash")) +
+  scale_y_continuous(limits=c(-1,1.5), breaks=seq(-1,1.5,0.5)) + 
+  scale_colour_manual(values=col.region, aesthetics=c("colour", "fill")) +
+  theme_sleek() + theme(legend.position="none") +
+   labs(x="Brood Year", y="Mean covariate effects")
+
+```
+**Figure 12**. Time-varying posterior mean estimates of SST and Competitor covariate effects on Pink salmon productivity, modelled as a random walk. Individual stock estimates are in faint lines, while regional means and 80% CI are represented by bold lines and shaded areas. Solid bold lines represent odd-year Pink stocks, while dashed lines are even-year stocks. Region-wide means and CI are post-hoc calculations, rather than resulting from hierarchical model structures as in the stationary and era models.
+
+### Chum
+```{r chum random walk, warning=FALSE}
+load("../output/models/dyn/chum/hbm_dyn_2c.RData")
+
+
+# Stock specific dataframe
+probs <- c(0.025, 0.10, 0.50, 0.90, 0.975)
+summ <- rstan::summary(dyn.2c, pars = c("gamma", "kappa"), probs = probs)$summary
+df.dyn.st.2c <- data.frame(Stock = chum$Stock,
+                   Ocean.Region2 = chum$Ocean.Region2,
+                   BY = chum$BY,
+                   mu = summ[, "mean"],
+                   se = summ[, "se_mean"],
+                   lower_10 = summ[, "10%"],
+                   upper_90 = summ[ , "90%"],
+                   var = str_extract(rownames(summ), "[a-z]+"),
+                   varnam = case_when(grepl("^gamma", rownames(summ)) ~ "SST",
+                                      grepl("^kappa", rownames(summ)) ~ "Competitors")
+                   )
+df.dyn.st.2c <- ocean_region_lab(df.dyn.st.2c)
+
+# Summarize at regional lvl
+df.dyn.reg.2c <- dplyr::summarize(df.dyn.st.2c, 
+                           reg_mean=mean(mu, na.rm=T), 
+                           n_stk=n_distinct(Stock),
+                           lower_10=quantile(mu, 0.1), 
+                           upper_90=quantile(mu, 0.9), 
+                           .by=c(Ocean.Region2, BY, varnam))
+df.dyn.reg.2c <- ddply(df.dyn.reg.2c, .(Ocean.Region2), dplyr::filter, n_stk >= 4)
+df.dyn.reg.2c <- ocean_region_lab(df.dyn.reg.2c)
+
+
+# Figures
+ggplot(df.dyn.reg.2c[df.dyn.reg.2c$Ocean.Region2 != "SEAK",]) +
+  geom_hline(yintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +  
+  geom_line(data= df.dyn.st.2c, aes(x=BY, y=mu, group=Stock, col=ocean_region_lab), alpha=0.2) +
+  geom_line(aes(x=BY, y=reg_mean, col=ocean_region_lab), linewidth=1) +
+  geom_ribbon(aes(x=BY, y=reg_mean, ymin=lower_10, ymax=upper_90, fill=ocean_region_lab), alpha=0.2) +
+  facet_grid(cols=vars(factor(ocean_region_lab, levels=rev(levels(ocean_region_lab)))), rows=vars(factor(varnam, levels=c("SST", "Competitors")))) + 
+  scale_y_continuous(limits=c(-1, 1), breaks=seq(-1,1,0.5)) + 
+  scale_colour_manual(values=col.region, aesthetics=c("colour", "fill")) +
+  theme_sleek() + theme(legend.position="none") +
+   labs(x="Brood Year", y="Mean covariate effects")
+
+
+```
+**Figure 13**. Time-varying posterior mean estimates of SST and Competitor covariate effects on Chum salmon productivity, modelled as a random walk. Individual stock estimates are in faint lines, while regional means and 80% CI are represented by bold lines and shaded areas. Region-wide means and CI are post-hoc calculations, rather than resulting from hierarchical model structures as in the stationary and era models.
+
+
+# Inferences and Next steps 
+
+Not finished, could use feedback! **********
+
+Inference
+- We see evidence of nonstationarity across all 3 species
+- The degree of change varies among regions and species
+- There is some evidence that the 'marine heatwave' period changed ocean condition-productivity relationships
+
+
+Next steps
+- Obtain updated data for Alaskan Pink and Chum stocks
+- Carry out sensitivity analyses for covariates as described
+- Make era model breaks consistent with each species' life history
+- Continue work on modelling regional effects as a random walk
