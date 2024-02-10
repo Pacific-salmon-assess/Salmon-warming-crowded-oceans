@@ -354,3 +354,51 @@ g <- xyplot(lnRS ~ early_sst_stnd | Stock, data = data_master,
             })
 print(g)
 dev.off()
+
+
+## Fig: Map ALL species (Hannah's version) --------------------
+
+
+# Downlad map and convert to sp
+cl <- rnaturalearth::ne_states(country = c("United States of America", "Canada"))
+na_map <- sf::st_as_sf(cl)
+
+axes <- list( xlims=c(-171, -121), 
+              ylims=c(46, 67),
+              xbreaks=seq(-170,-120,10), 
+              xlabels=as.character(seq(-170,-120,10)),
+              seq(45, 65, 5), 
+              ybreaks=seq(45, 65, 5),
+              ylabels=as.character(seq(45,65,5)))
+
+#make map data
+sock.info$Species <- "Sockeye"
+chum.info$Species <- "Chum"
+pink.info$Species <- "Pink"
+map.info <- rbind(sock.info, chum.info, pink.info)
+# colour
+sp.col <- c("seagreen4", "palevioletred3", "orangered4")
+names(sp.col) <- c("Chum", "Pink", "Sockeye")
+
+map <- ggplot(map.info) + 
+  geom_sf(data=na_map, color="grey40", fill="white", linewidth=0.1) + 
+  ggspatial::geom_spatial_point(aes(x=lon, y=lat, col=Species, shape=Species), 
+                                crs=4326, size=2.5, alpha=0.8, position=position_jitter(w=0.2, h=0.2)) +
+  coord_sf(xlim=axes$xlims, ylim=axes$ylims) +
+  scale_x_continuous(breaks=axes$xbreaks, labels=axes$xlabels) +
+  scale_y_continuous(breaks=axes$ybreaks, labels=axes$ylabels) +
+  #scale_colour_brewer(palette="Dark2") + 
+  scale_colour_manual(values=sp.col) +
+  scale_shape_manual(values=c(15,16,17)) +
+  labs(x="Longitude (°E)", y="Latitude (°N)") +
+  theme_sleek() + 
+  theme(panel.grid = element_blank(),
+        plot.title = element_text(hjust=0.5),
+        legend.position = c(0.4,0.25),
+        legend.background = element_rect(colour="grey75"),
+        aspect.ratio = 0.65
+  )
+
+pdf(here("figures", "spp-explore", "all_sp_map.pdf"), height=4, width=7)
+print(map)
+dev.off()
