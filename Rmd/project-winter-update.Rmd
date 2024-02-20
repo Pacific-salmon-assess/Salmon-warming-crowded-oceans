@@ -91,17 +91,17 @@ names(sp.col) <- c("Chum", "Pink", "Sockeye") # name
 
 # Purpose
 
-This document summarizes the results of new additions and edits to the initial analyses presented [here](https://pacific-salmon-assess.github.io/Salmon-warming-crowded-oceans/Rmd/project-fall-update.html). Notably, our analysis now includes Pink and Chum salmon stocks (N = 67, N = 48) from across the North Pacific Ocean, as well as newly added Sockeye stocks (N = 77).
+This document summarizes the results of updates to the initial analyses presented [here](https://pacific-salmon-assess.github.io/Salmon-warming-crowded-oceans/Rmd/project-fall-update.html). Notably, our analysis now includes Pink and Chum salmon stocks (N = 67, N = 48) from across the eastern North Pacific, as well as newly added Sockeye stocks (x news stocks for a total of N = 77). 
 
 
 # Methods
 
-We aim to characterize relationships between ocean conditions (SST and abundance of potential competitors) and salmon productivity (R/S) over space and time. There have been minor changes to our modelling approach since our [last update](https://pacific-salmon-assess.github.io/Salmon-warming-crowded-oceans/Rmd/project-fall-update.html#2_Methods). 
+The overarching goal of our analyses is to characterize relationships between ocean conditions (SST and abundance of potential competitors) and salmon productivity (R/S) over space and time. There have been minor changes to our modelling approach since our [last update](https://pacific-salmon-assess.github.io/Salmon-warming-crowded-oceans/Rmd/project-fall-update.html#2_Methods) including X, Y and Z which are detailed below. 
 
 
 ## Data
 
-We have compiled spawner-recruitment time series for all five species of Pacific salmon - [available here](https://github.com/Pacific-salmon-assess/dfo_salmon_compilation). The analyses presented here include 192 of these populations of Sockeye, Pink, and Chum salmon originating from Washington to the Bering Sea.
+We have compiled spawner-recruitment time series for all five species of Pacific salmon - [available here](https://github.com/Pacific-salmon-assess/dfo_salmon_compilation). The analyses presented here include 192 of these populations of Sockeye, Pink, and Chum salmon originating from Washington to the Bering Sea. Compilation of coho and Chinook time series is ongoing as is updating the Pink and Chum time series through to the present
 
 ### Map 
 
@@ -244,23 +244,22 @@ ggplot(prod_dat) +
 
 ## Models
 
-We use 3(4) classes of generalized spawner-recruitment models:
+Our updated analyses focus on three classes of generalized spawner-recruitment models:
 
-1. Stationary models (e.g. [Connors et al. 2020](https://cdnsciencepub.com/doi/full/10.1139/cjfas-2019-0422)), which estimate time-invariant relationships. These have not changed other than the addition of new data.
+1. Stationary models (e.g. [Connors et al. 2020](https://cdnsciencepub.com/doi/full/10.1139/cjfas-2019-0422)), which estimate time-invariant relationships. These have not changed since last update other than the addition of new data.
 
-2. 'Era' models (e.g., [Malick 2020](https://onlinelibrary.wiley.com/doi/10.1111/fog.12469)), which allow relationships to vary among pre-defined periods that represent hypothesized shifts in NP Ocean processes and relationships. The 1976/77 'regime shift' is no longer modelled following feedback from our last update, which brought to light that this shift from a cold to warm PDO phase is not a true 'regime shift'. New iterations of these models consider a second potential regime shift at the onset of the ~2013 marine heatwave ('the blob').
-Currently, we consider brood years >= 2011 to have interacted with the marine heatwave regardless of the species and stock. In future analyses, the timing can be altered to better reflect the diverse life histories of populations in the analysis.
+2. 'Era' models (e.g., [Malick 2020](https://onlinelibrary.wiley.com/doi/10.1111/fog.12469)), which allow relationships to vary among pre-defined periods that represent hypothesized shifts in North Pacific Ocean processes and relationships. The 1976/77 'regime shift' is no longer modelled following feedback from our last update, which highlighted that this shift from a cold to warm PDO phase simply reflected a temperature change (which is already accounted for via our direct consideration of ocean temperature) and not a fundamental change in oceanographic processes like the 1988/89 regime shift. Our updated analyses also conisder a potential regime shift at the onset of the ~2013 marine heatwave ('the blob'). Currently, we consider brood years >= 2011 to have interacted with the marine heatwave regardless of the species and stock. In future analyses, the timing can be altered to better reflect the diverse life histories of populations in the analysis.
 
-3. Random walk models (e.g., [Malick 2020](https://onlinelibrary.wiley.com/doi/10.1111/fog.12469)), which allow relationships to evolve gradually through time. These have not changed other than the addition of new data, however, a version that estimates ocean basin-scale trends in relationships is currently in development.
+3. Random walk models (e.g., [Malick 2020](https://onlinelibrary.wiley.com/doi/10.1111/fog.12469)), which allow relationships to evolve gradually through time. These have not changed since last update other than the addition of new data. However, a version that estimates ocean basin-scale trends in relationships (e.g., as shared trends within ocean region that are modeled hierarchically) is currently in development.
 
-4. Hidden Markov models, which allow relationships to vary according to latent states, are not included in this update. They may be revisited in the future.
+In this update we no longer consider Hidden Markov models, which allow relationships to vary according to latent states, given feedback from last update that these models appeared to add little to our inference compared to the radom walk models. They may be revisited in the future.
 
-Details of each model class and our Bayesian model fitting procedure can be found [here](https://pacific-salmon-assess.github.io/Salmon-warming-crowded-oceans/Rmd/project-fall-update.html#23_Era_models).
+More details on each model class and our Bayesian model fitting procedure can be found [here](https://pacific-salmon-assess.github.io/Salmon-warming-crowded-oceans/Rmd/project-fall-update.html#23_Era_models).
 
 
 ## Covariate analyses
 
-We continue to focus on:
+We continue to focus on two covariates:
 
 1. Sea surface temperature (SST) at juvenile salmon ocean entry points, indexing local ocean conditions early in marine life when temperature is hypothesized to be most influential to marine survival ([Mueter et al. 2002](https://cdnsciencepub.com/doi/abs/10.1139/f02-020?casa_token=KzFFwc9QXhAAAAAA:HXYklBNRVXs_o5_C-B74arVwNRHeyiexXRK3hPV_EbL63t8k-VwrTOFmdClLehivIPFuVrNw03sU)).
 
@@ -274,7 +273,7 @@ However, these will remain consistent with the general hypothesis that juvenile 
 
 2. The abundance of salmon in the North Pacific potentially competing directly or indirectly for food. 
 
-( Brendan to fill in more about competitor analyses)
+( Brendan to fill in more about competitor analyses): Our base cases analysis focuses on the abundance of pink salmon across the North Pacific in the second and/or third years of marine life as an index of potential direct or indirect competition for food. This approach is consistent with research that has suggested some salmon species primarily exhibit responses to competition with pink salmon during their second and/or third growing seasons at sea (Connors et al. 2020; Ruggerone et al.2023). However, we also plan to fit models to a small subset of alternative competitor indices as part of sensitivity analysis for this paper (e.g., total pink, chum and sockeye abundance; just North American abundances, biomass instead of abundance, etc.) and have begun sketching out a more comprehensive analytical plan for a separate paper that explores evidence for a wider range of hypotheses about intra- and inter-specific interactions at a variety of spatial and temporal scales. 
 
 
 # Results
