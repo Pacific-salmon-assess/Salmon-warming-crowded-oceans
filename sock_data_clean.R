@@ -87,8 +87,8 @@ all.equal(sort(r1), sort(r2))
 # More cleaning steps 
 bt.out.1 <- bt[complete.cases(bt),]                # drop years with missing data
 (nrow(bt) - nrow(bt.out.1)) # how many rows dropped
-bt.out.2 <- subset(bt.out.1, !(Stock.ID %in% c(7, 55, 30, 35, 52, 44, 50))) # remove stocks:
-    # 7 Frazer -hatchery influence, Sustut-duplicated, 30,35,52,44,50 too short or gappy 
+bt.out.2 <- subset(bt.out.1, !(Stock.ID %in% c(7, 55, 30, 35, 38, 41, 52, 43, 44, 47, 49, 50, 51, 54))) # remove stocks:
+    # 7 Frazer -hatchery influence, Sustut-duplicated, 30,35,52,44,50 too short or gappy, Babine x2 Hatchery influence
 bt.out.3 <- subset(bt.out.2,BY > 1949)        # do this because pre 1950 data is very sparse
 bt.out.4 <- subset(bt.out.3, BY<=2015) #- currently have pink-NP data up to 2021 (+6 yr)
 
