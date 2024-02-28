@@ -281,7 +281,6 @@ hb05_density_df <- function(stanfit, ocean.regions = 3, info_master=info_master,
   pc.s.joint <- (exp(s.gamma + s.kappa ) - 1) * 100
   pc.m.joint <- (exp(m.gamma + m.kappa ) - 1) * 100
   
-
   ## Calculate kernel densities
   s.den.wc.gamma  <- col_density(pc.s.gamma[ , ind.wc], plot.it = FALSE, adjust = adjust)
   s.den.goa.gamma <- col_density(pc.s.gamma[ , ind.goa], plot.it = FALSE, adjust = adjust)
@@ -2212,7 +2211,7 @@ if(FALSE) {
 
 
 ## sst.averager --------------------------------------------
-sst.averager <- function(info, sst, distance = 400, all.months=F) {
+sst.averager <- function(info, sst, distance = 400) {
 
     ## This function takes as input a data.frame of sst data output from the
     ## sst.anomaly() function and computes sst averages for each stock only
@@ -2252,7 +2251,8 @@ sst.averager <- function(info, sst, distance = 400, all.months=F) {
         info.i     <- info[i , ]
         stock.id.i <- info.i$stock.id
         lat.i      <- info.i$lat
-        lon.i      <- info.i$lon # Brendan removed "* -1" from this line of code; longitude was already converted to negative degrees east
+        lon.i      <- info.i$lon
+        reg.i      <- info.i$Ocean.Region2
 
         dist <- rep(NA, n.cells)
         for(j in 1:n.cells)
@@ -2261,13 +2261,13 @@ sst.averager <- function(info, sst, distance = 400, all.months=F) {
         cells.sub <- cells[which(dist <= distance), ]
         sst.sub   <- sst[sst$id %in% cells.sub$id, ]
         
-        if(stock.id.i <= 137)
+        if(reg.i %in% c("WC", "SEAK"))
             months <- 4:7  ## WA, BC, SEAK
 
-        if(stock.id.i > 137 & stock.id.i <= 152)
+        if(reg.i == "GOA")
             months <- 5:8  ## GOA
 
-        if(stock.id.i > 152)
+        if(reg.i == "BS")
             months <- 6:9  ## BB and AYK
 
         sst.sub.mnths <- sst.sub[sst.sub$month %in% months, ]
