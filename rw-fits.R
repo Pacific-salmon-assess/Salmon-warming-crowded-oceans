@@ -23,7 +23,88 @@ if(speciesFlag=="pink")
       dir.create(diag.dir, recursive = T)
     
     
-# Get stan data    
+    
+## -- Run the ungrouped RW with SUBSETTED data [sockeye ONLY] ---------------------------
+
+# subset data    
+stk.sub <- info_master$Stock.ID[info_master$yr_start < 1985 & info_master$yr_end >= 2014]
+data_sub <- data_master %>% filter(Stock.ID %in% stk.sub)
+info_sub <- info_master %>% filter(Stock.ID %in% stk.sub)
+data_sub <- geographic.order(data_sub)
+info_sub <- geographic.order(info_sub)
+    
+    
+stan.dat.2c.sub <- stan_data_dyn(data_sub, 
+                             var.x2 = "early_sst_stnd",
+                             var.x3 = "np_pinks_sec_stnd",
+                             breakpoint1 = 1989,
+                             breakpoint2 = 2011,
+                             var.region="Ocean.Region2", 
+                             scale.x1 = TRUE,
+                             alpha.group = ifelse(speciesFlag=="sockeye", TRUE, FALSE))
+pars_dyn_2c.sub <- c("alpha", "beta", "sigma", "phi", "mu_alpha", "sigma_alpha",
+                 "gamma", "sigma_gamma", "signal_noise_g",
+                 "kappa", "sigma_kappa", "signal_noise_k")
+
+pars.gen.quant <- c("log_lik", "yrep") ## Generated quantities to monitor
+dyn.2c.sub <- rstan::stan(file = "./stan/hbm_dyn_2c.stan",
+                      data = stan.dat.2c.sub,
+                      pars = c(pars_dyn_2c.sub, pars.gen.quant),
+                      warmup = 1000,
+                      iter = 4000, # try more iterations to fix Rhat & Neff
+                      cores = 4,
+                      chains = 4,
+                      seed = 123,
+                      control = list(adapt_delta = 0.99,
+                                     max_treedepth = 20))
+save(dyn.2c.sub, file = here(fit.dir, "hbm_dyn_2c.sub.Rdata"))
+
+# get outputs and plot 
+
+probs <- c(0.025, 0.05, 0.10, 0.50, 0.90, 0.95, 0.975)
+summ <- rstan::summary(dyn.2c.sub, pars = c("gamma", "kappa"), probs = probs)[[1]]
+
+df.dyn.st.2c <- data.frame(Stock = data_sub$Stock,
+                           Ocean.Region2 = data_sub$Ocean.Region2,
+                           BY = data_sub$BY,
+                           mu = summ[, "mean"],
+                           se = summ[, "se_mean"],
+                           lower_10 = summ[, "10%"],
+                           upper_90 = summ[ , "90%"],
+                           var = str_extract(rownames(summ), "[a-z]+"),
+                           varnam = case_when(grepl("^gamma", rownames(summ)) ~ "SST",
+                                              grepl("^kappa", rownames(summ)) ~ "Competitors")
+)
+df.dyn.st.2c <- ocean_region_lab(df.dyn.st.2c)
+
+df.dyn.reg.2c <- dplyr::summarize(df.dyn.st.2c, 
+                                  reg_mean=mean(mu, na.rm=T), 
+                                  n_stk=n_distinct(Stock),
+                                  lower_10=quantile(mu, 0.1), 
+                                  upper_90=quantile(mu, 0.9), 
+                                  .by=c(Ocean.Region2, BY, varnam))
+df.dyn.reg.2c <- ocean_region_lab(df.dyn.reg.2c)
+
+
+# Grouped gamma timeseries : 2-covar
+g<-ggplot(df.dyn.reg.2c) +
+  geom_hline(yintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +  
+  geom_line(data= df.dyn.st.2c, aes(x=BY, y=mu, group=Stock, col=ocean_region_lab), alpha=0.2) +
+  geom_line(aes(x=BY, y=reg_mean, col=ocean_region_lab), linewidth=1) +
+  geom_ribbon(aes(x=BY, y=reg_mean, ymin=lower_10, ymax=upper_90, fill=ocean_region_lab), alpha=0.2) +
+  facet_grid(cols=vars(factor(ocean_region_lab, levels=rev(levels(ocean_region_lab)))), rows=vars(factor(varnam, levels=c("SST", "Competitors")))) + 
+  scale_y_continuous(limits=c(-1, 1), breaks=seq(-1,1,0.5)) + 
+  scale_colour_manual(values=col.region, aesthetics=c("colour", "fill")) +
+  theme_sleek() + theme(legend.position="none") +
+  labs(x="Brood Year", y="Mean covariate effects")
+
+pdf(here(fig.dir, "dyn_2c_sub.pdf"))
+print(g)
+dev.off()
+
+    
+## -- Run the SHARED RW model with 2 covariates -------------------------------------
+ 
 
 # filter out short timeseries
 stk_20 <- info_master$Stock[info_master$n_years >= 20]
@@ -147,7 +228,7 @@ print(g)
 dev.off()
 
 
-## -- Run the model with 1 covariate to test -------------------------------------
+## -- Run the SHARED RW model with 1 covariate to test -------------------------------------
 
 # filter out short timeseries
 stk_20 <- info_master$Stock[info_master$n_years >= 20]

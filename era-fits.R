@@ -2,17 +2,21 @@
 
 # Set species
 #speciesFlag = "pink"
-speciesFlag = "chum"
-#speciesFlag = "sockeye"
+#speciesFlag = "chum"
+speciesFlag = "sockeye"
 
 # Species
 if(speciesFlag=="pink") 
   data_master <- pink else if(speciesFlag=="chum") 
     data_master <- chum else if(speciesFlag=="sockeye")
       data_master <- sock
+if(speciesFlag=="pink") 
+  info_master <- pink.info else if(speciesFlag=="chum") 
+    info_master <- chum.info else if(speciesFlag=="sockeye")
+      info_master <- sock.info   
 
 # Set paths to output locations - dependent on species 
-fig.dir <- here("figures", "dyn", speciesFlag, "hbm_fit") # place to store figures generated in this script
+fig.dir <- here("figures", "dyn", speciesFlag, "hbm_inf") # place to store figures generated in this script
 fit.dir <- here("output", "models", "dyn", speciesFlag) # place to store model fits
 diag.dir <- here("output", "diagnostics", "dyn", speciesFlag) # place to store diagnostics
 
@@ -278,4 +282,93 @@ pdf(here(fig.dir, "3t_era_tslength.pdf"))
 print(g)
 dev.off()
 
+
+
+## 3 eras : pre- 88/89, 89-2010, post- 2010/11 w/ SUBSETTED data [SOCKEYE only for now]------------------
+## Get data for Stan
+
+stk.sub <- info_master$Stock.ID[info_master$yr_start < 1985 & info_master$yr_end >= 2014]
+data_sub <- data_master %>% filter(Stock.ID %in% stk.sub)
+info_sub <- info_master %>% filter(Stock.ID %in% stk.sub)
+data_sub <- geographic.order(data_sub)
+info_sub <- geographic.order(info_sub)
+
+stan.dat.2c.3sub <- stan_data_dyn(data_sub, 
+                                var.x2 = "early_sst_stnd",
+                                var.x3 = "np_pinks_sec_stnd",
+                                breakpoint1 = 1989,
+                                breakpoint2 = 2011,
+                                var.region="Ocean.Region2", 
+                                scale.x1 = TRUE,
+                                alpha.group = ifelse(speciesFlag=="sockeye", TRUE, FALSE))
+
+pars_era_2c_3sub <- c("alpha", "beta", "sigma", "phi", "mu_alpha", "sigma_alpha",
+                    "gamma1", "gamma2", "gamma3", 
+                    "mu_gamma1", "mu_gamma2", "mu_gamma3", "sigma_gamma", 
+                    "kappa1", "kappa2", "kappa3", 
+                    "mu_kappa1", "mu_kappa2", "mu_kappa3", "sigma_kappa" )
+pars_dyn_2c_3sub <- c("alpha", "beta", "sigma", "phi", "mu_alpha", "sigma_alpha",
+                    "gamma", "sigma_gamma", "signal_noise_g",
+                    "kappa", "sigma_kappa", "signal_noise_k")
+
+pars.gen.quant <- c("log_lik", "yrep") ## Generated quantities to monitor
+
+era.2c.3sub <- rstan::stan(file = "./stan/hbm_era_2c.stan",
+                         data = stan.dat.2c.3sub,
+                         pars = c(pars_era_2c_3sub, pars.gen.quant),
+                         warmup = 1000,
+                         iter = 2000,
+                         cores = 4,
+                         chains = 4,
+                         seed = 123,
+                         control = list(adapt_delta = 0.99,
+                                        max_treedepth = 20))
+save(era.2c.3sub, file = here(fit.dir, "hbm_era_2c_3sub.RData"))
+
+### --- Data
+
+# Density dataframe - by stock
+dens.df.st.2c.3sub <- era_density_df(era.2c.3sub, par=c("gamma", "kappa"), neras=3, info=info_sub)
+dens.df.st.2c.3sub <- ocean_region_lab(dens.df.st.2c.3sub)
+# Density dataframe (regional lvl)
+dens.df.reg.2c.3sub <- era_density_df(era.2c.3sub, par=c("gamma", "kappa"), mu=T, neras=3, info=info_sub)
+dens.df.reg.2c.3sub <- ocean_region_lab(dens.df.reg.2c.3sub)
+
+### --- Figures
+
+## Density plot
+g <- ggplot(dens.df.st.2c.3sub) + 
+  geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
+  geom_path(aes(x=x, y=dens, group=stock, col=ocean_region_lab), alpha=0.2) + 
+  geom_path(data=dens.df.reg.2c.3sub, aes(x=x, y=dens, col=ocean_region_lab), alpha=0.85, linewidth=1) +
+  scale_colour_manual(values=col.region) +
+  facet_grid(rows=vars(era), cols=vars(varnam)) + 
+  coord_cartesian(xlim=c(-1, 1)) +
+  theme_minimal() + labs(x="covariate effect", y="", col="Ocean Region") +
+  theme(axis.text.y=element_blank(),
+        legend.position="bottom")
+pdf(here(fig.dir, "3sub_era_dens.pdf"))
+print(g)
+dev.off()
+
+
+# Time series length - show overlap
+prod_dat_t <- ocean_region_lab(data_sub)
+g <- ggplot(prod_dat_t) + 
+  geom_vline(xintercept=c(1989, 2011), color = "grey50", linetype = 2, linewidth = 0.25) +
+  geom_line(aes(x=BY, y=lnRS, col=ocean_region_lab)) + 
+  facet_grid(rows=vars(Stock), switch ="y", scales="free_y", as.table=F) + 
+  scale_colour_manual(values=col.region) +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        strip.text.y.left = element_text(angle=0, hjust=0, margin=margin(l=0, r=0)),
+        strip.background = element_rect(fill="transparent", colour="transparent"),
+        strip.text = element_text(size=7, ),
+        panel.spacing.y = unit(0, unit="cm"),
+        panel.background = element_rect(fill="white"),
+        legend.position = "none") +
+  labs(y="", x="Brood Year")
+pdf(here(fig.dir, "3sub_era_tslength.pdf"))
+print(g)
+dev.off()
 
