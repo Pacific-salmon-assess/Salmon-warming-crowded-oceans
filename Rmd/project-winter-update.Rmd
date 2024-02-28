@@ -98,7 +98,6 @@ names(sp.col) <- c("Chum", "Pink", "Sockeye") # name
 This document summarizes updated results from the analyses presented [here](https://pacific-salmon-assess.github.io/Salmon-warming-crowded-oceans/Rmd/project-fall-update.html). Notably, the analysis now includes Pink and Chum salmon stocks (N = 67, N = 48) from across the eastern North Pacific, as well as newly added Sockeye stocks (19 new stocks for a total of N = 55). 
 
 
-
 # Methods
 
 The overarching goal of our analyses is to characterize relationships between ocean conditions (SST and abundance of potential competitors) and salmon productivity (R/S) over space and time. Since our [last update](https://pacific-salmon-assess.github.io/Salmon-warming-crowded-oceans/Rmd/project-fall-update.html#2_Methods), we have made minor changes to our approach, as described in the sections below.
