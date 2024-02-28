@@ -53,16 +53,20 @@ source("../functions.R")
 # libraries
 source("../load.R")
 library(plotly)
-library(stringr)
 
 # read brood table data
 sock <- read.csv("../data/sockeye/master_sockeye_brood_table_covar.csv", stringsAsFactors = F)
-pink <- read.csv("../data/pink/master_pink_brood_table_covar.csv", stringsAsFactors = F)
+pink <- read.csv("../data/pink/master_pink_brood_table_covar_0124.csv", stringsAsFactors = F)
 chum <- read.csv("../data/chum/master_chum_brood_table_covar.csv", stringsAsFactors = F)
 # read info tables
 sock.info <- read.csv("../data/sockeye/master_sockeye_stock_info.csv", stringsAsFactors = F)
-pink.info <- read.csv("../data/pink/master_pink_stock_info.csv", stringsAsFactors = F)
+pink.info <- read.csv("../data/pink/master_pink_stock_info_0124.csv", stringsAsFactors = F)
 chum.info <- read.csv("../data/chum/master_chum_stock_info.csv", stringsAsFactors = F)
+
+# subset sockeye stocks
+stk.sub <- sock.info$Stock.ID[sock.info$yr_start < 1985 & sock.info$yr_end >= 2014]
+sock <- sock %>% filter(Stock.ID %in% stk.sub)
+sock.info <- sock.info %>% filter(Stock.ID %in% stk.sub)
 
 # everything crumbles if they aren't ordered factors
 sock <- geographic.order(sock)
@@ -91,27 +95,31 @@ names(sp.col) <- c("Chum", "Pink", "Sockeye") # name
 
 # Purpose
 
-This document summarizes the results of new additions and edits to the initial analyses presented [here](https://pacific-salmon-assess.github.io/Salmon-warming-crowded-oceans/Rmd/project-fall-update.html). Notably, our analysis now includes Pink and Chum salmon stocks (N = 67, N = 48) from across the North Pacific Ocean, as well as newly added Sockeye stocks (N = 77).
+This document summarizes updated results from the analyses presented [here](https://pacific-salmon-assess.github.io/Salmon-warming-crowded-oceans/Rmd/project-fall-update.html). Notably, the analysis now includes Pink and Chum salmon stocks (N = 67, N = 48) from across the eastern North Pacific, as well as newly added Sockeye stocks (19 new stocks for a total of N = 55). 
+
 
 
 # Methods
 
-We aim to characterize relationships between ocean conditions (SST and abundance of potential competitors) and salmon productivity (R/S) over space and time. There have been minor changes to our modelling approach since our [last update](https://pacific-salmon-assess.github.io/Salmon-warming-crowded-oceans/Rmd/project-fall-update.html#2_Methods). 
-
+The overarching goal of our analyses is to characterize relationships between ocean conditions (SST and abundance of potential competitors) and salmon productivity (R/S) over space and time. Since our [last update](https://pacific-salmon-assess.github.io/Salmon-warming-crowded-oceans/Rmd/project-fall-update.html#2_Methods), we have made minor changes to our approach, as described in the sections below.
 
 ## Data
 
-We have compiled spawner-recruitment time series for all five species of Pacific salmon - [available here](https://github.com/Pacific-salmon-assess/dfo_salmon_compilation). The analyses presented here include 192 of these populations of Sockeye, Pink, and Chum salmon originating from Washington to the Bering Sea.
+We have compiled spawner-recruitment time series for all five species of Pacific salmon - [available here](https://github.com/Pacific-salmon-assess/dfo_salmon_compilation), although only Sockeye, Pink, and Chum populations are analyzed here. We analyze a total of 170 populations originating from Washington to the Bering Sea:
 
-### Map 
+* From our original set of 58 Sockeye time series, we obtained more data from the SEAK and WC regions, but subsequently chose to remove time series that did not span at least the brood years of 1984-2015 without significant gaps, ensuring sufficient overlap with each time period in our era models and a suitable length for random walk models. There are now 55 Sockeye stocks in the analysis - many of the original stocks, and some new ones.
 
-Clicking on the legend items on the right hand side of the plot below will allow you to toggle between species.
+* We obtained spawner-recruitment time series for Pink and Chum populations, and currently use all time series with good data quality, regardless of whether they meet the criteria applied to Sockeye data. These data do not represent all regions and time periods well, and notably, we have no data after 2009 for all Alaskan stocks. We are working to update these data through to the present.
 
-```{r Ocean entry map, out.width="100%"}
+* Compilation of coho and Chinook time series is ongoing.
+
+
+### Map of ocean entry points
+
+The map below shows the ocean entry locations of all stocks in the analysis presented. The legend to the right of the plot allows you to toggle between species (double-click a legend item to isolate that species). Hovering over a point will show the stock name and ocean region.
+
+```{r Ocean entry map, out.width="100%", out.height="50%", warning=FALSE}
 # specify output size or plotly makes it huge
-
-#p <- plotly(username="hhunter", key="fishpass")
-# don't think I need this?
 
 # Downlad map and convert to sp
 na_map <- rnaturalearth::ne_states(country = c("United States of America", "Canada"), returnclass='sf')
@@ -131,10 +139,11 @@ pink.info$Species <- "Pink"
 map.info <- rbind(sock.info, chum.info, pink.info)
 
 
-map <- ggplot(map.info) + 
+map <- ggplot(data = map.info) + 
   geom_sf(data=na_map, color="grey40", fill="white", linewidth=0.1) + 
-  ggspatial::geom_spatial_point(aes(x=lon, y=lat, col=Species, shape=Species, group=Stock), 
-                                crs=4326, size=2.5, alpha=0.8, position=position_jitter(w=0.2, h=0.2)) +
+  ggspatial::geom_spatial_point(aes(x=lon, y=lat, col=Species, shape=Species, group=Stock, text=paste("Region:", ocean_region_lab)), 
+                                crs=4326, size=2.5,
+                                position=position_jitter(w=0.2, h=0.2)) +
   coord_sf(xlim=axes$xlims, ylim=axes$ylims) +
   scale_x_continuous(breaks=axes$xbreaks, labels=axes$xlabels) +
   scale_y_continuous(breaks=axes$ybreaks, labels=axes$ylabels) +
@@ -146,18 +155,22 @@ map <- ggplot(map.info) +
         plot.title = element_text(hjust=0.5),
         legend.position = c(0.4,0.25),
         legend.background = element_rect(colour="grey75")
-        # , aspect.ratio = 0.65
   )
 
-ggplotly(map, tooltip=c("group"))
+ggplotly(map, tooltip=c("group", "text")) %>% config(modeBarButtonsToRemove = 
+                                                       c("zoom", "lasso2d", "select2d", 
+                                                         "autoscale2d", "hoverClosestCartesian", "hoverCompareCartesian")
+                                                     #,scrollZoom = TRUE
+                                                     )
+#%>% layout(legend=list(x=0.8,y=0.9))
 
 ```
-**Figure 1**. Ocean entry locations of Sockeye (n=77), Pink (n=67), and Chum (n=48) salmon stocks included in analyses (total N=192).
+**Figure 1**. Ocean entry locations of Sockeye (n=55), Pink (n=67), and Chum (n=48) salmon stocks included in analyses (total N=170).
 
 
 ### Time Series Length {.tabset}
 
-Productivity (log[R/S]) time series of all stocks are shown below to illustrate the length and relative number of time series among regions and species. Vertical dashed lines represent breakpoints in 'Era' models and illustrate the coverage of data over periods of interest.
+Productivity (log[R/S]) time series of all stocks are shown below to illustrate the length and relative number of time series among regions and species. Vertical dashed lines represent proposed regime shifts in the 'era' model (described in sec. 2.2) to illustrate the coverage of data over periods of interest.
 
 #### Sockeye
 
@@ -182,11 +195,9 @@ ggplot(prod_dat) +
 
 
 ```
-**Figure 2**. Productivity (log[R/S]) time series of Sockeye stocks (n=77) with vertical dashed lines indicating proposed ocean regime shifts.
+**Figure 2**. Productivity (log[R/S]) time series of Sockeye stocks (n=55) with vertical dashed lines indicating proposed ocean regime shifts.
 
 #### Pink
-
-- add proposed regime shifts to plots below
 
 ```{r Pink time series}
 prod_dat <- ocean_region_lab(pink)
@@ -214,7 +225,7 @@ ggplot(prod_dat) +
   labs(y="", x="Brood Year")
 
 ```
-**Figure 3**. Productivity (log[R/S]) time series of Pink stocks (n=67) with vertical dashed lines indicating proposed ocean regime shifts.
+**Figure 3**. Productivity (log[R/S]) time series of Pink stocks (n=67) with vertical dashed lines indicating proposed ocean regime shifts. Note that Even- and Odd-run pinks are considered separately due to their independent and at times vastly different productivity regimes.
 
 #### Chum 
 
@@ -244,40 +255,36 @@ ggplot(prod_dat) +
 
 ## Models
 
-We use 3(4) classes of generalized spawner-recruitment models:
+Our updated analyses focus on three classes of generalized spawner-recruitment models:
 
-1. Stationary models (e.g. [Connors et al. 2020](https://cdnsciencepub.com/doi/full/10.1139/cjfas-2019-0422)), which estimate time-invariant relationships. These have not changed other than the addition of new data.
+1. Stationary models (e.g. [Connors et al. 2020](https://cdnsciencepub.com/doi/full/10.1139/cjfas-2019-0422)), which estimate time-invariant relationships. These have not changed since last update other than the addition of data for the two new species.
 
-2. 'Era' models (e.g., [Malick 2020](https://onlinelibrary.wiley.com/doi/10.1111/fog.12469)), which allow relationships to vary among pre-defined periods that represent hypothesized shifts in NP Ocean processes and relationships. The 1976/77 'regime shift' is no longer modelled following feedback from our last update, which brought to light that this shift from a cold to warm PDO phase is not a true 'regime shift'. New iterations of these models consider a second potential regime shift at the onset of the ~2013 marine heatwave ('the blob').
-Currently, we consider brood years >= 2011 to have interacted with the marine heatwave regardless of the species and stock. In future analyses, the timing can be altered to better reflect the diverse life histories of populations in the analysis.
+2. 'Era' models (e.g., [Malick 2020](https://onlinelibrary.wiley.com/doi/10.1111/fog.12469)), which allow relationships to vary among pre-defined periods that represent hypothesized shifts in North Pacific Ocean processes and relationships. 
 
-3. Random walk models (e.g., [Malick 2020](https://onlinelibrary.wiley.com/doi/10.1111/fog.12469)), which allow relationships to evolve gradually through time. These have not changed other than the addition of new data, however, a version that estimates ocean basin-scale trends in relationships is currently in development.
+* We no longer model 1976/77 as a regime shift as per feedback from our last update, which highlighted that this shift from a cold to warm PDO phase simply reflected a temperature change (which is already accounted for via our direct consideration of ocean temperature) and not a fundamental change in oceanographic processes like the 1988/89 regime shift.
 
-4. Hidden Markov models, which allow relationships to vary according to latent states, are not included in this update. They may be revisited in the future.
+* Our updated analyses consider a potential regime shift at the onset of the ~2013-2015 marine heatwave ('the blob') [sources?]. Currently, we consider brood years >= 2011 to have interacted with the marine heatwave regardless of the species and stock. In future analyses, the timing can be altered to better reflect the diverse life histories of populations in the analysis.
 
-Details of each model class and our Bayesian model fitting procedure can be found [here](https://pacific-salmon-assess.github.io/Salmon-warming-crowded-oceans/Rmd/project-fall-update.html#23_Era_models).
+3. Random walk models (e.g., [Malick 2020](https://onlinelibrary.wiley.com/doi/10.1111/fog.12469)), which allow relationships to evolve gradually through time. 
 
+* These have not changed since last update other than the addition of new data. However, a version that estimates ocean basin-scale trends in relationships (e.g., as shared trends within ocean region that are modeled hierarchically) is currently in initial stages of application.
 
-## Covariate analyses
-
-We continue to focus on:
-
-1. Sea surface temperature (SST) at juvenile salmon ocean entry points, indexing local ocean conditions early in marine life when temperature is hypothesized to be most influential to marine survival ([Mueter et al. 2002](https://cdnsciencepub.com/doi/abs/10.1139/f02-020?casa_token=KzFFwc9QXhAAAAAA:HXYklBNRVXs_o5_C-B74arVwNRHeyiexXRK3hPV_EbL63t8k-VwrTOFmdClLehivIPFuVrNw03sU)).
-
-The resolution of SST data is currently 2 x 2 degrees ([ERSST](https://www.ncei.noaa.gov/products/extended-reconstructed-sst)). SST at ocean entry points are averaged spatially across 400 square km, and temporally across a 3-month period immediately following ocean entry for most stocks, to get a simple index of SST. Future analyses of SST may include:
-
-- Sensitivity analysis of spatial averaging of SST over smaller (200 sq. km) or broader (800 sq. km) areas, to test alternative hypotheses about the distance over which initial ocean temperatures affect juvenile salmon as they migrate; 
-- Sensitivity analysis of temporal SST averaging windows, including spring, summer, and winter of the first year at sea, to test alternative hypotheses about the time at which juvenile salmon are most affected by temperature;
-- Inclusion of high-resolution SST data.
-However, these will remain consistent with the general hypothesis that juvenile salmon are impacted by temperature in the first year of marine life, and finer-scale analyses of SST conditions remain outside the scope of this project.
+(4) At this time we are not pursuing Hidden Markov models, which model the system as oscillating between two or more latent states, as they did not capture trends shown in both other models. They may be revisited in the future.
 
 
-2. The abundance of salmon in the North Pacific potentially competing directly or indirectly for food. 
-
-( Brendan to fill in more about competitor analyses)
+Details on each model class and our Bayesian model fitting procedure can be found [here](https://pacific-salmon-assess.github.io/Salmon-warming-crowded-oceans/Rmd/project-fall-update.html#23_Era_models).
 
 
 # Results
+
+## Overall insights
+
+To be discussed Feb 27 ***** 
+
+Inference
+- We see evidence of nonstationarity across all 3 species
+- The degree of change varies among regions and species
+- There is some evidence that the 'marine heatwave' period changed ocean condition-productivity relationships
 
 
 ## Stationary models {.tabset}
@@ -288,10 +295,10 @@ However, these will remain consistent with the general hypothesis that juvenile 
 ```{r Sockeye stationary}
 
 # Load model fit
-load("../output/models/stat/sockeye/stat_a.Rdata")
+load("../output/models/stat/sockeye/stat_sub.Rdata")
 
 # Get data
-lst <- hb05_density_df(stat_a, ocean.regions = 4, info_master=sock.info, data_master=sock)
+lst <- hb05_density_df(stat_sub, ocean.regions = 4, info_master=sock.info, data_master=sock)
 s.df <- lst$stock
 m.df <- lst$region
 m.df$region <- factor(m.df$region, levels = c("West Coast", "Gulf of Alaska", "Southeast Alaska", "Bering Sea"))
@@ -472,83 +479,18 @@ ggplot(m.df) +
 
 ## Era models {.tabset}
 
-
-```{r SST anomaly plot, include=FALSE}
-## IGNORED for now
-
-## Played with versions of SST plots to show marine heatwave period but all looked bad and left me with more questions than answers
-
-sst.dat <- read.csv("../data/sst_yr_1_stock_anomalies.csv")
-sst.raw <- read.csv("../data/sst_raw_anomalies.csv")
-  
-sst.dat.rm <- sst.dat[!duplicated(sst.dat[,c("Year", "sst_anomaly")]),] # removing duplicates in a hack way
-
-# a better way:
-all.info <- rbind(sock.info, pink.info, chum.info)
-all.info <- all.info %>% dplyr::mutate(species = case_when(
-      Stock.ID %in% seq(range(sock.info$Stock.ID)[1], range(sock.info$Stock.ID)[2]) ~ "sockeye",
-      Stock.ID %in% seq(range(chum.info$Stock.ID)[1], range(chum.info$Stock.ID)[2]) ~ "chum",
-      Stock.ID %in% seq(range(pink.info$Stock.ID)[1], range(pink.info$Stock.ID)[2]) ~ "pink")) %>%
-  mutate(Stock = paste(Stock, species, sep="-"))
-all.info.geo <- geographic.order(all.info)
-all.info.geo$geo.id <- 1:nrow(all.info.geo)
-
-sst.join <- left_join(sst.dat, all.info.geo[,c("Stock.ID", "lat", "lon", "geo.id")], by="Stock.ID")
-sst.distinct <- sst.join[!duplicated(sst.join[,c("Year", "lat", "lon")]),]
-sst.distinct <- left_join(sst.distinct, all.info[,c("ocean_region_lab", "Stock.ID")], by="Stock.ID")
-# Plotting monthly data instead would be interesting
-
-ggplot(sst.distinct) + geom_line(aes(x=Year, y=sst_anomaly, group=Stock.ID, col=geo.id), alpha=0.2) +
-  geom_hline(yintercept=0, linetype="dashed") + 
-  geom_rect(aes(xmin=2013, xmax=2015, ymin=-3, ymax=3), alpha=0.005, fill="orangered4") +
-  coord_cartesian(xlim=c(2000, 2022), ylim=c(-3,3)) +
-  viridis::scale_colour_viridis() +
-  theme_sleek() 
-
-# or use region colours but this just looks purple
-ggplot(sst.distinct) + 
-  geom_line(aes(x=Year, y=sst_anomaly, group=Stock.ID, col=ocean_region_lab), alpha=0.2) +
-  geom_hline(yintercept=0, linetype="dashed") + 
-  geom_rect(aes(xmin=2013, xmax=2015, ymin=-3, ymax=3), alpha=0.005, fill="orangered4") +
-  coord_cartesian(xlim=c(2000, 2022), ylim=c(-3,3)) +
-  scale_colour_manual(values=col.region) +
-  theme_sleek() 
-
-# Or use the one we had before (our actual SST index)
-
-# first get the data
-all.brood <- bind_rows(fill.time.series(sock), fill.time.series(chum), fill.time.series(pink))
-covar.dat.st <- all.brood %>% select(Stock, BY, Species, Ocean.Region2, early_sst, np_pinks_sec) %>% tidyr::pivot_longer(cols=c(early_sst), names_to = "covar") %>% mutate(covar_nam = "SST Index")
-covar.dat.st <- ocean_region_lab(covar.dat.st)
-covar.dat.reg <- dplyr::summarize(.data=covar.dat.st, mean_covar = mean(value), .by = c("BY", "ocean_region_lab", "covar_nam"))
-
-ggplot(covar.dat.st) + 
-  #geom_vline(xintercept=c(1976,1988), color = "grey50", linetype = 2, linewidth = 0.25) +
-  geom_line(aes(x=BY, y=value, group=Stock, colour=ocean_region_lab), linewidth=0.5, alpha=0.1) +
-  #geom_line(data=covar.dat.reg, aes(x=BY, y=mean_covar, col=ocean_region_lab), linewidth=0.5) +
-  facet_grid(rows=NULL, cols=vars(ocean_region_lab), scales="free_y") +
-  geom_rect(aes(xmin=2013, xmax=2015, ymin=-3, ymax=3), alpha=0.005, fill="orangered4") +
-  scale_colour_manual(values=col.region) +
-  coord_cartesian(xlim=c(2000, 2020)) +
-  theme_sleek() + theme(legend.position="none") +
-  labs(x= "Brood Year", y="")
-# the above not very interesting at the moment but maybe to show marine heatwave windows at some point in future...
-
-```
-
-
 ### Sockeye
 ```{r Sockeye eras}
-load("../output/models/dyn/sockeye/hbm_era_2c_3.RData")
+load("../output/models/dyn/sockeye/hbm_era_2c_3sub.RData")
 
 ## Data
 # Density dataframe - by stock
-dens.df.st.2c <- era_density_df(era.2c, par=c("gamma", "kappa"), percent.change = T, neras=3, info=sock.info)
+dens.df.st.2c <- era_density_df(era.2c.3sub, par=c("gamma", "kappa"), percent.change = T, neras=3, info=sock.info)
 dens.df.st.2c <- ocean_region_lab(dens.df.st.2c)
 dens.df.st.2c <- era_lab(dens.df.st.2c, data_master=sock, breakpoint2=2011)
 
 # Density dataframe (regional lvl)
-dens.df.reg.2c <- era_density_df(era.2c, par=c("gamma", "kappa"), mu=T, percent.change=T, neras=3)
+dens.df.reg.2c <- era_density_df(era.2c.3sub, par=c("gamma", "kappa"), mu=T, percent.change=T, neras=3)
 dens.df.reg.2c <- ocean_region_lab(dens.df.reg.2c)
 dens.df.reg.2c <- era_lab(dens.df.reg.2c, data_master=sock, breakpoint2=2011)
 
@@ -666,12 +608,12 @@ ggplot(dens.df.st.2c) +
 
 ### Sockeye
 ```{r sockeye random walk, warning=FALSE}
-load("../output/models/dyn/sockeye/hbm_dyn_2c.RData")
+load("../output/models/dyn/sockeye/hbm_dyn_2c_sub.RData")
 
 
 # Stock specific dataframe
 probs <- c(0.025, 0.10, 0.50, 0.90, 0.975)
-summ <- rstan::summary(dyn.2c, pars = c("gamma", "kappa"), probs = probs)$summary
+summ <- rstan::summary(dyn.2c.sub, pars = c("gamma", "kappa"), probs = probs)$summary
 df.dyn.st.2c <- data.frame(Stock = sock$Stock,
                    Ocean.Region2 = sock$Ocean.Region2,
                    BY = sock$BY,
@@ -810,18 +752,89 @@ ggplot(df.dyn.reg.2c[df.dyn.reg.2c$Ocean.Region2 != "SEAK",]) +
 **Figure 13**. Time-varying posterior mean estimates of SST and Competitor covariate effects on Chum salmon productivity, modelled as a random walk. Individual stock estimates are in faint lines, while regional means and 80% CI are represented by bold lines and shaded areas. Region-wide means and CI are post-hoc calculations, rather than resulting from hierarchical model structures as in the stationary and era models.
 
 
-# Inferences and Next steps 
+# Next steps
 
-Not finished, could use feedback! **********
+Priorities for future analysis are:
 
-Inference
-- We see evidence of nonstationarity across all 3 species
-- The degree of change varies among regions and species
-- There is some evidence that the 'marine heatwave' period changed ocean condition-productivity relationships
+1. Update data to present (as recent as possible) for all species and regions, particularly Alaskan pink and chum.
+
+2. Sensitivity analyses of SST and competitor index covariates
+
+  _SST_
+  
+    The resolution of the SST data is currently 2 x 2 degrees ([ERSST](https://www.ncei.noaa.gov/products/extended-reconstructed-sst)). Cells within 400 km of ocean entry points are averaged over the three months after migration to sea (April-July, depending on location). Sensitivity to these assumptions will be tested with alternative spatial and temporal windows for averaging SST. However, these will remain consistent with the general hypothesis that juvenile salmon are impacted by temperature in the first year of marine life, and fine-scale analyses of local SST conditions are outside the scope of this project.
+    There may be high-resolution SST data available in the near future to test.
+
+ _Competitor Index_
+ 
+    Our base cases analysis focuses on the abundance of pink salmon across the North Pacific in the second and/or third years of marine life as an index of potential direct or indirect competition for food. This approach is consistent with research that has suggested some salmon species primarily exhibit responses to competition with pink salmon during their second and/or third growing seasons at sea (Connors et al. 2020; Ruggerone et al.2023). However, we also plan to fit models to a small subset of alternative competitor indices as part of sensitivity analysis for this paper (e.g., total pink, chum and sockeye abundance; just North American abundances, biomass instead of abundance, etc.) and have begun sketching out a more comprehensive analytical plan for a separate paper that explores evidence for a wider range of hypotheses about intra- and inter-specific interactions at a variety of spatial and temporal scales. 
 
 
-Next steps
-- Obtain updated data for Alaskan Pink and Chum stocks
-- Carry out sensitivity analyses for covariates as described
-- Make era model breaks consistent with each species' life history
-- Continue work on modelling regional effects as a random walk
+3. Random Walk model improvements
+Work on versions of random walk models with (1) estimated region-wide mean effects, and (2) reduced sensitivity to time series of different lengths, is ongoing. 
+
+
+
+```{r SST anomaly plot, include=FALSE}
+## IGNORED for now
+
+## Played with versions of SST plots to show marine heatwave period but all looked bad and left me with more questions than answers
+
+sst.dat <- read.csv("../data/sst_yr_1_stock_anomalies.csv")
+sst.raw <- read.csv("../data/sst_raw_anomalies.csv")
+  
+sst.dat.rm <- sst.dat[!duplicated(sst.dat[,c("Year", "sst_anomaly")]),] # removing duplicates in a hack way
+
+# a better way:
+all.info <- rbind(sock.info, pink.info, chum.info)
+all.info <- all.info %>% dplyr::mutate(species = case_when(
+      Stock.ID %in% seq(range(sock.info$Stock.ID)[1], range(sock.info$Stock.ID)[2]) ~ "sockeye",
+      Stock.ID %in% seq(range(chum.info$Stock.ID)[1], range(chum.info$Stock.ID)[2]) ~ "chum",
+      Stock.ID %in% seq(range(pink.info$Stock.ID)[1], range(pink.info$Stock.ID)[2]) ~ "pink")) %>%
+  mutate(Stock = paste(Stock, species, sep="-"))
+all.info.geo <- geographic.order(all.info)
+all.info.geo$geo.id <- 1:nrow(all.info.geo)
+
+sst.join <- left_join(sst.dat, all.info.geo[,c("Stock.ID", "lat", "lon", "geo.id")], by="Stock.ID")
+sst.distinct <- sst.join[!duplicated(sst.join[,c("Year", "lat", "lon")]),]
+sst.distinct <- left_join(sst.distinct, all.info[,c("ocean_region_lab", "Stock.ID")], by="Stock.ID")
+# Plotting monthly data instead would be interesting
+
+ggplot(sst.distinct) + geom_line(aes(x=Year, y=sst_anomaly, group=Stock.ID, col=geo.id), alpha=0.2) +
+  geom_hline(yintercept=0, linetype="dashed") + 
+  geom_rect(aes(xmin=2013, xmax=2015, ymin=-3, ymax=3), alpha=0.005, fill="orangered4") +
+  coord_cartesian(xlim=c(2000, 2022), ylim=c(-3,3)) +
+  viridis::scale_colour_viridis() +
+  theme_sleek() 
+
+# or use region colours but this just looks purple
+ggplot(sst.distinct) + 
+   geom_rect(aes(xmin=2012, xmax=2020, ymin=-3, ymax=3), fill="grey80") +
+   geom_line(aes(x=Year, y=sst_anomaly, group=Stock.ID, col=ocean_region_lab), alpha=0.2) +
+  geom_hline(yintercept=0, linetype="dashed") + 
+  coord_cartesian(xlim=c(1960, 2022), ylim=c(-3,3)) +
+  scale_colour_manual(values=col.region) +
+  theme_sleek()  +
+  facet_wrap(vars(ocean_region_lab))
+
+# Or use the one we had before (our actual SST index)
+
+# first get the data
+all.brood <- bind_rows(fill.time.series(sock), fill.time.series(chum), fill.time.series(pink))
+covar.dat.st <- all.brood %>% select(Stock, BY, Species, Ocean.Region2, early_sst, np_pinks_sec) %>% tidyr::pivot_longer(cols=c(early_sst), names_to = "covar") %>% mutate(covar_nam = "SST Index")
+covar.dat.st <- ocean_region_lab(covar.dat.st)
+covar.dat.reg <- dplyr::summarize(.data=covar.dat.st, mean_covar = mean(value), .by = c("BY", "ocean_region_lab", "covar_nam"))
+
+ggplot(covar.dat.st) + 
+  #geom_vline(xintercept=c(1976,1988), color = "grey50", linetype = 2, linewidth = 0.25) +
+  geom_line(aes(x=BY, y=value, group=Stock, colour=ocean_region_lab), linewidth=0.5, alpha=0.1) +
+  #geom_line(data=covar.dat.reg, aes(x=BY, y=mean_covar, col=ocean_region_lab), linewidth=0.5) +
+  facet_grid(rows=NULL, cols=vars(ocean_region_lab), scales="free_y") +
+  geom_rect(aes(xmin=2013, xmax=2015, ymin=-3, ymax=3), alpha=0.005, fill="orangered4") +
+  scale_colour_manual(values=col.region) +
+  coord_cartesian(xlim=c(2000, 2020)) +
+  theme_sleek() + theme(legend.position="none") +
+  labs(x= "Brood Year", y="")
+# the above not very interesting at the moment but maybe to show marine heatwave windows at some point in future...
+
+```
