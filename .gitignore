@@ -11,6 +11,6 @@ output
 pub
 #folder for messing around
 hannahland
-!archive/**/*.stan #ignore all archived items except stan models
-
+#!archive/**/*.stan #ignore all archived items except stan models # this doesn't work?
+archive
 
