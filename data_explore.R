@@ -37,7 +37,7 @@ stk.summary <- plyr::ddply(data_fill, .(Stock), summarize,
                 n.total = length(BY),
                 n.na = sum(is.na(R)),
                 n.data  = sum(!is.na(R)))
-
+stk.summary
 
 
 ## Avg prod x covar correlations ---------------------------

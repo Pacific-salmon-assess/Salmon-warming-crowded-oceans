@@ -55,8 +55,8 @@ head(s.brood)
 
 
 # Remove species from Stock names
-s.brood$Stock <- stringr::str_remove(s.brood$Stock, "-Sockeye")
-s.info$stock.name <- stringr::str_remove(s.info$stock.name, "-Sockeye")
+s.brood$Stock <- stringr::str_remove_all(s.brood$Stock, regex(".sockeye", ignore_case = T))
+s.info$stock.name <- stringr::str_remove_all(s.info$stock.name, regex(".sockeye", ignore_case = T))
 
 
 ## Create data frame with estimates of recruits, spawners and proportion of
@@ -87,8 +87,13 @@ all.equal(sort(r1), sort(r2))
 # More cleaning steps 
 bt.out.1 <- bt[complete.cases(bt),]                # drop years with missing data
 (nrow(bt) - nrow(bt.out.1)) # how many rows dropped
-bt.out.2 <- subset(bt.out.1, !(Stock.ID %in% c(7, 55, 30, 35, 38, 41, 52, 43, 44, 47, 49, 50, 51, 54))) # remove stocks:
-    # 7 Frazer -hatchery influence, Sustut-duplicated, 30,35,52,44,50 too short or gappy, Babine x2 Hatchery influence
+bt.out.2 <- subset(bt.out.1, !(Stock.ID %in% c( 7, # Frazer - hatchery influence
+                                                29:36, #misc. Fraser stocks - too short
+                                                38, 41, # Babine-Fulton and Babine-Pinkut - hatchery influence 
+                                                43, 46, 47, # Johnston, McDonnell & Kitwancool - gappy
+                                                49, 51, 54, # Swan-Stephens, Bear-Skeena, Sustut - gappy
+                                                50, 52, 53, 55 # Asitika, Damshilgwit, Motase, Upper Nass - too short
+)))
 bt.out.3 <- subset(bt.out.2,BY > 1949)        # do this because pre 1950 data is very sparse
 bt.out.4 <- subset(bt.out.3, BY<=2015) #- currently have pink-NP data up to 2021 (+6 yr)
 
@@ -97,8 +102,6 @@ bt.out.4 <- subset(bt.out.3, BY<=2015) #- currently have pink-NP data up to 2021
 bt.out.4$Ocean.Region2 <- s.info$ocean.basin[match(bt.out.4$Stock, s.info$stock.name)]
 # Add SEAK grouping
 bt.out.4$Ocean.Region2[bt.out.4$Lat >= 54.09 & bt.out.4$Lon > -140] <- "SEAK"
-
-# A step for infilling then re-trimming missing values was removed here. If timeseries gaps are an issue, can be added back.
 
 ## Order stocks geographically to make plotting easier
 bt.out.5 <- geographic.order(bt.out.4)

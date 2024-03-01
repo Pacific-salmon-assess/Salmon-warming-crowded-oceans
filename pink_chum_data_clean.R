@@ -70,8 +70,8 @@ bt.out.7$Stock <- stringr::str_remove(bt.out.7$Stock, "-Pink")
 # Drop stocks (temporarily?!):
 bt.out.7[bt.out.7$R==0, "R"] # check for zero recruits
 bt.out.7[bt.out.7$S==0, "S"] # check for zero spawners
-bt.out.7 <- bt.out.7 %>% filter(!Stock.ID %in% c(148, 149)) # remove Nisqually and S. South Misc temporarily
-bt.out.7 <- bt.out.7 %>% filter(!Stock.ID %in% c(202, 203, 214, 204, 209)) # remove Haida Gwaii stocks & Homathko
+bt.out.7 <- bt.out.7 %>% filter(!Stock.ID %in% c(149:150) )# Humpy stocks - too short
+
 # Summary
 bt.out <- bt.out.7
 head(bt.out)
@@ -160,10 +160,12 @@ bt.out.3 <- left_join(bt.out.2, coord.lookup, by=c("Stock"="Stock.name"))
 head(bt.out.3)
 
 # Add ocean regions
-bt.out.4 <- bt.out.3
+bt.out.4 <- subset(bt.out.3, !(Stock.ID %in% c( 95:97, # Kadashan, Chilkat, and E Alsek - too short
+                                                119    # Togiak - too short
+)))
 bt.out.4$Ocean.Region2 <- c.info$ocean.basin[match(bt.out.4$Stock, c.info$stock.name)]
 # Add SEAK grouping
-bt.out.4$Ocean.Region2[bt.out.4$Ocean.Region2=="WC" & bt.out.4$Lat >= 54.09] <- "SEAK"
+#bt.out.4$Ocean.Region2[bt.out.4$Ocean.Region2=="WC" & bt.out.4$Lat >= 54.09] <- "SEAK" # Removing SEAK for now
 
 
 ## Order stocks geographically to make plotting easier
@@ -203,7 +205,7 @@ c.info.brood <- geographic.order(c.info.brood)
 c.info.brood <- dplyr::arrange(c.info.brood, factor(Stock, levels=levels(c.info.brood$Stock)))
 
 
-write.csv(c.info.brood, "./data/chum/master_stock_info.csv", row.names = FALSE)
+write.csv(c.info.brood, "./data/chum/master_chum_stock_info.csv", row.names = FALSE)
 
 chum.info <- c.info.brood
 
