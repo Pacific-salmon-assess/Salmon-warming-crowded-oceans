@@ -13,6 +13,7 @@ output:
     toc: yes
     toc_float: yes
 ---
+
 ```{=html}
 <style type="text/css">
 
@@ -40,7 +41,6 @@ h3 { /* Header 3 */
 }
 </style>
 ```
-
 ```{r setup, include=FALSE}
 
 # global settings
@@ -95,8 +95,7 @@ names(sp.col) <- c("Chum", "Pink", "Sockeye") # name
 
 # Purpose
 
-This document summarizes updated results from the analyses described [here](https://pacific-salmon-assess.github.io/Salmon-warming-crowded-oceans/Rmd/project-fall-update.html). Notably, the analysis now includes Pink (n=70) and Chum (n=44) salmon stocks from across the eastern North Pacific, as well as updated data for Sockeye stocks (n = 52). 
-
+This document summarizes updated methods and results from the analyses origionally described [here](https://pacific-salmon-assess.github.io/Salmon-warming-crowded-oceans/Rmd/project-fall-update.html). Notably, our analysis now includes Pink (n=70) and Chum (n=44) salmon stocks from across the eastern North Pacific, as well as updated data for Sockeye stocks (n = 52).
 
 # Methods
 
@@ -106,12 +105,11 @@ The overarching goal of our analyses is to characterize relationships between oc
 
 We have compiled spawner-recruitment time series for all five species of Pacific salmon, which are hosted in a [github repository](https://github.com/Pacific-salmon-assess/dfo_salmon_compilation), although only Sockeye, Pink, and Chum populations are analyzed here. We analyze a total of 166 populations originating from Washington to the Bering Sea:
 
-* From our original set of 58 Sockeye populations, we obtained more data for the Southeast Alaska and West Coast (BC) regions, but subsequently chose to remove time series that did not span at least 1984-2015 brood years without significant gaps. This is intended to  make sure each time series overlaps with all three time periods in our era models, and excludes short series that random walk models may be sensitive to. There are now 52 Sockeye stocks in the analysis - many of the original stocks, and some new ones.
+-   From our original set of 58 Sockeye populations, we obtained more data for the Southeast Alaska and West Coast (BC) regions, but subsequently chose to remove time series that did not span at least 1984-2015 brood years without significant gaps. This is intended to make sure each time series overlaps with all three time periods in our 'era' models, and excludes short series that random walk models may be sensitive to. There are now 52 Sockeye stocks in the analysis - many of the original stocks, and some new ones.
 
-* We obtained spawner-recruitment time series for Pink and Chum populations, and currently use all time series with good data quality, regardless of whether they meet the criteria applied to Sockeye data. These data are not representative of all regions and time periods, and notably, we have no data after 2009 for any Alaskan stocks. We are working to update these data through to the present.
+-   We obtained spawner-recruitment time series for Pink and Chum populations, and currently use all time series with reasonable data quality, regardless of whether they meet the criteria applied to Sockeye data. These data are not representative of all regions and time periods, and notably, we have no data after 2009 for any Alaskan stocks. We are working with Andrew Munro (ADF&G) to update these Alaskan timeseries (or some subset of them) through to the present.
 
-* Compilation of coho and Chinook time series is ongoing.
-
+-   Compilation of coho and Chinook time series is on the back burner for now.
 
 ### Map of ocean entry points
 
@@ -164,8 +162,8 @@ ggplotly(map, tooltip=c("group", "text")) %>% config(modeBarButtonsToRemove =
 #%>% layout(legend=list(x=0.8,y=0.9))
 
 ```
-**Figure 1**. Ocean entry locations of Sockeye (n=52), Pink (n=70), and Chum (n=44) salmon stocks included in analyses (total N=166).
 
+**Figure 1**. Ocean entry locations of Sockeye (n=52), Pink (n=70), and Chum (n=44) salmon stocks included in analyses (total N=166).
 
 ### Time Series Length {.tabset}
 
@@ -196,6 +194,7 @@ ggplot(prod_dat) +
 
 
 ```
+
 **Figure 2**. Productivity (log[R/S]) time series of Sockeye stocks (n=52) with vertical dashed lines indicating proposed ocean regime shifts.
 
 #### Pink
@@ -223,9 +222,10 @@ ggplot(prod_dat) +
   labs(y="", x="Brood Year")
 
 ```
+
 **Figure 3**. Productivity (log[R/S]) time series of Pink stocks (n=70) with vertical dashed lines indicating proposed ocean regime shifts. Note that Even- and Odd-run pinks are considered separately due to their independent and sometimes vastly different productivity regimes.
 
-#### Chum 
+#### Chum
 
 ```{r Chum time series, warning=F}
 prod_dat <- fill.time.series(chum)
@@ -251,29 +251,30 @@ ggplot(prod_dat) +
 
 
 ```
+
 **Figure 4**. Productivity (log[R/S]) time series of Chum stocks (n=44) with vertical dashed lines indicating proposed ocean regime shifts. Note that there are no time series in the Southeast Alaska (SEAK) region; one stock (Middle Skeena) that would have been assigned to SEAK was grouped with West Coast stocks instead.
 
 ## Models
 
 Our updated analyses focus on three classes of generalized spawner-recruitment models:
 
-1. Stationary models (e.g. [Connors et al. 2020](https://cdnsciencepub.com/doi/full/10.1139/cjfas-2019-0422)), which estimate time-invariant relationships. These have not changed since last update other than the addition of data for the two new species.
+1.  Stationary models (e.g. [Connors et al. 2020](https://cdnsciencepub.com/doi/full/10.1139/cjfas-2019-0422)), which estimate time-invariant relationships. These have not changed since last update other than the addition of data for the two new species.
 
-2. 'Era' models (e.g., [Malick 2020](https://onlinelibrary.wiley.com/doi/10.1111/fog.12469)), which allow relationships to vary among pre-defined periods that represent hypothesized shifts in North Pacific Ocean processes and relationships. 
+2.  'Era' models (e.g., [Malick 2020](https://onlinelibrary.wiley.com/doi/10.1111/fog.12469)), which allow relationships to vary among pre-defined periods that represent hypothesized shifts in North Pacific Ocean processes and relationships.
 
-    * We no longer model 1976/77 as a regime shift as per feedback from our last update, which highlighted that this shift from a cold to warm PDO phase simply reflected a temperature change (which is already accounted for via our direct consideration of ocean temperature) and not a fundamental change in oceanographic processes like the 1988/89 regime shift.
+    -   We no longer model 1976/77 as a regime shift as per feedback from our last update, which highlighted that this shift from a cold to warm PDO phase simply reflected a temperature change (which is already accounted for via our direct consideration of ocean temperature) and not a fundamental change in oceanographic processes like the 1988/89 regime shift.
 
-    * Our updated analyses consider a potential regime shift at the onset of the ~2013-2015 marine heatwave ('the blob'). Currently, we consider brood years >= 2011 to have interacted with the marine heatwave regardless of the species and stock. In future analyses, the timing can be altered to better reflect the diverse life histories of populations in the analysis.
+    -   Our updated analyses consider a potential regime shift at the onset of the \~2013-2015 marine heatwave ('the blob'). Currently, we consider brood years \>= 2011 to have interacted with the marine heatwave regardless of the species and stock. In future analyses, the timing can be altered to better reflect the diverse life histories of populations in the analysis.
 
-3. Random walk models (e.g., [Malick 2020](https://onlinelibrary.wiley.com/doi/10.1111/fog.12469)), which allow relationships to evolve gradually through time. 
+3.  Random walk models (e.g., [Malick 2020](https://onlinelibrary.wiley.com/doi/10.1111/fog.12469)), which allow relationships to evolve gradually through time.
 
-    * These have not changed since last update other than the addition of new data. However, a version that estimates ocean basin-scale trends in relationships (e.g., as shared trends within ocean region that are modeled hierarchically) is currently in initial stages of application.
+    -   These have not changed since last update other than the addition of new data. However, a version that estimates ocean basin-scale trends in relationships (e.g., as shared trends within ocean region that are modeled hierarchically) is currently in initial stages of development.
 
-(4) At this time we are not pursuing Hidden Markov models, which model the system as oscillating between two or more latent states, as they did not capture trends shown in both other models. They may be revisited in the future.
+<!-- -->
 
+(4) At this time we are not pursuing Hidden Markov models, which model the system as oscillating between two or more latent states, further as our initial analyses indicated they did not add any additional inference beyond those from the era and random walk models. They may be revisited in the future.
 
-Details on each model class and our Bayesian model fitting procedure can be found [here](https://pacific-salmon-assess.github.io/Salmon-warming-crowded-oceans/Rmd/project-fall-update.html#23_Era_models).
-
+Further details on each model class and Bayesian model fitting procedure can be found [here](https://pacific-salmon-assess.github.io/Salmon-warming-crowded-oceans/Rmd/project-fall-update.html#23_Era_models).
 
 # Results
 
@@ -281,15 +282,13 @@ Details on each model class and our Bayesian model fitting procedure can be foun
 
 Across the three species, we continue to see evidence for spatially and temporally variable responses to warming and competition at sea.
 
-In Sockeye, we continue to see strong spatial stratification of relationships with both SST and competition, with the southernmost stocks initially having the most negative responses to temperatures (and northernmost stocks having positive relationships). However, this structure disappears in the 'marine heatwave' period, in which Alaskan (SEAK and GoA) stocks have more negative SST relationships than more southern (WC) stocks, and all only WC stocks show negative responses to competition. However, due to the short duration of the marine heatwave period, we should interpret these findings cautiously.
+In Sockeye, we continue to see strong evidence of spatial variation in relationship between productivity and both SST and competitor abundance, as has been described previously, as well as variation in relationships within regions over time. For southernmost stocks we see a general strengthening of inverse relationships for both covariates over time. For stocks at intermediate latitudes (SEAK and GoA) we see evidence of relationships with SST flipping over time such that during the 'marine heatwave' period they are strongly negative, and we see weak and variable relationships in early and late periods and consistently negative ones in the 1989-2010 period. At the northernmost extent (Bering Sea) we see consistently positive relationships with SST and variable relationships with competitor abundance. Due to the short duration of the marine heatwave period that we are able to consider, we should interpret findings for the period cautiously.
 
-In Pink salmon, there are clear spatial and temporal patterns in SST effects, but less pronounced patterns in competition effects, which are either uncertain (in early 'era') or near zero (in middle era). This is consistent with the hypothesis that Pink salmon are the least affected by competitors at sea (Ruggerone & Nielsen, 2005).
+In Pink salmon, we see clear evidence of spatial variation in SST relationships, consistent with previous work, but less pronounced patterns in ones with competitor abundance. Like in Sockeye, relationships with SST vary latitudinally and for southernmost stocks become more negative over time while for SEAK stocks there is evidence of a flip in relationships from positive to negative by the 'marine heatwave' period. For the competitor index we see positive relationships in the early period which presumably reflects shared positive responses to ocean conditions and then highly uncertain and weak relationships thereafter which is consistent with the hypothesis that Pink salmon are the least affected by intra-specfic competition at sea (Ruggerone & Nielsen, 2005). However, in addition to the short temporal window of the most recent period, many of the time series for mid and northern latitude stocks have not been updated yet.
 
-..chum insights to come with final model runs…
-
+..chum insights to come with final model runs...
 
 ## Stationary models {.tabset}
-
 
 ### Sockeye
 
@@ -352,9 +351,11 @@ ggplot(m.df) +
 
 
 ```
+
 **Figure 5**. Posterior probability distributions of the predicted effect of SST (top), competitor abundance (middle), and the combined effect (bottom) on Sockeye productivity (R/S). Faint lines show stock-specific effects while bold lines show regional effects from hierarchical model. X-axis values represent the percent change in productivity per standard deviation unit increase in the covariate.
 
 ### Pink
+
 ```{r Pink stationary}
 
 # Load model fit
@@ -413,6 +414,7 @@ ggplot(m.df) +
         strip.text.x = element_blank())
         
 ```
+
 **Figure 6**. Posterior probability distributions of the predicted effect of SST (top), competitor abundance (middle), and the combined effect (bottom) on Pink salmon productivity (R/S). Faint lines show stock-specific effects while bold lines show regional effects from hierarchical model. X-axis values represent the percent change in productivity per standard deviation unit increase in the covariate.
 
 ### Chum
@@ -477,12 +479,13 @@ ggplot(m.df) +
         strip.text.x = element_blank())
 
 ```
-**Figure 7**. Posterior probability distributions of the predicted effect of SST (top), competitor abundance (middle), and the combined effect (bottom) on Chum salmon productivity (R/S). Faint lines show stock-specific effects while bold lines show regional effects from hierarchical model. X-axis values represent the percent change in productivity per standard deviation unit increase in the covariate.
 
+**Figure 7**. Posterior probability distributions of the predicted effect of SST (top), competitor abundance (middle), and the combined effect (bottom) on Chum salmon productivity (R/S). Faint lines show stock-specific effects while bold lines show regional effects from hierarchical model. X-axis values represent the percent change in productivity per standard deviation unit increase in the covariate.
 
 ## Era models {.tabset}
 
 ### Sockeye
+
 ```{r Sockeye eras}
 load("../output/models/dyn/sockeye/hbm_era_2c_3sub.RData")
 
@@ -519,10 +522,11 @@ ggplot(dens.df.st.2c) +
 
 
 ```
-**Figure 8**. Posterior probability distributions of the predicted effect of SST and competitors on Sockeye productivity over three pre-defined time periods/eras (earliest in top panel). Regional mean effects are shown by bold lines and individual stocks’ distributions by light lines.
 
+**Figure 8**. Posterior probability distributions of the predicted effect of SST and competitors on Sockeye productivity over three pre-defined time periods/eras (earliest in top panel). Regional mean effects are shown by bold lines and individual stocks' distributions by light lines.
 
 ### Pink
+
 ```{r Pink eras}
 
 load("../output/models/dyn/pink/hbm_era_2c.RData")
@@ -561,9 +565,11 @@ ggplot(dens.df.st.2c) +
         axis.ticks.y=element_blank()) 
 
 ```
-**Figure 9**. Posterior probability distributions of the predicted effect of SST and competitors on Pink salmon productivity over three pre-defined time periods/eras (earliest in top panel). Regional mean effects are shown by bold lines and individual stocks’ distributions by light lines. Note that data from Alaska for the most recent time period are needed (Figure 3).
+
+**Figure 9**. Posterior probability distributions of the predicted effect of SST and competitors on Pink salmon productivity over three pre-defined time periods/eras (earliest in top panel). Regional mean effects are shown by bold lines and individual stocks' distributions by light lines. Note that data from Alaska for the most recent time period are needed (Figure 3).
 
 ### Chum
+
 ```{r Chum eras, eval=FALSE}
 load("../output/models/dyn/chum/hbm_era_2c_3.RData")
 
@@ -604,12 +610,13 @@ ggplot(dens.df.st.2c) +
 # probably worth combining Chum-SEAK with another region in future analyses
 
 ```
-**Figure 10**. Posterior probability distributions of the predicted effect of SST and competitors on Chum salmon productivity over three pre-defined time periods/eras (earliest in top panel). Regional mean effects are shown by bold lines and individual stocks’ distributions by light lines. Note that data from Alaska for the most recent time period are needed, and there are no time series in the Southeast Alaska region.
 
+**Figure 10**. Posterior probability distributions of the predicted effect of SST and competitors on Chum salmon productivity over three pre-defined time periods/eras (earliest in top panel). Regional mean effects are shown by bold lines and individual stocks' distributions by light lines. Note that data from Alaska for the most recent time period are needed, and there are no time series in the Southeast Alaska region.
 
 ## Random Walk models {.tabset}
 
 ### Sockeye
+
 ```{r sockeye random walk, warning=FALSE}
 load("../output/models/dyn/sockeye/hbm_dyn_2c_sub.RData")
 
@@ -655,9 +662,11 @@ ggplot(df.dyn.reg.2c) +
 
 # take out the scale squish, and revise 4-stock rule
 ```
+
 **Figure 11**. Time-varying posterior mean estimates of SST and Competitor covariate effects on Sockeye productivity, modelled as a random walk. Individual stock estimates are in faint lines, while regional means are represented by bolded lines. Region-wide means are post-hoc calculations, rather than resulting from hierarchical model structures as in the stationary and era models.
 
 ### Pink
+
 ```{r pink random walk, warning=FALSE}
 load("../output/models/dyn/pink/hbm_dyn_2c.RData")
 
@@ -704,9 +713,11 @@ ggplot(df.dyn.reg.2c) +
    labs(x="Brood Year", y="Mean covariate effects")
 
 ```
+
 **Figure 12**. Time-varying posterior mean estimates of SST and Competitor covariate effects on Pink salmon productivity, modelled as a random walk. Individual stock estimates are in faint lines, while regional means and 80% CI are represented by bold lines and shaded areas. Solid bold lines represent odd-year Pink stocks, while dashed lines are even-year stocks. Region-wide means are post-hoc calculations, rather than resulting from hierarchical model structures as in the stationary and era models.
 
 ### Chum
+
 ```{r chum random walk, warning=FALSE, eval=FALSE}
 load("../output/models/dyn/chum/hbm_dyn_2c.RData")
 
@@ -752,27 +763,21 @@ ggplot(df.dyn.reg.2c[df.dyn.reg.2c$Ocean.Region2 != "SEAK",]) +
 
 
 ```
-**Figure 13**. Time-varying posterior mean estimates of SST and Competitor covariate effects on Chum salmon productivity, modelled as a random walk. Individual stock estimates are in faint lines, while regional means are represented by bolded lines. Region-wide means are post-hoc calculations, rather than resulting from hierarchical model structures as in the stationary and era models.
 
+**Figure 13**. Time-varying posterior mean estimates of SST and Competitor covariate effects on Chum salmon productivity, modelled as a random walk. Individual stock estimates are in faint lines, while regional means are represented by bolded lines. Region-wide means are post-hoc calculations, rather than resulting from hierarchical model structures as in the stationary and era models.
 
 # Next steps
 
-Priorities for future analysis are:
+Priorities for future analysis include:
 
-1. Update data to present (as recent as possible) for all species and regions, particularly Alaskan pink and chum
+1.  Update data to present (as recent as possible) for all species and regions, particularly Alaskan pink and chum
 
-2. Sensitivity analyses of SST and competitor index covariates
+2.  Sensitivity analyses of SST and competitor index covariates
 
-|      _SST_: The resolution of the SST data is currently 2 x 2 degrees ([ERSST](https://www.ncei.noaa.gov/products/extended-reconstructed-sst)). Cells within 400 km of ocean entry points are averaged over the three months after migration to sea (April-July, depending on location). Sensitivity to these assumptions will be tested with alternative spatial and temporal windows for averaging SST. However, these will remain consistent with the overall hypothesis that juvenile salmon are impacted by temperature in the first year of marine life, and fine-scale analyses of local SST conditions are outside the scope of this project.
-    There may be high-resolution SST data available in the near future to test.
+    -   *SST*: The resolution of the SST data is currently 2 x 2 degrees ([ERSST](https://www.ncei.noaa.gov/products/extended-reconstructed-sst)). Cells within 400 km of ocean entry points are averaged over the three months after migration to sea (April-September, depending on ocean region according to [Mueter et al. 2002](dx.doi.org/10.1139/f02-020)). Given that these assumptions about the spatial and temporal window over which SST is averaged are quite dated, sensitivity to these assumptions will be tested with alternative spatial and temporal windows. However, we will continue to focus on early marine life to remain consistent with the overall hypothesis that juvenile salmon are impacted by temperature in the first year of marine life, and fine-scale analyses of local SST conditions are outside the scope of this project. That said there may be high-resolution SST data available in the near future to further explore this in subsequent paper.
 
-|    _Competitor Index_: Our base cases analysis focuses on the abundance of pink salmon across the North Pacific in the second and/or third years of marine life as an index of potential direct or indirect competition for food. This approach is consistent with research that has suggested some salmon species primarily exhibit responses to competition with pink salmon during their second and/or third growing seasons at sea (Connors et al. 2020; Ruggerone et al.2023). However, we also plan to fit models to a small subset of alternative competitor indices as part of sensitivity analysis for this paper (e.g., total pink, chum and sockeye abundance; just North American abundances, biomass instead of abundance, etc.) and have begun sketching out a more comprehensive analytical plan for a separate paper that explores evidence for a wider range of hypotheses about intra- and inter-specific interactions at a variety of spatial and temporal scales. 
+    -   *Competitor Index*: Our base cases analysis focuses on the abundance of pink salmon across the North Pacific in the second and/or third years of marine life as an index of potential direct or indirect competition for food. This approach is consistent with research that has suggested some salmon species primarily exhibit responses to competition with pink salmon during their second and/or third growing seasons at sea ([Connors et al. 2020](https://cdnsciencepub.com/doi/full/10.1139/cjfas-2019-0422); [Ruggerone et al.2023](https://www.int-res.com/articles/feature/m719p001.pdf)). However, we also plan to fit models to a small subset of alternative competitor indices as part of sensitivity analysis for this paper (e.g., total pink, chum and sockeye abundance; just North American abundances, biomass instead of abundance, etc.) and have begun sketching out a more comprehensive analytical plan for a separate paper that explores evidence for a wider range of hypotheses about intra- and inter-specific interactions at a variety of spatial and temporal scales.
 
+3.  Revise hierachical grouping of Pink salmon stocks. The random walk models for Pink salmon show the trends for even-year and odd-year stocks separately for ease of visualization, but the difference in the effects between lineages in some cases begs the question of whether even and odd stocks within a region should be grouped together in hierarchical models or separately. We will investigate the possibility of separating lineages, which means treating them as if they were separate species, and which is consistent with the hypothesis that the genetically distinct odd- and even-year lineages of Pink salmon may respond differently to ocean warming ([Irvine et al. 2014](%5BIncreasing%20Dominance%20of%20Odd‐Year%20Returning%20Pink%20Salmon%5D(https://afspubs.onlinelibrary.wiley.com/doi/pdfdirect/10.1080/00028487.2014.889747))).
 
-3. Revise hierachical grouping of Pink salmon stocks
-|       The random walk models for Pink salmon show the trends for even-year and odd-year stocks separately for ease of visualization, but the difference in the effects between lineages in some cases begs the question of whether even and odd stocks within a region should be grouped together in hierarchical models or separately. We will investigate the possibility of separating even and odd lineages, which means treating them as if they were separate species.
-
-
-4. Random Walk model improvements
-|       Work on versions of random walk models with (1) estimated region-wide mean effects, and (2) reduced sensitivity to time series of different lengths, is ongoing. 
-
+4.  Random Walk model improvements. Work on versions of random walk models with (1) estimated region-wide mean effects, and (2) reduced sensitivity to time series of different lengths, is ongoing.
