@@ -109,7 +109,7 @@ We have compiled spawner-recruitment time series for all five species of Pacific
 
 -   We obtained spawner-recruitment time series for Pink and Chum populations, and currently use all time series with reasonable data quality, regardless of whether they meet the criteria applied to Sockeye data. These data are not representative of all regions and time periods, and notably, we have no data after 2009 for any Alaskan stocks. We are working with Andrew Munro (ADF&G) to update these Alaskan timeseries (or some subset of them) through to the present.
 
--   Compilation of coho and Chinook time series is on the back burner for now.
+-   Compilation of Coho and Chinook time series is on the back burner for now.
 
 ### Map of ocean entry points
 
@@ -181,7 +181,7 @@ ggplot(prod_dat) +
   geom_line(data=na.omit(prod_dat), aes(x=BY, y=lnRS), col="grey75") + # if there are any gaps they will show
   geom_line(aes(x=BY, y=lnRS, col=ocean_region_lab)) + 
   facet_grid(rows=vars(stock_lab), switch ="y", scales="free_y", as.table=F) + 
-  scale_colour_manual(values=col.region) +
+  scale_colour_manual(values=col.region, name="") +
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
         strip.text.y.left = element_text(angle=0, hjust=0, margin=margin(l=0, r=0)),
@@ -189,7 +189,9 @@ ggplot(prod_dat) +
         strip.text = element_text(size=7, ),
         panel.spacing.y = unit(0, unit="cm"),
         panel.background = element_rect(fill="white"),
-        legend.position = "none") +
+        legend.position = "right",
+        legend.key = element_blank()) +
+  guides(colour=guide_legend(reverse=TRUE)) +
   labs(y="", x="Brood Year")
 
 
@@ -209,7 +211,7 @@ ggplot(prod_dat) +
   geom_line(data=na.omit(prod_dat), aes(x=BY, y=lnRS), col="grey75") + 
   geom_line(aes(x=BY, y=lnRS, col=ocean_region_lab)) + 
   facet_grid(rows=vars(stock_lab), switch ="y", scales="free_y", as.table=F) + 
-  scale_colour_manual(values=col.region) +
+  scale_colour_manual(values=col.region, name="") +
   scale_x_continuous(breaks=seq(1950, 2020, 10)) +
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
@@ -218,7 +220,9 @@ ggplot(prod_dat) +
         strip.text = element_text(size=7, ),
         panel.spacing.y = unit(0, unit="cm"),
         panel.background = element_rect(fill="white"),
-        legend.position = "none") +
+        legend.position = "right",
+        legend.key = element_blank()) +
+  guides(colour=guide_legend(reverse=TRUE)) +
   labs(y="", x="Brood Year")
 
 ```
@@ -237,7 +241,7 @@ ggplot(prod_dat) +
   geom_line(data=na.omit(prod_dat), aes(x=BY, y=lnRS), col="grey75") + 
   geom_line(aes(x=BY, y=lnRS, col=ocean_region_lab)) + 
   facet_grid(rows=vars(stock_lab), switch ="y", scales="free_y", as.table=F) + 
-  scale_colour_manual(values=col.region) +
+  scale_colour_manual(values=col.region, name="") +
   scale_x_continuous(breaks=seq(1950, 2020, 10)) +
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
@@ -246,7 +250,9 @@ ggplot(prod_dat) +
         strip.text = element_text(size=7, ),
         panel.spacing.y = unit(0, unit="cm"),
         panel.background = element_rect(fill="white"),
-        legend.position = "none") +
+        legend.position = "right",
+        legend.key = element_blank()) +
+  guides(colour=guide_legend(reverse=TRUE)) +
   labs(y="", x="Brood Year")
 
 
@@ -272,7 +278,7 @@ Our updated analyses focus on three classes of generalized spawner-recruitment m
 
 <!-- -->
 
-(4) At this time we are not pursuing Hidden Markov models, which model the system as oscillating between two or more latent states, further as our initial analyses indicated they did not add any additional inference beyond those from the era and random walk models. They may be revisited in the future.
+(4) At this time we are not pursuing Hidden Markov models, which model the system as having two or more latent states, as our initial analyses indicated they did not add any additional inference beyond those from the era and random walk models. They may be revisited in the future.
 
 Further details on each model class and Bayesian model fitting procedure can be found [here](https://pacific-salmon-assess.github.io/Salmon-warming-crowded-oceans/Rmd/project-fall-update.html#23_Era_models).
 
@@ -280,13 +286,15 @@ Further details on each model class and Bayesian model fitting procedure can be 
 
 ## Overall insights
 
-Across the three species, we continue to see evidence for spatially and temporally variable responses to warming and competition at sea.
+There is some evidence for spatially and temporally varying responses to warming and competition at sea in all three species analyzed.
 
 In Sockeye, we continue to see strong evidence of spatial variation in relationship between productivity and both SST and competitor abundance, as has been described previously, as well as variation in relationships within regions over time. For southernmost stocks we see a general strengthening of inverse relationships for both covariates over time. For stocks at intermediate latitudes (SEAK and GoA) we see evidence of relationships with SST flipping over time such that during the 'marine heatwave' period they are strongly negative, and we see weak and variable relationships in early and late periods and consistently negative ones in the 1989-2010 period. At the northernmost extent (Bering Sea) we see consistently positive relationships with SST and variable relationships with competitor abundance. Due to the short duration of the marine heatwave period that we are able to consider, we should interpret findings for the period cautiously.
 
 In Pink salmon, we see clear evidence of spatial variation in SST relationships, consistent with previous work, but less pronounced patterns in ones with competitor abundance. Like in Sockeye, relationships with SST vary latitudinally and for southernmost stocks become more negative over time while for SEAK stocks there is evidence of a flip in relationships from positive to negative by the 'marine heatwave' period. For the competitor index we see positive relationships in the early period which presumably reflects shared positive responses to ocean conditions and then highly uncertain and weak relationships thereafter which is consistent with the hypothesis that Pink salmon are the least affected by intra-specfic competition at sea (Ruggerone & Nielsen, 2005). However, in addition to the short temporal window of the most recent period, many of the time series for mid and northern latitude stocks have not been updated yet.
 
-..chum insights to come with final model runs...
+In Chum, there is a consistently negative relationship with SST in the southernmost (WC) region that decreases over time, while more northern stocks show weakly positive to neutral SST relationships. Chum have relatively weak relationships with competitor abundance compared to Sockeye, but northern (BS) stocks shift from a positive relationship in the first era to weakly negative in the second era in both species. Again, this likely represents a response to favourable ocean conditions experienced by all species in the early period, and negative responses to inter-specific competition in later periods as pink salmon abundance increased. Inference about Chum in the marine heatwave period will also require updating time series for Alaskan stocks.
+
+
 
 ## Stationary models {.tabset}
 
@@ -352,7 +360,7 @@ ggplot(m.df) +
 
 ```
 
-**Figure 5**. Posterior probability distributions of the predicted effect of SST (top), competitor abundance (middle), and the combined effect (bottom) on Sockeye productivity (R/S). Faint lines show stock-specific effects while bold lines show regional effects from hierarchical model. X-axis values represent the percent change in productivity per standard deviation unit increase in the covariate.
+**Figure 5**. Posterior probability distributions of the predicted effect of SST (top), competitor (pink salmon) abundance (middle), and the combined effect (bottom) on Sockeye productivity (R/S). Faint lines show stock-specific effects while bold lines show regional effects from hierarchical model. X-axis values represent the percent change in productivity per standard deviation unit increase in the covariate.
 
 ### Pink
 
@@ -415,7 +423,7 @@ ggplot(m.df) +
         
 ```
 
-**Figure 6**. Posterior probability distributions of the predicted effect of SST (top), competitor abundance (middle), and the combined effect (bottom) on Pink salmon productivity (R/S). Faint lines show stock-specific effects while bold lines show regional effects from hierarchical model. X-axis values represent the percent change in productivity per standard deviation unit increase in the covariate.
+**Figure 6**. Posterior probability distributions of the predicted effect of SST (top), intra-specific competitor abundance (middle), and the combined effect (bottom) on Pink salmon productivity (R/S). Faint lines show stock-specific effects while bold lines show regional effects from hierarchical model. X-axis values represent the percent change in productivity per standard deviation unit increase in the covariate.
 
 ### Chum
 
@@ -480,7 +488,7 @@ ggplot(m.df) +
 
 ```
 
-**Figure 7**. Posterior probability distributions of the predicted effect of SST (top), competitor abundance (middle), and the combined effect (bottom) on Chum salmon productivity (R/S). Faint lines show stock-specific effects while bold lines show regional effects from hierarchical model. X-axis values represent the percent change in productivity per standard deviation unit increase in the covariate.
+**Figure 7**. Posterior probability distributions of the predicted effect of SST (top), competitor (pink salmon) abundance (middle), and the combined effect (bottom) on Chum salmon productivity (R/S). Faint lines show stock-specific effects while bold lines show regional effects from hierarchical model. X-axis values represent the percent change in productivity per standard deviation unit increase in the covariate.
 
 ## Era models {.tabset}
 
@@ -496,7 +504,7 @@ dens.df.st.2c <- ocean_region_lab(dens.df.st.2c)
 dens.df.st.2c <- era_lab(dens.df.st.2c, data_master=sock.sub, breakpoint2=2011)
 
 # Density dataframe (regional lvl)
-dens.df.reg.2c <- era_density_df(era.2c.3sub, par=c("gamma", "kappa"), mu=T, percent.change=T, neras=3)
+dens.df.reg.2c <- era_density_df(era.2c.3sub, par=c("gamma", "kappa"), mu=T, percent.change=T, neras=3, info=sock.info.sub)
 dens.df.reg.2c <- ocean_region_lab(dens.df.reg.2c)
 dens.df.reg.2c <- era_lab(dens.df.reg.2c, data_master=sock.sub, breakpoint2=2011)
 
@@ -570,22 +578,22 @@ ggplot(dens.df.st.2c) +
 
 ### Chum
 
-```{r Chum eras, eval=FALSE}
-load("../output/models/dyn/chum/hbm_era_2c_3.RData")
+```{r Chum eras}
+load("../output/models/dyn/chum/hbm_era_2c.RData")
 
 
 ## Data
 # Density dataframe - by stock
-dens.df.st.2c <- era_density_df(era.2c.3, par=c("gamma", "kappa"), percent.change = T, neras=3, info=chum.info)
+dens.df.st.2c <- era_density_df(era.2c, par=c("gamma", "kappa"), percent.change = T, neras=3, info=chum.info, region.var="Ocean.Region")
 dens.df.st.2c <- ocean_region_lab(dens.df.st.2c)
 dens.df.st.2c <- era_lab(dens.df.st.2c, data_master=chum, breakpoint2=2011)
 dens.df.st.2c <- dplyr::filter(dens.df.st.2c, !(Ocean.Region2 %in% c("BS", "GOA", "SEAK") & era=="Late"))
 
 # Density dataframe (regional lvl)
-dens.df.reg.2c <- era_density_df(era.2c.3, par=c("gamma", "kappa"), mu=T, percent.change=T, neras=3, info=chum.info)
-dens.df.reg.2c <- ocean_region_lab(dens.df.reg.2c)
+dens.df.reg.2c <- era_density_df(era.2c, par=c("gamma", "kappa"), mu=T, percent.change=T, neras=3, info=chum.info, region.var="Ocean.Region")
+dens.df.reg.2c <- ocean_region_lab(dens.df.reg.2c, var="Ocean.Region")
 dens.df.reg.2c <- era_lab(dens.df.reg.2c, data_master=chum, breakpoint2=2011)
-dens.df.reg.2c <- dplyr::filter(dens.df.reg.2c, !(Ocean.Region2 %in% c("BS", "GOA", "SEAK") & era=="Late"))
+dens.df.reg.2c <- dplyr::filter(dens.df.reg.2c, !(Ocean.Region %in% c("BS", "GOA", "SEAK") & era=="Late"))
 
 
 
@@ -607,7 +615,6 @@ ggplot(dens.df.st.2c) +
         panel.spacing.y = unit(-0.5, "pt"),
         axis.ticks.y=element_blank()) 
 
-# probably worth combining Chum-SEAK with another region in future analyses
 
 ```
 
@@ -663,7 +670,7 @@ ggplot(df.dyn.reg.2c) +
 # take out the scale squish, and revise 4-stock rule
 ```
 
-**Figure 11**. Time-varying posterior mean estimates of SST and Competitor covariate effects on Sockeye productivity, modelled as a random walk. Individual stock estimates are in faint lines, while regional means are represented by bolded lines. Region-wide means are post-hoc calculations, rather than resulting from hierarchical model structures as in the stationary and era models.
+**Figure 11**. Time-varying posterior mean estimates of SST and Competitor covariate effects on Sockeye productivity, modelled as a random walk. Individual stock estimates are in faint lines, while regional means are represented by bolded lines. Region-wide means are post-hoc calculations, rather than resulting from a hierarchical model structure as in the stationary and era models.
 
 ### Pink
 
@@ -714,11 +721,11 @@ ggplot(df.dyn.reg.2c) +
 
 ```
 
-**Figure 12**. Time-varying posterior mean estimates of SST and Competitor covariate effects on Pink salmon productivity, modelled as a random walk. Individual stock estimates are in faint lines, while regional means and 80% CI are represented by bold lines and shaded areas. Solid bold lines represent odd-year Pink stocks, while dashed lines are even-year stocks. Region-wide means are post-hoc calculations, rather than resulting from hierarchical model structures as in the stationary and era models.
+**Figure 12**. Time-varying posterior mean estimates of SST and Competitor covariate effects on Pink salmon productivity, modelled as a random walk. Individual stock estimates are in faint lines, while regional means are represented by bold lines. Solid bold lines represent odd-year Pink stocks, while dashed lines are even-year stocks. Region-wide means are post-hoc calculations, rather than resulting from a hierarchical model structure as in the stationary and era models.
 
 ### Chum
 
-```{r chum random walk, warning=FALSE, eval=FALSE}
+```{r chum random walk, warning=FALSE}
 load("../output/models/dyn/chum/hbm_dyn_2c.RData")
 
 
@@ -764,20 +771,20 @@ ggplot(df.dyn.reg.2c[df.dyn.reg.2c$Ocean.Region2 != "SEAK",]) +
 
 ```
 
-**Figure 13**. Time-varying posterior mean estimates of SST and Competitor covariate effects on Chum salmon productivity, modelled as a random walk. Individual stock estimates are in faint lines, while regional means are represented by bolded lines. Region-wide means are post-hoc calculations, rather than resulting from hierarchical model structures as in the stationary and era models.
+**Figure 13**. Time-varying posterior mean estimates of SST and Competitor covariate effects on Chum salmon productivity, modelled as a random walk. Individual stock estimates are in faint lines, while regional means are represented by bolded lines. Region-wide means are post-hoc calculations, rather than resulting from a hierarchical model structure as in the stationary and era models.
 
 # Next steps
 
 Priorities for future analysis include:
 
-1.  Update data to present (as recent as possible) for all species and regions, particularly Alaskan pink and chum
+1.  Updating data to present (as recent as possible) for all species and regions, particularly Alaskan pink and chum.
 
-2.  Sensitivity analyses of SST and competitor index covariates
+2.  Sensitivity analyses of SST and competitor index covariates.
 
     -   *SST*: The resolution of the SST data is currently 2 x 2 degrees ([ERSST](https://www.ncei.noaa.gov/products/extended-reconstructed-sst)). Cells within 400 km of ocean entry points are averaged over the three months after migration to sea (April-September, depending on ocean region according to [Mueter et al. 2002](dx.doi.org/10.1139/f02-020)). Given that these assumptions about the spatial and temporal window over which SST is averaged are quite dated, sensitivity to these assumptions will be tested with alternative spatial and temporal windows. However, we will continue to focus on early marine life to remain consistent with the overall hypothesis that juvenile salmon are impacted by temperature in the first year of marine life, and fine-scale analyses of local SST conditions are outside the scope of this project. That said there may be high-resolution SST data available in the near future to further explore this in subsequent paper.
 
     -   *Competitor Index*: Our base cases analysis focuses on the abundance of pink salmon across the North Pacific in the second and/or third years of marine life as an index of potential direct or indirect competition for food. This approach is consistent with research that has suggested some salmon species primarily exhibit responses to competition with pink salmon during their second and/or third growing seasons at sea ([Connors et al. 2020](https://cdnsciencepub.com/doi/full/10.1139/cjfas-2019-0422); [Ruggerone et al.2023](https://www.int-res.com/articles/feature/m719p001.pdf)). However, we also plan to fit models to a small subset of alternative competitor indices as part of sensitivity analysis for this paper (e.g., total pink, chum and sockeye abundance; just North American abundances, biomass instead of abundance, etc.) and have begun sketching out a more comprehensive analytical plan for a separate paper that explores evidence for a wider range of hypotheses about intra- and inter-specific interactions at a variety of spatial and temporal scales.
 
-3.  Revise hierachical grouping of Pink salmon stocks. The random walk models for Pink salmon show the trends for even-year and odd-year stocks separately for ease of visualization, but the difference in the effects between lineages in some cases begs the question of whether even and odd stocks within a region should be grouped together in hierarchical models or separately. We will investigate the possibility of separating lineages, which means treating them as if they were separate species, and which is consistent with the hypothesis that the genetically distinct odd- and even-year lineages of Pink salmon may respond differently to ocean warming ([Irvine et al. 2014](%5BIncreasing%20Dominance%20of%20Odd‐Year%20Returning%20Pink%20Salmon%5D(https://afspubs.onlinelibrary.wiley.com/doi/pdfdirect/10.1080/00028487.2014.889747))).
+3.  Revising hierachical grouping of Pink salmon stocks. The random walk models for Pink salmon show the trends for even-year and odd-year stocks separately for ease of visualization, but the difference in the effects between lineages in some cases begs the question of whether even and odd stocks within a region should be grouped together or separately in hierarchical models. We will investigate the possibility of separating them, which is consistent with the hypothesis that the genetically distinct odd- and even-year lineages of Pink salmon may respond differently to ocean warming ([Irvine et al. 2014](%5BIncreasing%20Dominance%20of%20Odd‐Year%20Returning%20Pink%20Salmon%5D(https://afspubs.onlinelibrary.wiley.com/doi/pdfdirect/10.1080/00028487.2014.889747))).
 
 4.  Random Walk model improvements. Work on versions of random walk models with (1) estimated region-wide mean effects, and (2) reduced sensitivity to time series of different lengths, is ongoing.

@@ -450,13 +450,12 @@ era_density_df <- function(stanfit, par, region.var="Ocean.Region2", mu = FALSE,
         x<- (exp(x)- 1) * 100
       }
       dens.out <- col_density(x, plot.it=F)
+      dimnames(dens.out$x)[2] <- list(c(unique(info[[region.var]])))
+      dimnames(dens.out$y)[2] <- list(c(unique(info[[region.var]])))
       dens.list <- lapply(dens.out, adply, .margins=c(1,2))
       dens.df <- join(dens.list$x, dens.list$y, by=c("X1", "X2"))
-      names(dens.df) <- c("n", "region", "x", "dens")
-      dens.df$Ocean.Region2 <- case_when(dens.df$region == 1 ~ "WC",
-                                         dens.df$region == 2 ~ "SEAK",
-                                         dens.df$region == 3 ~ "GOA",
-                                         dens.df$region == 4 ~ "BS")
+      names(dens.df) <- c("n", region.var, "x", "dens")
+      
       return(dens.df)
     } )
     
