@@ -95,7 +95,7 @@ names(sp.col) <- c("Chum", "Pink", "Sockeye") # name
 
 # Purpose
 
-This document summarizes updated methods and results from the analyses origionally described [here](https://pacific-salmon-assess.github.io/Salmon-warming-crowded-oceans/Rmd/project-fall-update.html). Notably, our analysis now includes Pink (n=70) and Chum (n=44) salmon stocks from across the eastern North Pacific, as well as updated data for Sockeye stocks (n = 52).
+This document summarizes updated methods and results from the analyses origionally described [here](https://pacific-salmon-assess.github.io/Salmon-warming-crowded-oceans/Rmd/project-fall-update.html). Our analysis now includes Pink (n=70) and Chum (n=44) salmon stocks from across the eastern North Pacific, as well as updated data for Sockeye stocks (n = 52), however, Pink and Chum time series from Alaska have not been able to be updated yet.
 
 # Methods
 
@@ -268,7 +268,7 @@ Our updated analyses focus on three classes of generalized spawner-recruitment m
 
 2.  'Era' models (e.g., [Malick 2020](https://onlinelibrary.wiley.com/doi/10.1111/fog.12469)), which allow relationships to vary among pre-defined periods that represent hypothesized shifts in North Pacific Ocean processes and relationships.
 
-    -   We no longer model 1976/77 as a regime shift as per feedback from our last update, which highlighted that this shift from a cold to warm PDO phase simply reflected a temperature change (which is already accounted for via our direct consideration of ocean temperature) and not a fundamental change in oceanographic processes like the 1988/89 regime shift.
+    -   We no longer model 1976/77 as a regime shift per feedback from collaborators at our last update, which highlighted that this shift from a cold to warm PDO phase simply reflected a temperature change (which is already accounted for via our direct consideration of ocean temperature) and not a fundamental change in oceanographic processes like the 1988/89 regime shift.
 
     -   Our updated analyses consider a potential regime shift at the onset of the \~2013-2015 marine heatwave ('the blob'). Currently, we consider brood years \>= 2011 to have interacted with the marine heatwave regardless of the species and stock. In future analyses, the timing can be altered to better reflect the diverse life histories of populations in the analysis.
 
@@ -286,15 +286,13 @@ Further details on each model class and Bayesian model fitting procedure can be 
 
 ## Overall insights
 
-There is some evidence for spatially and temporally varying responses to warming and competition at sea in all three species analyzed.
+We see evidence for spatially and temporally varying responses to warming and competition at sea in all three species.
 
-In Sockeye, we continue to see strong evidence of spatial variation in relationship between productivity and both SST and competitor abundance, as has been described previously, as well as variation in relationships within regions over time. For southernmost stocks we see a general strengthening of inverse relationships for both covariates over time. For stocks at intermediate latitudes (SEAK and GoA) we see evidence of relationships with SST flipping over time such that during the 'marine heatwave' period they are strongly negative, and we see weak and variable relationships in early and late periods and consistently negative ones in the 1989-2010 period. At the northernmost extent (Bering Sea) we see consistently positive relationships with SST and variable relationships with competitor abundance. Due to the short duration of the marine heatwave period that we are able to consider, we should interpret findings for the period cautiously.
+In Sockeye, we continue to see strong evidence for spatial variation in relationships between productivity and both SST and competitor abundance, as has been described previously, as well as variation in relationships within regions over time. For southernmost stocks we see a general strengthening of inverse relationships for both covariates over time. For stocks at intermediate latitudes (SEAK and GoA) we see evidence of relationships with SST flipping over time such that during positive relationships the 'marine heatwave' period they are strongly negative, but positive in earlier periods. For the competitor index we see weak and variable relationships in early and late periods and consistently negative ones in the 1989-2010 period. At the northernmost extent (Bering Sea) we see consistently positive relationships with SST and variable relationships with competitor abundance.
 
-In Pink salmon, we see clear evidence of spatial variation in SST relationships, consistent with previous work, but less pronounced patterns in ones with competitor abundance. Like in Sockeye, relationships with SST vary latitudinally and for southernmost stocks become more negative over time while for SEAK stocks there is evidence of a flip in relationships from positive to negative by the 'marine heatwave' period. For the competitor index we see positive relationships in the early period which presumably reflects shared positive responses to ocean conditions and then highly uncertain and weak relationships thereafter which is consistent with the hypothesis that Pink salmon are the least affected by intra-specfic competition at sea (Ruggerone & Nielsen, 2005). However, in addition to the short temporal window of the most recent period, many of the time series for mid and northern latitude stocks have not been updated yet.
+In Pinks, we see clear evidence of spatial variation in SST relationships, consistent with previous work, but less pronounced patterns in ones with competitor abundance. Like in Sockeye, relationships with SST vary latitudinally and for southernmost stocks become more negative over time while for SEAK stocks there is evidence of a flip in relationships from positive to negative by the 'marine heatwave' period. For the competitor index we see positive relationships in the early period which presumably reflects shared positive responses to ocean conditions and then highly uncertain and weak relationships thereafter which is consistent with the hypothesis that Pink salmon are the least affected by intra-specfic competition at sea (Ruggerone and Nielsen, 2005). However, in addition to the short temporal window of the most recent period, many of the time series for mid and northern latitude stocks have not been updated yet.
 
-In Chum, there is a consistently negative relationship with SST in the southernmost (WC) region that decreases over time, while more northern stocks show weakly positive to neutral SST relationships. Chum have relatively weak relationships with competitor abundance compared to Sockeye, but northern (BS) stocks shift from a positive relationship in the first era to weakly negative in the second era in both species. Again, this likely represents a response to favourable ocean conditions experienced by all species in the early period, and negative responses to inter-specific competition in later periods as pink salmon abundance increased. Inference about Chum in the marine heatwave period will also require updating time series for Alaskan stocks.
-
-
+In Chum, we see a consistently negative relationship with SST in the southernmost (WC) region that becomes more negative over time, while more northern stocks show weakly positive to neutral SST relationships. Chum have relatively weak relationships with competitor abundance compared to Sockeye, but northern (BS) stocks shift from a positive relationship in the first era to weakly negative in the second era in both species. Again, this likely represents a response to favourable ocean conditions experienced by all species in the early period, and negative responses to inter-specific competition in later periods as pink salmon abundance increased. Inference about Chum in the marine heatwave period will also require updating time series for Alaskan stocks.
 
 ## Stationary models {.tabset}
 
@@ -775,7 +773,7 @@ ggplot(df.dyn.reg.2c[df.dyn.reg.2c$Ocean.Region2 != "SEAK",]) +
 
 # Next steps
 
-Priorities for future analysis include:
+Priorities for future analyses include:
 
 1.  Updating data to present (as recent as possible) for all species and regions, particularly Alaskan pink and chum.
 
