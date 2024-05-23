@@ -4,11 +4,15 @@
 # Species
 if(speciesFlag=="pink") {
   data_master <- pink
-  info_master <- pink.info} else if(speciesFlag=="chum") {
-   data_master <- chum
-   info_master <- chum.info } else if(speciesFlag=="sockeye"){
-      data_master <- sock
-      info_master <- sock.info }
+  info_master <- pink.info} else if (speciesFlag=="pinkeven"){
+    data_master <- pinkeven
+    info_master <- pinkeven.info } else if (speciesFlag=="pinkodd"){
+      data_master <- pinkodd
+      info_master <- pinkodd.info } else if (speciesFlag=="chum") {
+       data_master <- chum
+       info_master <- chum.info } else if(speciesFlag=="sockeye"){
+        data_master <- sock
+        info_master <- sock.info }
 
     
 # Set paths to output locations - dependent on species 

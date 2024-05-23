@@ -3,11 +3,16 @@
 # Species
 if(speciesFlag=="pink") {
   data_master <- pink
-  info_master <- pink.info} else if(speciesFlag=="chum") {
-    data_master <- chum
-    info_master <- chum.info } else if(speciesFlag=="sockeye"){
-      data_master <- sock
-      info_master <- sock.info }
+  info_master <- pink.info} else if (speciesFlag=="pinkeven"){
+    data_master <- pinkeven
+    info_master <- pinkeven.info } else if (speciesFlag=="pinkodd"){
+      data_master <- pinkodd
+      info_master <- pinkodd.info } else if (speciesFlag=="chum") {
+        data_master <- chum
+        info_master <- chum.info } else if(speciesFlag=="sockeye"){
+          data_master <- sock
+          info_master <- sock.info }
+
 
 # Set paths to output locations - dependent on species 
 fig.dir <- here("figures", "spp-explore", speciesFlag) # place to store figures generated in this script
@@ -360,13 +365,13 @@ dev.off()
 
 
 # Downlad map and convert to sp
-cl <- rnaturalearth::ne_states(country = c("United States of America", "Canada"))
-na_map <- sf::st_as_sf(cl)
+na_map <- rnaturalearth::ne_countries(country = c("United States of America", "Canada"), scale='medium', returnclass="sf")
 
-axes <- list( xlims=c(-171, -121), 
+
+axes <- list( xlims=c(-167, -121), 
               ylims=c(46, 67),
-              xbreaks=seq(-170,-120,10), 
-              xlabels=as.character(seq(-170,-120,10)),
+              xbreaks=seq(-160,-120,10), 
+              xlabels=as.character(seq(-160,-120,10)),
               seq(45, 65, 5), 
               ybreaks=seq(45, 65, 5),
               ylabels=as.character(seq(45,65,5)))
@@ -375,30 +380,116 @@ axes <- list( xlims=c(-171, -121),
 sock.info$Species <- "Sockeye"
 chum.info$Species <- "Chum"
 pink.info$Species <- "Pink"
-map.info <- rbind(sock.info, chum.info, pink.info)
+map.info <- bind_rows(sock.info, chum.info, pink.info)
 # colour
 sp.col <- c("seagreen4", "palevioletred3", "orangered4")
 names(sp.col) <- c("Chum", "Pink", "Sockeye")
 
+col.dk <- rev(chroma::qpal(7, luminance = 20)[c(1, 3, 5, 7)])
+names(col.dk) <- unique(info_master$ocean_region_lab)
+
+
 map <- ggplot(map.info) + 
   geom_sf(data=na_map, color="grey40", fill="white", linewidth=0.1) + 
   ggspatial::geom_spatial_point(aes(x=lon, y=lat, col=Species, shape=Species), 
-                                crs=4326, size=2.5, alpha=0.8, position=position_jitter(w=0.2, h=0.2)) +
+                                crs=4326, size=1.5, alpha=0.8, position=position_jitter(w=0.2, h=0.2)) +
   coord_sf(xlim=axes$xlims, ylim=axes$ylims) +
   scale_x_continuous(breaks=axes$xbreaks, labels=axes$xlabels) +
   scale_y_continuous(breaks=axes$ybreaks, labels=axes$ylabels) +
   #scale_colour_brewer(palette="Dark2") + 
-  scale_colour_manual(values=sp.col) +
-  scale_shape_manual(values=c(15,16,17)) +
+  scale_colour_manual(values=sp.col, labels=c("Chum (n=44)", "Pink (n=70)", "Sockeye (n=52)")) +
+  scale_shape_manual(values=c(15,16,17), labels=c("Chum (n=44)", "Pink (n=70)", "Sockeye (n=52)")) +
   labs(x="Longitude (°E)", y="Latitude (°N)") +
   theme_sleek() + 
   theme(panel.grid = element_blank(),
         plot.title = element_text(hjust=0.5),
-        legend.position = c(0.4,0.25),
+        legend.position = c(0.85,0.75),
         legend.background = element_rect(colour="grey75"),
-        aspect.ratio = 0.65
-  )
+        aspect.ratio = 0.55) 
 
-pdf(here("figures", "spp-explore", "all_sp_map.pdf"), height=4, width=7)
+png(here('figures', 'spp-explore', "all_sp_map_pres.png"), res=288, height=1216, width=2192)
 print(map)
 dev.off()
+
+ggsave(here('figures', 'spp-explore', "all_sp_map_pres.png"), map)
+#pdf(here("figures", "spp-explore", "all_sp_map.pdf"), height=4, width=7)
+#print(map)
+#dev.off()
+
+
+map.alt <- 
+  ggplot(map.info) + 
+  geom_sf(data=na_map, color="grey40", fill="white", linewidth=0.2) + 
+  ggspatial::geom_spatial_point(aes(x=lon, y=lat, col=ocean_region_lab, fill=ocean_region_lab, shape=Species), 
+                                crs=4326, size=1.2, alpha=0.6, position=position_jitter(w=0.5, h=0.2)) +
+  coord_sf(xlim=axes$xlims, ylim=axes$ylims) +
+  scale_x_continuous(breaks=axes$xbreaks, labels=axes$xlabels) +
+  scale_y_continuous(breaks=axes$ybreaks, labels=axes$ylabels) +
+  #scale_colour_brewer(palette="Dark2") + 
+  scale_colour_manual(values=col.dk) +
+  scale_fill_manual(values=col.region) +
+  scale_shape_manual(values=c(22,21,24)) +
+  labs(x="Longitude (°E)", y="Latitude (°N)") +
+  theme_sleek() + 
+  theme(panel.grid = element_blank(),
+        plot.title = element_text(hjust=0.5),
+        legend.position = "none",
+        legend.background = element_rect(colour="grey75"),
+        aspect.ratio = 0.7)
+
+pdf(here("figures", "spp-explore", "all_sp_map_alt.pdf"), height=4, width=7)
+print(map.alt)
+dev.off()
+
+
+
+## Fig: Time series of covariates
+
+# 1) Competitor time series with raw data
+
+comp.fig <- ggplot(raw.comp) + 
+        geom_line(aes(x=Year, y=pink_numbers_np), col="darkred") +
+        geom_vline(xintercept=c(1989,2011), color = "grey80", linetype = 1, linewidth = 0.25, alpha=0.8) +
+        labs(x="Year", y="Pink abundance (millions)") +
+        scale_y_continuous(limits=c(0,800), breaks = seq(0,750,250)) +
+        theme_sleek() +
+        theme(aspect.ratio=0.35)
+# for presentation
+comp.fig.pres <- comp.fig + theme(aspect.ratio=0.55)
+png(here("figures", "spp-explore", "comp-pres.png"), width=550*2, height=300*2, res=72*4)
+print(comp.fig.pres)
+dev.off()
+  
+
+# 2) SST with raw data
+
+# Load data
+unique.oc.entry <- distinct(map.info, lat, lon, .keep_all=TRUE)
+sst.anom <- read.csv("data/sst_raw_anomalies_extend.csv")
+## Calculate average SST anomaly within area where stock spends first few months of marine life 
+sst_anom <- sst.averager(unique.oc.entry, sst.anom, distance = 400)
+sst_anom <- left_join(sst_anom, unique.oc.entry[,c("Stock.ID", "Ocean.Region2")], by=c("stock.id" = "Stock.ID"))
+
+sst.fig <- 
+  ggplot(sst_anom) +
+  geom_line(aes(x=year, y=sst.anom, col=ocean_region_lab, group=stock.id), alpha=0.2) +
+  geom_hline(aes(yintercept=0), linetype="dashed", col="gray50") +
+  geom_vline(xintercept=c(1989,2011), color = "grey80", linetype = 1, linewidth = 0.25, alpha=0.8) +
+  facet_grid(rows=vars(as.character(ocean_region_lab)), switch="y") +
+  scale_colour_manual(values=col.region) +
+  labs(x="Year", y="SST anomalies") +
+  coord_cartesian(xlim=c(1950,2020)) +
+  scale_y_continuous(breaks=seq(-3, 3, 3), labels=c("-3", " 0", " 3"), position="right") +
+  theme_sleek() +
+  theme(legend.position="none")
+
+
+
+left <- cowplot::plot_grid(map.alt, comp.fig, ncol=1, rel_heights = c(1.7, 1), labels="auto", label_x = 0.075, label_y=1.03)
+full.intro <- cowplot::plot_grid(left, sst.fig, ncol=2, rel_widths = c(1, .7), labels=list("", "c"))
+
+png(here("figures", "spp-explore", "multi-intro.png"), height=721*1.5, width=1000*1.5, res=72*3)
+print(full.intro)
+dev.off()
+
+

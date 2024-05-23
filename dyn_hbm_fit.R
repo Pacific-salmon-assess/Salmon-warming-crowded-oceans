@@ -2,10 +2,18 @@
 # This is adapted from: https://github.com/michaelmalick/sockeye-nonstationary
 
 # Species
-if(speciesFlag=="pink") 
-  data_master <- pink else if(speciesFlag=="chum") 
-    data_master <- chum else if(speciesFlag=="sockeye")
-      data_master <- sock
+if(speciesFlag=="pink") {
+    data_master <- pink
+    info_master <- pink.info} else if (speciesFlag=="pinkeven"){
+      data_master <- pinkeven
+      info_master <- pinkeven.info } else if (speciesFlag=="pinkodd"){
+        data_master <- pinkodd
+        info_master <- pinkodd.info } else if (speciesFlag=="chum") {
+          data_master <- chum
+          info_master <- chum.info } else if(speciesFlag=="sockeye"){
+            data_master <- sock
+            info_master <- sock.info }
+
     
 # Set paths to output locations - dependent on species 
 fig.dir <- here("figures", "dyn", speciesFlag, "hbm_fit") # place to store figures generated in this script
@@ -47,7 +55,7 @@ pars_dyn_2c <- c("alpha", "beta", "sigma", "phi", "mu_alpha", "sigma_alpha",
                  "gamma", "sigma_gamma", "signal_noise_g",
                  "kappa", "sigma_kappa", "signal_noise_k")
 
-pars.gen.quant <- c("log_lik", "yrep") ## Generated quantities to monitor
+pars.gen.quant <- c("log_lik", "yrep", "yhat", "yresid") ## Generated quantities to monitor
 
 
 save(pars_era_2c, file = "./output/pars_era_2c.RData")

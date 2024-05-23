@@ -98,9 +98,17 @@ p.info.brood <- geographic.order(p.info.brood) # Order stocks geographically to 
 p.info.brood <- dplyr::arrange(p.info.brood, factor(Stock, levels=levels(p.info.brood$Stock)))
 
 
+# export and save info table
 write.csv(p.info.brood, "./data/pink/master_pink_stock_info.csv", row.names = FALSE)
-
 pink.info <- p.info.brood
+# repeat for even- and odd- so they can be used separately
+pinkeven.info <- pink.info[grep("-Even", pink.info$Stock),]
+pinkeven.info <- geographic.order(pinkeven.info)
+write.csv(pinkeven.info, "./data/pink/master_pinkeven_stock_info.csv", row.names = FALSE)
+pinkodd.info <- pink.info[grep("-Odd", pink.info$Stock),]
+pinkodd.info <- geographic.order(pinkodd.info)
+write.csv(pinkodd.info, "./data/pink/master_pinkodd_stock_info.csv", row.names = FALSE)
+
 
 
 ## CHUM -----------------------------------------------

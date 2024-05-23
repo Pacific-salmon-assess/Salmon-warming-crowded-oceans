@@ -25,9 +25,7 @@ source("sock_covariates.R")
 source("pink_chum_covariates.R")
 
 # Toggle one species 'ON' for #3-6
-#speciesFlag = "pink"
-#speciesFlag = "chum"
-speciesFlag = "sockeye"
+speciesFlag = "sockeye" # one of "sockeye", "chum", "pink", "pinkeven", "pinkodd'
 
 # 3. Exploratory plots and models
 source("data_explore.R")  

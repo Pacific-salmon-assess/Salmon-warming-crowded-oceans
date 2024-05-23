@@ -55,8 +55,18 @@ master.pink.bt_w_cov2 <- ddply(master.pink.bt_w_cov1, .(Stock), transform,
 
 
 # Export to output
+# all pinks
 pink <- master.pink.bt_w_cov2
 write.csv(pink, "data/pink/master_pink_brood_table_covar.csv", row.names=FALSE)
+# even-year pinks
+pinkeven <- pink[grep("-Even", pink$Stock),]
+pinkeven <- geographic.order(pinkeven)
+write.csv(pinkeven, "data/pink/master_pinkeven_brood_table_covar.csv", row.names=FALSE)
+# odd-year pinks
+pinkodd <- pink[grep("-Odd", pink$Stock),]
+pinkodd <- geographic.order(pinkodd)
+write.csv(pinkodd, "data/pink/master_pinkodd_brood_table_covar.csv", row.names=FALSE)
+
 
 
 ### CHUM

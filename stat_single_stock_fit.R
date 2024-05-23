@@ -2,10 +2,17 @@
 ## Non-hierarchical equivalents of HBM for comparison, testing model assumptions
 
 # Species
-if(speciesFlag=="pink") 
-  data_master <- pink else if(speciesFlag=="chum") 
-    data_master <- chum else if(speciesFlag=="sockeye")
-      data_master <- sock
+if(speciesFlag=="pink") {
+  data_master <- pink
+  info_master <- pink.info} else if (speciesFlag=="pinkeven"){
+    data_master <- pinkeven
+    info_master <- pinkeven.info } else if (speciesFlag=="pinkodd"){
+      data_master <- pinkodd
+      info_master <- pinkodd.info } else if (speciesFlag=="chum") {
+        data_master <- chum
+        info_master <- chum.info } else if(speciesFlag=="sockeye"){
+          data_master <- sock
+          info_master <- sock.info }
 
 ## Make directories to save plots
 fig.dir <- here("figures", "stat", speciesFlag, "single-stock")
