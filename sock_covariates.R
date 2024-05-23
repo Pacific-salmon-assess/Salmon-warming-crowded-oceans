@@ -20,8 +20,8 @@ raw.clim.sock <- dplyr::filter(raw.clim, Species=="Sockeye")
 head(raw.clim.sock)
 
 
-## Pink competition
-raw.comp <- read.csv(file="data-downloaded/competitor_indices_2023_05_16.csv", header = TRUE)
+## Competition
+raw.comp <- read.csv(file="data-downloaded/competitor_indices_2024.csv", header = TRUE)
 head(raw.comp)
 
 
