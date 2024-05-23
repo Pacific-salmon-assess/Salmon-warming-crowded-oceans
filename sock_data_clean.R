@@ -96,19 +96,21 @@ bt.out.2 <- subset(bt.out.1, !(Stock.ID %in% c( 7, # Frazer - hatchery influence
 )))
 bt.out.3 <- subset(bt.out.2,BY > 1949)        # do this because pre 1950 data is very sparse
 bt.out.4 <- subset(bt.out.3, BY<=2015) #- currently have pink-NP data up to 2021 (+6 yr)
-
+# Final filtering step: make sure all stks extend thru all time periods
+stk.sub <- bt.out.4 %>% dplyr::summarize(yr_start = min(BY), yr_end = max(BY), .by="Stock.ID") %>% filter(yr_start < 1985 & yr_end >= 2014)
+bt.out.5 <- subset(bt.out.4, Stock.ID %in% stk.sub$Stock.ID)
 
 # Add ocean regions
-bt.out.4$Ocean.Region2 <- s.info$ocean.basin[match(bt.out.4$Stock, s.info$stock.name)]
+bt.out.5$Ocean.Region2 <- s.info$ocean.basin[match(bt.out.5$Stock, s.info$stock.name)]
 # Add SEAK grouping
-bt.out.4$Ocean.Region2[bt.out.4$Lat >= 54.09 & bt.out.4$Lon > -140] <- "SEAK"
+bt.out.5$Ocean.Region2[bt.out.5$Lat >= 54.09 & bt.out.5$Lon > -140] <- "SEAK"
 
 ## Order stocks geographically to make plotting easier
-bt.out.5 <- geographic.order(bt.out.4)
-bt.out.6 <- dplyr::arrange(bt.out.5, factor(Stock, levels=levels(bt.out.5$Stock)))
+bt.out.6 <- geographic.order(bt.out.5)
+bt.out.7 <- dplyr::arrange(bt.out.6, factor(Stock, levels=levels(bt.out.6$Stock)))
 
 # Summary
-bt.out <- bt.out.6
+bt.out <- bt.out.7
 head(bt.out)
 tail(bt.out)
 sapply(bt.out, class)
