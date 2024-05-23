@@ -145,10 +145,12 @@ model {
 generated quantities {
     real log_lik[N];                      // log-likelihood
     real yrep[N];                         // replicated datasets
+    real yresid[N];                       // realized residuals
     for(i in 1:n_series) {
         for(t in y_start[i]:y_end[i]) {
             log_lik[t] = normal_lpdf(y[t] | yhat[t], sigma[i]);
             yrep[t] = normal_rng(yhat[t], sigma[i]);
+            yresid[t] = y[t] - yhat[t];
         }
     }
 }
