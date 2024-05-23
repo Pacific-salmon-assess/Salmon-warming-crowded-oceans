@@ -1,6 +1,47 @@
 ## Functions for analysis ##
 ## ---------------------- ##
 
+
+
+## moving average_df
+moving_average_df <- function(x, value, lag = 2, Ocean.Region="Ocean.Region2", var_col="varnam", vars=c("SST", "Competitors")) {
+  # x = a dataframe you want returned with a mov_avg column
+  # lag = lag (past only) for moving average, e.g. a lag=2 gives a 3-year average
+  
+  out <- data.frame(NULL)
+  
+  for(var in vars){
+    xvar <- x[x[[var_col]] == var,] # isolate a variable (loop 1)
+    
+    xreg.out <- data.frame(NULL) # make df for next loop
+    
+    for(reg in unique(xvar[[Ocean.Region]])){ # isolate a region (group) (loop 2)
+      
+      xreg <- xvar[xvar[[Ocean.Region]]==reg, ]
+      xreg <- arrange(xreg, BY)
+      
+      mov_avg <- NA # make vector for next loop
+      
+      for(i in c(lag+1):c(nrow(xreg))){ # rolling mean (loop 3)
+        
+        sub <- xreg[c(i-lag):i, value]
+        mov_avg[i] <- mean(sub)
+      } # end loop 3
+      
+      xreg.out <- rbind(xreg.out, cbind(xreg, mov_avg))
+      
+    } # end loop 2 
+    
+    out <- rbind(out, xreg.out)
+    
+  } # end loop 1
+  
+  return(out)
+  
+}
+
+
+
 ## get_ocean_entry_prop -------------------------------------
 
 get_ocean_entry_prop <- function(data=s.brood, r.cols=r.cols){
@@ -281,6 +322,7 @@ hb05_density_df <- function(stanfit, ocean.regions = 3, info_master=info_master,
   pc.s.joint <- (exp(s.gamma + s.kappa ) - 1) * 100
   pc.m.joint <- (exp(m.gamma + m.kappa ) - 1) * 100
   
+
   ## Calculate kernel densities
   s.den.wc.gamma  <- col_density(pc.s.gamma[ , ind.wc], plot.it = FALSE, adjust = adjust)
   s.den.goa.gamma <- col_density(pc.s.gamma[ , ind.goa], plot.it = FALSE, adjust = adjust)
@@ -2829,18 +2871,6 @@ theme.mjm <- function(fontsize = 11, ...) {
     modifyList(modifyList(standard.theme("pdf"), theme), simpleTheme(...))
 }
 
-
-## moving average_df
-moving_average_df <- function(x, value, lag = 2) {  # Create user-defined function
-  ma=NA
-  ma_sd=NA
-  for(t in c(lag+1):c(nrow(x))){
-    x1=x[c(t-lag):c(t+lag), value] 
-    ma[t]=mean(as.vector(x1))
-    ma_sd[t]=sd(as.vector(x1))
-  }
-  return(cbind(x, ma, ma_sd))
-}
 
 
 ## ocean_region_col
