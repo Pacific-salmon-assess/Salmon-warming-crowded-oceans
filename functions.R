@@ -2,6 +2,15 @@
 ## ---------------------- ##
 
 
+## Design matrix for MV RW 
+make_design_matrix=function(x,grp){
+  x2=matrix(nrow=length(x),ncol=length(unique(grp)))
+  for(i in 1:length(unique(grp))){
+    x2[,i]=ifelse(grp==levels(factor(grp))[i],1,0)*x
+  }
+  return(x2)
+}
+
 
 ## moving average_df
 moving_average_df <- function(x, value, lag = 2, Ocean.Region="Ocean.Region2", var_col="varnam", vars=c("SST", "Competitors")) {
