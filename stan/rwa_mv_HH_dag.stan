@@ -1,4 +1,4 @@
-// HH version of MV RW
+// HH/DG version of MV RW
 data{
   int<lower=1> N; //number of annual samples 
   int L; //years covered by time-series
@@ -33,11 +33,12 @@ parameters{
 //MVN parameters  
   cholesky_factor_corr[J] Lcorr;
   //vector[J] z_dev_s0;
-  vector[J] z_dev_g0;
+  vector[J] z_dev_g0; // does this parameter do anything? was unlabeled -HH 
   //matrix[L-1,J] z_dev_s;  // deviations in stock productivity from year-to-year
   matrix[L-1,J] z_dev_g; // deviations in gamma from year-to-year
   //vector<lower = 0>[J] sigma_a_s; //variance in stock productivity among years //try sharing?
-  vector<lower = 0>[J] sigma_g_s; //variance in gammas among years
+  real<lower=0> sigma_g_s; // -- SIMPLIFYING CHANGE to shared sigma
+  //vector<lower = 0>[J] sigma_g_s; //variance in gammas among years
 
 }
 transformed parameters{
@@ -54,7 +55,7 @@ transformed parameters{
   g_t[1,] = g_s0;
   
   for(t in 1:L-1){
-   g_dev[t,] = (diag_pre_multiply(sigma_g_s, Lcorr) * to_vector(z_dev_g[t,]))';
+   g_dev[t,] = (diag_pre_multiply(rep_vector(sigma_g_s, J), Lcorr) * to_vector(z_dev_g[t,]))';
   }
   
   for(t in 2:L){
@@ -66,11 +67,12 @@ model{
   for(j in 1:J)log_b[j] ~ normal(logbeta_pr[j],logbeta_pr_sig[j]); //capacity with informative prior for each stock
   //log_a_s0 ~ normal(1.5,5);//initial prod. for each stock
   log_a ~ normal(1.5,2); //intercept
-  g_s0 ~ normal(1.5,5); // -HH
+  g_s0 ~ normal(0,5); // -HH
 
   Lcorr ~ lkj_corr_cholesky(1.0); // prior for correlation of process deviances
  
   to_vector(z_dev_g) ~ std_normal(); //global deviation in prod.
+  z_dev_g0 ~ std_normal(); // - HH does this parameter do anything?
   
   //variance terms
   sigma ~ gamma(2,2);
@@ -83,9 +85,9 @@ model{
 }
 generated quantities{
 corr_matrix[J] Cor_J = multiply_lower_tri_self_transpose(Lcorr);
-//vector[N] log_lik;
-//vector[L] gamma_t_m; //average gamma through time
+vector[N] log_lik;
+vector[L] gamma_t_m; //average gamma through time
 
-//for(i in 1:N) log_lik[i] = normal_lpdf(R_S[i]|to_vector(log_a_t)[J_ii[i]] - S[i]*b, sigma[J_i[i]]);
-//for(t in 1:L) log_a_m[t]=sum(log_a_t[t,])/J; //arithmetic mean of log_alpha at each time-step
+for(i in 1:N) log_lik[i] = normal_lpdf(R_S[i]|to_vector(g_t)[J_ii[i]] - S[i]*b, sigma[J_i[i]]);
+for(t in 1:L) gamma_t_m[t]=sum(g_t[t,])/J; //arithmetic mean of log_alpha at each time-step
 }
