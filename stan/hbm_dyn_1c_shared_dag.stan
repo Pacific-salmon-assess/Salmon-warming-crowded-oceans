@@ -58,7 +58,7 @@ transformed parameters {
             gamma[t] = tmp_gamma + sigma_gamma[j] * d_gamma[t-1];
         }
     }
-    gamma_i = sigma_gamma_i[a_group]*d_gamma_i;
+    gamma_i[i] = sigma_gamma_i[a_group[i]]*d_gamma_i[i];
     for(i in 1:n_series) {
         alpha[i] = mu_alpha[a_group[i]] + sigma_alpha[a_group[i]] * d_alpha[i];
 
