@@ -45,10 +45,10 @@ parameters {
     real d_kappa[Ng-1];                   // random kappa deviate
     real<lower=0> sigma_gamma[Ng_groups]; // gamma SD
     real<lower=0> sigma_kappa[Ng_groups]; // kappa SD
-	real d_gamma_i[n_series];	    // z-score for stock-specific gamma
-    real sigma_gamma_i[Ng_groups];  //stock-specific gamma SD (indexed by group)
-	real d_kappa_i[n_series];	    // z-score for stock-specific gamma
-    real sigma_kappa_i[Ng_groups];  //stock-specific gamma SD (indexed by group)
+    vector[n_series] d_gamma_i;	    // z-score for stock-specific gamma
+    vector<lower=0>[Ng_groups] sigma_gamma_i;  //stock-specific gamma SD (indexed by group)
+    vector[n_series] d_kappa_i;	    // z-score for stock-specific gamma
+    vector<lower=0>[Ng_groups] sigma_kappa_i;  //stock-specific gamma SD (indexed by group)
 }
 transformed parameters {
     real alpha[n_series];                 // series-specific intercept
@@ -60,8 +60,8 @@ transformed parameters {
     real tmp_epsilon;                     // temporary var to avoid deep copy
     real tmp_gamma;                       // temporary var to avoid deep copy
     real tmp_kappa;                       // temporary var to avoid deep copy
-    real gamma_i[n_series];                 // series-specific time-invariant covariate
-    real kappa_i[n_series];                 // series-specific time-invariant covariate
+    vector[n_series] gamma_i;                 // series-specific time-invariant covariate
+    vector[n_series] kappa_i;                 // series-specific time-invariant covariate
     
 	gamma_i = sigma_gamma_i[a_group].*d_gamma_i;
 	kappa_i = sigma_kappa_i[a_group].*d_kappa_i;
