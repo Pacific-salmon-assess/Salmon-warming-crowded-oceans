@@ -63,8 +63,8 @@ transformed parameters {
     real gamma_i[n_series];                 // series-specific time-invariant covariate
     real kappa_i[n_series];                 // series-specific time-invariant covariate
     
-	gamma_i = sigma_gamma_i[a_group]*d_gamma_i;
-	kappa_i = sigma_kappa_i[a_group]*d_kappa_i;
+	gamma_i = sigma_gamma_i[a_group].*d_gamma_i;
+	kappa_i = sigma_kappa_i[a_group].*d_kappa_i;
 	
 	for(j in 1:Ng_groups) {
         gamma[g_start[j]] = g0[j];
