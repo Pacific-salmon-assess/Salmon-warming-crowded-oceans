@@ -86,7 +86,7 @@ transformed parameters {
 
         for(t in (y_start[i]+1):y_end[i]) {
             tmp_epsilon = epsilon[t-1];
-            yhat[t] = alpha[i] + beta[i] * x1[t] + gamma[year[t]] * x2[t] + kappa[year[t]] * x3[t] + phi * tmp_epsilon;
+            yhat[t] = alpha[i] + beta[i] * x1[t]+ gamma_i[i]*x2[t] + gamma[year[t]] * x2[t]+ kappa_i[i]*x3[t] + kappa[year[t]] * x3[t] + phi * tmp_epsilon;
             epsilon[t] = y[t] - (yhat[t] - (phi * tmp_epsilon));
         }
 
