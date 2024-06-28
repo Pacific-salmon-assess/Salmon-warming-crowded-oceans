@@ -149,6 +149,95 @@ print(g)
 dev.off()
 
 
+## -- 1a. SHARED RW model - Dan's version -------------------------------------
+
+# In this model, all data are pooled w/in regions and a single RW series is calculated for each region
+# In this variation, a time-invarying series-specific gamma/kappa is also estimated.
+
+stan.dat.2c <- stan_data_dyn(data_dyn, 
+                             var.x2 = "early_sst_stnd",
+                             var.x3 = "np_pinks_sec_stnd",
+                             breakpoint1 = 1989,
+                             breakpoint2 = 2011,
+                             var.region="Ocean.Region2", 
+                             scale.x1 = TRUE,
+                             alpha.group = ifelse(speciesFlag=="sockeye", TRUE, FALSE))
+# set pars to monitor
+pars_dyn_2c <- c("alpha", "beta", "sigma", "phi", "mu_alpha", "sigma_alpha",
+                 "gamma", "gamma_i", "sigma_gamma", "signal_noise_g",
+                 "kappa", "kappa_i", "sigma_kappa", "signal_noise_k")
+
+pars.gen.quant <- c("log_lik", "yrep") ## Generated quantities to monitor
+
+# Run MCMC
+
+dyn.grp.2c.dag <- rstan::stan(file = "./stan/hbm_dyn_2c_shared_dag.stan",
+                          data = stan.dat.2c,
+                          pars = c(pars_dyn_2c, pars.gen.quant),
+                          warmup = 1000,
+                          iter = 4000, # try more iterations to fix Rhat & Neff
+                          cores = 4,
+                          chains = 4,
+                          seed = 123,
+                          control = list(adapt_delta = 0.99,
+                                         max_treedepth = 20))
+save(dyn.grp.2c.dag, file = here(fit.dir, "hbm_dyn_grp_2c_dag.Rdata"))
+
+### --- Dynamic model: Data
+
+# Stock-specific dataframe
+probs <- c(0.025, 0.50, 0.975)
+summ <- rstan::summary(dyn.grp.2c.dag, pars = c("gamma", "kappa"), probs = probs)[[1]]
+df.dyn.reg.2c <- data.frame(Ocean.Region2 = unique((data_dyn[,c("Ocean.Region2", "BY")]))$Ocean.Region2,
+                            BY = unique((data_dyn[,c("Ocean.Region2", "BY")]))$BY,
+                            mu = summ[, "mean"],
+                            se = summ[, "se_mean"],
+                            lower = summ[, "2.5%"],
+                            upper = summ[ , "97.5%"],
+                            var = str_extract(rownames(summ), "[a-z]+"),
+                            varnam = case_when(grepl("^gamma", rownames(summ)) ~ "SST",
+                                               grepl("^kappa", rownames(summ)) ~ "Competitors")
+)
+df.dyn.reg.2c <- ocean_region_lab(df.dyn.reg.2c)
+
+## Another run with Fraser stocks only:
+
+stan.dat.2c.fr <- stan_data_dyn(mvrw.dat, 
+                             var.x2 = "early_sst_stnd",
+                             var.x3 = "np_pinks_sec_stnd",
+                             breakpoint1 = 1989,
+                             breakpoint2 = 2011,
+                             var.region="Ocean.Region2", 
+                             scale.x1 = TRUE,
+                             alpha.group = ifelse(speciesFlag=="sockeye", TRUE, FALSE))
+
+dyn.grp.2c.dag.fr <- rstan::stan(file = "./stan/hbm_dyn_2c_shared_dag.stan",
+                              data = stan.dat.2c.fr,
+                              pars = c(pars_dyn_2c, pars.gen.quant),
+                              warmup = 1000,
+                              iter = 4000, # try more iterations to fix Rhat & Neff
+                              cores = 4,
+                              chains = 4,
+                              seed = 123,
+                              control = list(adapt_delta = 0.99,
+                                             max_treedepth = 20))
+save(dyn.grp.2c.dag.fr, file = here(fit.dir, "hbm_dyn_grp_2c_dag_fr.Rdata"))
+
+
+### --- Dynamic model: Figures 
+
+# Grouped gamma timeseries : 2-covar
+df.dyn.reg.2c %>% filter(Ocean.Region2=="WC") %>% ggplot() +
+  geom_line(aes(x=BY, y=mu, col=ocean_region_lab), linewidth=1) + 
+  geom_ribbon(aes(x=BY, y=mu, ymin=lower, ymax=upper, fill=ocean_region_lab), alpha=0.2) +
+  hline_0() + 
+  facet_grid(rows=vars(ocean_region_lab), cols=vars(varnam)) + 
+  ylim(c(-1.5,1)) + 
+  scale_colour_manual(values=col.region, aesthetics=c("colour", "fill")) +
+  theme_sleek() + theme(legend.position="none") + labs(y="Effect size", x="Brood Year")
+
+
+
 ## -- Run the SHARED RW model with 1 covariate to test -------------------------------------
 
 # filter out short timeseries
@@ -612,3 +701,5 @@ ggplot(rw4.df) + geom_line(aes(BY, mu_kt, group=Stock, colour=from_data), alpha=
   theme_sleek() + labs(x="Brood Year", y="Effect size", title="Competitors") +
   theme(legend.position="none",
         plot.title = element_text(hjust=0.5))
+
+
