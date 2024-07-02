@@ -16,6 +16,7 @@
 data {
     int<lower=0> N;                      // total number of years
     int<lower=0> n_series;               // number of time series
+	int<lower=0> n_years;               // number of brood cohort years overall all time series
     int<lower=0> Ng_groups;              // number of gamma groups
     int<lower=0> Na_groups;              // number of alpha groups
     int<lower=0> a_group[n_series];      // alpha grouping factor
@@ -41,22 +42,22 @@ parameters {
     real g0[Ng_groups];                   // gamma at t = 1
     real k0[Ng_groups];                   // kappa at t=1  
     real d_alpha[n_series];               // random alpha deviate
-    real d_gamma[Ng-1];                   // random gamma deviate
-    real d_kappa[Ng-1];                   // random kappa deviate
-    real<lower=0> sigma_gamma[Ng_groups]; // gamma SD
-    real<lower=0> sigma_kappa[Ng_groups]; // kappa SD
-    vector[n_series] d_gamma_i;	    // z-score for stock-specific gamma
-    vector<lower=0>[Ng_groups] sigma_gamma_i;  //stock-specific gamma SD (indexed by group)
-    vector[n_series] d_kappa_i;	    // z-score for stock-specific gamma
-    vector<lower=0>[Ng_groups] sigma_kappa_i;  //stock-specific gamma SD (indexed by group)
+    matrix[Ng,n_years-1] d_gamma;         // random gamma deviate matrix
+    matrix[Ng,n_years-1] d_kappa;         // random kappa deviate matrix
+    real<lower=0> sigma_gamma[Ng_groups]; // time-varying gamma SD
+    real<lower=0> sigma_kappa[Ng_groups]; // time-varying kappa SD
+    vector[n_series] d_gamma_i;	                // z-score for stock-specific time-invariant gamma
+    vector<lower=0>[Ng_groups] sigma_gamma_i;   //stock-specific gamma SD (indexed by group)
+    vector[n_series] d_kappa_i;	                // z-score for stock-specific time-invariant kappa
+    vector<lower=0>[Ng_groups] sigma_kappa_i;   //stock-specific gamma SD (indexed by group)
 }
 transformed parameters {
     real alpha[n_series];                 // series-specific intercept
     real yhat[N];                         // predicted values
     real epsilon[N];                      // residuals
     real<lower=0> sigma[n_series];        // residual SD (corrected for AR1)
-    real gamma[Ng];                       // 2nd covariate effect
-    real kappa[Ng];                       // 3rd covariate effect
+    matrix[Ng,n_years] gamma;                       // 2nd covariate effect - stratified by gamma group
+    matrix[Ng,n_years] kappa;                       // 3rd covariate effect - stratified by gamma group
     real tmp_epsilon;                     // temporary var to avoid deep copy
     real tmp_gamma;                       // temporary var to avoid deep copy
     real tmp_kappa;                       // temporary var to avoid deep copy
@@ -67,13 +68,13 @@ transformed parameters {
 	kappa_i = sigma_kappa_i[a_group].*d_kappa_i;
 	
 	for(j in 1:Ng_groups) {
-        gamma[g_start[j]] = g0[j];
-        kappa[g_start[j]] = k0[j];
-        for(t in (g_start[j]+1):g_end[j]) {
-            tmp_gamma = gamma[t-1];
-            gamma[t] = tmp_gamma + sigma_gamma[j] * d_gamma[t-1];
-            tmp_kappa = kappa[t-1];
-            kappa[t] = tmp_kappa + sigma_kappa[j] * d_kappa[t-1];
+        gamma[j,1] = g0[j];
+        kappa[j,1] = k0[j];
+        for(t in 2:n_years) {
+            tmp_gamma = gamma[j,t-1];
+            gamma[j,t] = tmp_gamma + sigma_gamma[j] * d_gamma[j,t-1];
+            tmp_kappa = kappa[j,t-1];
+            kappa[j,t] = tmp_kappa + sigma_kappa[j] * d_kappa[j,t-1];
         }
     }
 
@@ -81,13 +82,17 @@ transformed parameters {
         alpha[i] = mu_alpha[a_group[i]] + sigma_alpha[a_group[i]] * d_alpha[i];
 
         // first data point in series
-        yhat[y_start[i]] = alpha[i] + beta[i] * x1[y_start[i]]+ gamma_i[i]*x2[y_start[i]] + gamma[year[y_start[i]]] * x2[y_start[i]]+ kappa_i[i]*x3[y_start[i]] +  kappa[year[y_start[i]]] * x3[y_start[i]];
+        yhat[y_start[i]] = alpha[i] + beta[i] * x1[y_start[i]]+ gamma_i[i]*x2[y_start[i]] + gamma[g_group[i],year[y_start[i]]] * x2[y_start[i]]+ kappa_i[i]*x3[y_start[i]] +  kappa[g_group[i],year[y_start[i]]] * x3[y_start[i]];
         epsilon[y_start[i]] = y[y_start[i]] - yhat[y_start[i]];
 
         for(t in (y_start[i]+1):y_end[i]) {
             tmp_epsilon = epsilon[t-1];
+
             yhat[t] = alpha[i] + beta[i] * x1[t]+ gamma_i[i]*x2[t] + gamma[year[t]] * x2[t]+ kappa_i[i]*x3[t] + kappa[year[t]] * x3[t] + phi * tmp_epsilon;
             epsilon[t] = y[t] - (yhat[t] - (phi * tmp_epsilon));
+
+            yhat[t] = alpha[i] + beta[i] * x1[t]+ gamma_i[i]*x2[t] + gamma[g_group[i],year[t]] * x2[t]+ kappa_i[i]*x3[t] + kappa[g_group[i],year[t]] * x3[t] + (phi^(year[t]-year[t-1]))*tmp_epsilon;
+            epsilon[t] = y[t] - (yhat[t] - ((phi^(year[t]-year[t-1])) * tmp_epsilon));
         }
 
         // AR1 impacts variance: sigma^2 = sigmaNC^2 * (1 - phi^2)
@@ -100,8 +105,8 @@ model {
     sigma_alpha ~ student_t(3, 0, 3);
     phi ~ normal(0, 1);
     g0 ~ normal(0, 3);
-    d_gamma ~ normal(0, 1);
-    d_kappa ~ normal(0,1);
+    to_vector(d_gamma) ~ normal(0, 1);
+    to_vector(d_kappa) ~ normal(0,1);
 	d_gamma_i ~ normal(0, 1);
 	d_kappa_i ~ normal(0, 1);
 	
