@@ -41,8 +41,8 @@ parameters {
     real g0[Ng_groups];                   // gamma at t = 1
     real k0[Ng_groups];                   // kappa at t=1  
     real d_alpha[n_series];               // random alpha deviate
-    matrix[Ng,n_years-1] d_gamma;         // random gamma deviate matrix
-    matrix[Ng,n_years-1] d_kappa;         // random kappa deviate matrix
+    matrix[Ng_groups,Ng-1] d_gamma;         // random gamma deviate matrix
+    matrix[Ng_groups,Ng-1] d_kappa;         // random kappa deviate matrix
     real<lower=0> sigma_gamma[Ng_groups]; // time-varying gamma SD
     real<lower=0> sigma_kappa[Ng_groups]; // time-varying kappa SD
     vector[n_series] d_gamma_i;	                // z-score for stock-specific time-invariant gamma
