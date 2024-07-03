@@ -16,7 +16,6 @@
 data {
     int<lower=0> N;                      // total number of years
     int<lower=0> n_series;               // number of time series
-	int<lower=0> n_years;               // number of brood cohort years overall all time series
     int<lower=0> Ng_groups;              // number of gamma groups
     int<lower=0> Na_groups;              // number of alpha groups
     int<lower=0> a_group[n_series];      // alpha grouping factor
@@ -56,8 +55,8 @@ transformed parameters {
     real yhat[N];                         // predicted values
     real epsilon[N];                      // residuals
     real<lower=0> sigma[n_series];        // residual SD (corrected for AR1)
-    matrix[Ng,n_years] gamma;                       // 2nd covariate effect - stratified by gamma group
-    matrix[Ng,n_years] kappa;                       // 3rd covariate effect - stratified by gamma group
+    matrix[Ng_groups,Ng] gamma;                       // 2nd covariate effect - stratified by gamma group
+    matrix[Ng_groups,Ng] kappa;                       // 3rd covariate effect - stratified by gamma group
     real tmp_epsilon;                     // temporary var to avoid deep copy
     real tmp_gamma;                       // temporary var to avoid deep copy
     real tmp_kappa;                       // temporary var to avoid deep copy
