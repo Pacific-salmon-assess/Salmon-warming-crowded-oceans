@@ -16,7 +16,7 @@
 data {
     int<lower=0> N;                      // total number of years
     int<lower=0> n_series;               // number of time series
-    int<lower=0> Ng_groups;              // number of gamma groups
+	int<lower=0> Ng_groups;              // number of gamma groups
     int<lower=0> Na_groups;              // number of alpha groups
     int<lower=0> a_group[n_series];      // alpha grouping factor
     int<lower=0> g_group[n_series];      // gamma/kappa grouping factor
@@ -63,13 +63,13 @@ transformed parameters {
     vector[n_series] gamma_i;                 // series-specific time-invariant covariate
     vector[n_series] kappa_i;                 // series-specific time-invariant covariate
     
-	gamma_i = sigma_gamma_i[a_group].*d_gamma_i;
-	kappa_i = sigma_kappa_i[a_group].*d_kappa_i;
+	gamma_i = sigma_gamma_i[g_group].*d_gamma_i;
+	kappa_i = sigma_kappa_i[g_group].*d_kappa_i;
 	
 	for(j in 1:Ng_groups) {
         gamma[j,1] = g0[j];
         kappa[j,1] = k0[j];
-        for(t in 2:n_years) {
+        for(t in 2:Ng) {
             tmp_gamma = gamma[j,t-1];
             gamma[j,t] = tmp_gamma + sigma_gamma[j] * d_gamma[j,t-1];
             tmp_kappa = kappa[j,t-1];
@@ -82,15 +82,14 @@ transformed parameters {
 
         // first data point in series
         yhat[y_start[i]] = alpha[i] + beta[i] * x1[y_start[i]]+ gamma_i[i]*x2[y_start[i]] + gamma[g_group[i],year[y_start[i]]] * x2[y_start[i]]+ kappa_i[i]*x3[y_start[i]] +  kappa[g_group[i],year[y_start[i]]] * x3[y_start[i]];
+		
         epsilon[y_start[i]] = y[y_start[i]] - yhat[y_start[i]];
 
         for(t in (y_start[i]+1):y_end[i]) {
             tmp_epsilon = epsilon[t-1];
-
-            yhat[t] = alpha[i] + beta[i] * x1[t]+ gamma_i[i]*x2[t] + gamma[year[t]] * x2[t]+ kappa_i[i]*x3[t] + kappa[year[t]] * x3[t] + phi * tmp_epsilon;
-            epsilon[t] = y[t] - (yhat[t] - (phi * tmp_epsilon));
-
+			
             yhat[t] = alpha[i] + beta[i] * x1[t]+ gamma_i[i]*x2[t] + gamma[g_group[i],year[t]] * x2[t]+ kappa_i[i]*x3[t] + kappa[g_group[i],year[t]] * x3[t] + (phi^(year[t]-year[t-1]))*tmp_epsilon;
+			
             epsilon[t] = y[t] - (yhat[t] - ((phi^(year[t]-year[t-1])) * tmp_epsilon));
         }
 
@@ -104,9 +103,11 @@ model {
     sigma_alpha ~ student_t(3, 0, 3);
     phi ~ normal(0, 1);
     g0 ~ normal(0, 3);
-    to_vector(d_gamma) ~ normal(0, 1);
-    to_vector(d_kappa) ~ normal(0,1);
-	d_gamma_i ~ normal(0, 1);
+	for(g in 1:Ng_groups){
+	to_vector(d_gamma[g,]) ~ normal(0, 1);
+    to_vector(d_kappa[g,]) ~ normal(0,1);
+	}
+    d_gamma_i ~ normal(0, 1);
 	d_kappa_i ~ normal(0, 1);
 	
     sigma_gamma ~ student_t(3, 0, 0.5);
