@@ -45,6 +45,10 @@ start.end.grp.vec <- unlist(lapply(seq_along(start.end.grp.lst),
                                    function(x) rep(x, length(start.end.grp.lst[[x]]))))
 start.end.grp <- levels_start_end(as.factor(start.end.grp.vec))
 
+smax_priors=rw.dat %>% group_by(Stock.ID) %>%summarise(stock=Stock,maxS=max(S))
+smax_priors=distinct(smax_priors,Stock.ID,.keep_all=T)
+
+
 stan.dat.rw2a <- list(N = nrow(rw.dat), # total observations
                       n_series = n_distinct(rw.dat$Stock.ID), # no. of series
                       n_years = max(rw.dat$BY) - min(rw.dat$BY) +1, # max span of years
@@ -64,7 +68,9 @@ stan.dat.rw2a <- list(N = nrow(rw.dat), # total observations
                       x2 = rw.dat$early_sst_stnd,
                       x3 = rw.dat$np_pinks_sec_stnd,
                       y = rw.dat$lnRS,
-                      priors_only = 0 )
+                      priors_only = 0, 
+                      pSmax_mean = 0.5*smax_priors$maxS,
+                      pSmax_sig = 0.5*smax_priors$maxS)
 
 # Alternative way to get data 
 #stan.dat.rw2a <- stan_data_dyn(sock, var.x2 = "early_sst_stnd", var.x3 = "np_pinks_sec_stnd",breakpoint1 = 1989,breakpoint2 = 2011, var.region="Ocean.Region2", scale.x1 = TRUE, alpha.group = FALSE)
@@ -72,8 +78,9 @@ stan.dat.rw2a <- list(N = nrow(rw.dat), # total observations
 # Run
 rw_2a <- rstan::stan(file = "./stan/hbm_dyn_2c_shared_dag.stan",
             data = stan.dat.rw2a,
-            warmup = 1000,
-            iter = 3000, 
+            warmup = 200,
+            init=0,
+            iter = 800, 
             cores = 4,
             chains = 4,
             seed = 123,
