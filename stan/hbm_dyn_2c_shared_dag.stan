@@ -31,12 +31,23 @@ data {
     real x3[N];                          // 3rd covariate
     real y[N];                           // response
     int priors_only;                     // should likelihood be ignored?
+	vector[n_series] pSmax_mean; //priors on smax - based on observed spawner abundance
+    vector[n_series] pSmax_sig; //priors on sigma for smax - based on observed spawner abundance
+}
+transformed data{
+vector[n_series] logbeta_pr;
+vector[n_series] logbeta_pr_sig;
+
+for(t in 1:n_series){
+logbeta_pr_sig[t]=sqrt(log(1+((1/pSmax_sig[t])*(1/pSmax_sig[t]))/((1/pSmax_mean[t])*(1/pSmax_mean[t])))); //this converts sigma on the untransformed scale to a log scale
+logbeta_pr[t]=log(1/pSmax_mean[t])-0.5*logbeta_pr_sig[t]*logbeta_pr_sig[t]; //convert smax prior to per capita slope - transform to log scale with bias correction
+}
 }
 parameters {
     real mu_alpha[Na_groups];             // population-level intercept
     real<lower=0> sigma_alpha[Na_groups]; // population-level intercept SD
-    real beta[n_series];                  // slopes for 1st covariate
-    real<lower=-1, upper=1> phi;          // autocorrelation parameter
+    real log_beta[n_series];                  // slopes for 1st covariate
+    vector<lower=-1, upper=1>[n_series] phi;          // autocorrelation parameter
     real<lower=0> sigmaNC[n_series];      // residual SD (not corrected for AR1)
     real g0[Ng_groups];                   // gamma at t = 1
     real k0[Ng_groups];                   // kappa at t=1  
@@ -62,7 +73,9 @@ transformed parameters {
     real tmp_kappa;                       // temporary var to avoid deep copy
     vector[n_series] gamma_i;                 // series-specific time-invariant covariate
     vector[n_series] kappa_i;                 // series-specific time-invariant covariate
-    
+    vector[n_series]  beta;
+	
+	
 	gamma_i = sigma_gamma_i[g_group].*d_gamma_i;
 	kappa_i = sigma_kappa_i[g_group].*d_kappa_i;
 	
@@ -78,6 +91,7 @@ transformed parameters {
     }
 
     for(i in 1:n_series) {
+	    beta[i]=exp(log_beta[i]);
         alpha[i] = mu_alpha[a_group[i]] + sigma_alpha[a_group[i]] * d_alpha[i];
 
         // first data point in series
@@ -88,20 +102,20 @@ transformed parameters {
         for(t in (y_start[i]+1):y_end[i]) {
             tmp_epsilon = epsilon[t-1];
 			
-            yhat[t] = alpha[i] + beta[i] * x1[t]+ gamma_i[i]*x2[t] + gamma[g_group[i],year[t]] * x2[t]+ kappa_i[i]*x3[t] + kappa[g_group[i],year[t]] * x3[t] + (phi^(year[t]-year[t-1]))*tmp_epsilon;
+            yhat[t] = alpha[i] + beta[i] * x1[t]+ gamma_i[i]*x2[t] + gamma[g_group[i],year[t]] * x2[t]+ kappa_i[i]*x3[t] + kappa[g_group[i],year[t]] * x3[t] + (phi[i]^(year[t]-year[t-1]))*tmp_epsilon;
 			
-            epsilon[t] = y[t] - (yhat[t] - ((phi^(year[t]-year[t-1])) * tmp_epsilon));
+            epsilon[t] = y[t] - (yhat[t] - ((phi[i]^(year[t]-year[t-1])) * tmp_epsilon));
         }
 
         // AR1 impacts variance: sigma^2 = sigmaNC^2 * (1 - phi^2)
-        sigma[i] = sqrt(sigmaNC[i] * sigmaNC[i] * (1 - phi * phi));
+        sigma[i] = sqrt(sigmaNC[i] * sigmaNC[i] * (1 - phi[i] * phi[i]));
     }
 }
 model {
     // priors: population-level
     mu_alpha ~ normal(1, 5);
     sigma_alpha ~ student_t(3, 0, 3);
-    phi ~ normal(0, 1);
+    phi ~ uniform(-1,1);
     g0 ~ normal(0, 3);
     k0 ~ normal(0, 3);
 	for(g in 1:Ng_groups){
@@ -111,14 +125,14 @@ model {
     d_gamma_i ~ normal(0, 1);
 	  d_kappa_i ~ normal(0, 1);
 	
-    sigma_gamma ~ student_t(3, 0, 0.5);
-    sigma_kappa ~ student_t(3, 0, 0.5);
-	  sigma_kappa_i ~ student_t(3, 0, 0.5);
-	  sigma_gamma_i ~ student_t(3, 0, 0.5);
+    sigma_gamma ~ normal(0,1);
+    sigma_kappa ~ normal(0,1);
+	  sigma_kappa_i ~ normal(0,1);
+	  sigma_gamma_i ~ normal(0,1);
 
     // priors: series-specific
-    sigmaNC ~ student_t(3, 0, 3);
-    beta ~ normal(0, 5);
+    sigmaNC ~ normal(0.5,1);
+    log_beta ~ normal(logbeta_pr, logbeta_pr_sig);
     d_alpha ~ normal(0, 1);
 
     // likelihood
@@ -131,8 +145,6 @@ model {
 generated quantities {
     real log_lik[N];                      // log-likelihood
     real yrep[N];                         // replicated datasets
-    real signal_noise_g[n_series];          // signal-to-noise ratio
-    real signal_noise_k[n_series];
     for(i in 1:n_series) {
         for(t in y_start[i]:y_end[i]) {
             log_lik[t] = normal_lpdf(y[t] | yhat[t], sigma[i]);
@@ -140,11 +152,6 @@ generated quantities {
         }
     }
 
-    for(j in 1:Ng_groups) {
-        for(i in 1:n_series) {
-            signal_noise_g[i] = sigma_gamma[j] / sigma[i];
-            signal_noise_k[i] = sigma_kappa[j] / sigma[i];
-        }
-    }
+  
 }
 
