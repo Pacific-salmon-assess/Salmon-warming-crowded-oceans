@@ -47,7 +47,7 @@ parameters {
     real mu_alpha[Na_groups];             // population-level intercept
     real<lower=0> sigma_alpha[Na_groups]; // population-level intercept SD
     real log_beta[n_series];                  // slopes for 1st covariate
-    real<lower=-1, upper=1> phi;          // autocorrelation parameter
+    vector<lower=-1, upper=1>[n_series] phi;          // autocorrelation parameter
     real<lower=0> sigmaNC[n_series];      // residual SD (not corrected for AR1)
     real g0[Ng_groups];                   // gamma at t = 1
     real k0[Ng_groups];                   // kappa at t=1  
@@ -102,20 +102,20 @@ transformed parameters {
         for(t in (y_start[i]+1):y_end[i]) {
             tmp_epsilon = epsilon[t-1];
 			
-            yhat[t] = alpha[i] + beta[i] * x1[t]+ gamma_i[i]*x2[t] + gamma[g_group[i],year[t]] * x2[t]+ kappa_i[i]*x3[t] + kappa[g_group[i],year[t]] * x3[t] + (phi^(year[t]-year[t-1]))*tmp_epsilon;
+            yhat[t] = alpha[i] + beta[i] * x1[t]+ gamma_i[i]*x2[t] + gamma[g_group[i],year[t]] * x2[t]+ kappa_i[i]*x3[t] + kappa[g_group[i],year[t]] * x3[t] + (phi[i]^(year[t]-year[t-1]))*tmp_epsilon;
 			
-            epsilon[t] = y[t] - (yhat[t] - ((phi^(year[t]-year[t-1])) * tmp_epsilon));
+            epsilon[t] = y[t] - (yhat[t] - ((phi[i]^(year[t]-year[t-1])) * tmp_epsilon));
         }
 
         // AR1 impacts variance: sigma^2 = sigmaNC^2 * (1 - phi^2)
-        sigma[i] = sqrt(sigmaNC[i] * sigmaNC[i] * (1 - phi * phi));
+        sigma[i] = sqrt(sigmaNC[i] * sigmaNC[i] * (1 - phi[i] * phi[i]));
     }
 }
 model {
     // priors: population-level
     mu_alpha ~ normal(1, 5);
     sigma_alpha ~ student_t(3, 0, 3);
-    phi ~ normal(0, 1);
+    phi ~ uniform(-1,1);
     g0 ~ normal(0, 3);
     k0 ~ normal(0, 3);
 	for(g in 1:Ng_groups){
