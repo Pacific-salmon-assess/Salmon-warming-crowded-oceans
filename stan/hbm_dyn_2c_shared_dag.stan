@@ -31,16 +31,16 @@ data {
     real x3[N];                          // 3rd covariate
     real y[N];                           // response
     int priors_only;                     // should likelihood be ignored?
-	vector[n_series] pSmax_mean; //priors on smax - based on observed spawner abundance
+	  vector[n_series] pSmax_mean; //priors on smax - based on observed spawner abundance
     vector[n_series] pSmax_sig; //priors on sigma for smax - based on observed spawner abundance
 }
 transformed data{
-vector[n_series] logbeta_pr;
-vector[n_series] logbeta_pr_sig;
-
-for(t in 1:n_series){
-logbeta_pr_sig[t]=sqrt(log(1+((1/pSmax_sig[t])*(1/pSmax_sig[t]))/((1/pSmax_mean[t])*(1/pSmax_mean[t])))); //this converts sigma on the untransformed scale to a log scale
-logbeta_pr[t]=log(1/pSmax_mean[t])-0.5*logbeta_pr_sig[t]*logbeta_pr_sig[t]; //convert smax prior to per capita slope - transform to log scale with bias correction
+  vector[n_series] logbeta_pr;
+  vector[n_series] logbeta_pr_sig;
+  
+  for(t in 1:n_series){
+    logbeta_pr_sig[t]=sqrt(log(1+((1/pSmax_sig[t])*(1/pSmax_sig[t]))/((1/pSmax_mean[t])*(1/pSmax_mean[t])))); //this converts sigma on the untransformed scale to a log scale
+    logbeta_pr[t]=log(1/pSmax_mean[t])-0.5*logbeta_pr_sig[t]*logbeta_pr_sig[t]; //convert smax prior to per capita slope - transform to log scale with bias correction
 }
 }
 parameters {
@@ -92,7 +92,7 @@ transformed parameters {
 
     for(i in 1:n_series) {
 	    beta[i]=exp(log_beta[i]);
-        alpha[i] = mu_alpha[a_group[i]] + sigma_alpha[a_group[i]] * d_alpha[i];
+      alpha[i] = mu_alpha[a_group[i]] + sigma_alpha[a_group[i]] * d_alpha[i];
 
         // first data point in series
         yhat[y_start[i]] = alpha[i] + beta[i] * x1[y_start[i]]+ gamma_i[i]*x2[y_start[i]] + gamma[g_group[i],year[y_start[i]]] * x2[y_start[i]]+ kappa_i[i]*x3[y_start[i]] +  kappa[g_group[i],year[y_start[i]]] * x3[y_start[i]];
