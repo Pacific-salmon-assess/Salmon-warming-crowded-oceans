@@ -3,10 +3,10 @@
 
 
 # -- Load packages
+library(ggplot2)
 library(dplyr)
 library(rstan)
 library(here)
-library(ggplot2)
 
 # Define a data wrangling function:
  levels_start_end <- function(factor) {
@@ -29,7 +29,7 @@ library(ggplot2)
 
  
 # -- Get (sockeye) data 
-all.sock <- read.csv(here('data', 'sockeye', 'master_sockeye_brood_table_covar.csv'))
+all.sock <- read.csv(here::here('data', 'sockeye', 'master_sockeye_brood_table_covar.csv'))
 sample.ids <- 10:28 # fit to 19 fraser stocks 
 rw.dat <- filter(all.sock, Stock.ID %in% sample.ids) # make rw.dat dataframe
  
@@ -45,9 +45,7 @@ start.end.grp.vec <- unlist(lapply(seq_along(start.end.grp.lst),
                                    function(x) rep(x, length(start.end.grp.lst[[x]]))))
 start.end.grp <- levels_start_end(as.factor(start.end.grp.vec))
 
-smax_priors=rw.dat %>% group_by(Stock.ID) %>%summarise(stock=Stock,maxS=max(S))
-smax_priors=distinct(smax_priors,Stock.ID,.keep_all=T)
-
+smax_priors <- rw.dat %>% group_by(Stock.ID) %>% dplyr::summarize(stock=unique(Stock),maxS=max(S))
 
 stan.dat.rw2a <- list(N = nrow(rw.dat), # total observations
                       n_series = n_distinct(rw.dat$Stock.ID), # no. of series
@@ -78,15 +76,15 @@ stan.dat.rw2a <- list(N = nrow(rw.dat), # total observations
 # Run
 rw_2a <- rstan::stan(file = "./stan/hbm_dyn_2c_shared_dag.stan",
             data = stan.dat.rw2a,
-            warmup = 200,
+            warmup = 1000,
             init=0,
-            iter = 800, 
+            iter = 3000, 
             cores = 4,
             chains = 4,
             seed = 123,
             control = list(adapt_delta = 0.9, 
-                           max_treedepth = 20)) # increasing treedepth didn't work?
-save(rw_2a, file = here('output', 'models', 'dyn', 'sockeye', 'rw-model-compare', paste0('rw_2a_', Sys.Date(), '.RData')))
+                           max_treedepth = 20))
+save(rw_2a, file = here::here('output', 'models', 'dyn', 'sockeye', 'rw-model-compare', paste0('rw_2a_', Sys.Date(), '.RData')))
 
 # Diagnostics
 rstan::check_hmc_diagnostics(rw_2a)
@@ -112,9 +110,67 @@ rw.2a.dat <- rbind(rw.2a.dat, data.frame(BY = NA,
 # Plot gamma & kappa time series
 ggplot(rw.2a.dat) +
   geom_line(aes(x=BY, y=mu), col = "navyblue", linewidth=1) + 
-  geom_ribbon(aes(x=BY, y=mu, ymin=lower, ymax=upper), fill="lightblue4", alpha=0.2) +
-  #geom_hline(data=rw.2a.dat[!is.na(rw.2a.dat$Stock)], aes(yintercept=mu)) + 
+  geom_ribbon(aes(x=BY, y=mu, ymin=lower, ymax=upper), fill="navyblue", alpha=0.2) +
+  geom_hline(data=rw.2a.dat[!is.na(rw.2a.dat$stock),], aes(yintercept=mu), col="grey40") + 
   facet_wrap(vars(var)) + 
-  #ylim(-5,5) + 
+  ylim(-2,1.2) + 
+  theme_minimal() + labs(x="brood year", y="covar coefficient est.")
+
+
+
+## -- Model '5a' - grouped RW with stock-specific deviances
+
+# get stan data
+stan.dat.rw5a <- stan.dat.rw2a
+stan.dat.rw5a$priors_only = 0
+
+# run
+rw_5a <- rstan::stan(file="./stan/hbm_dyn_2c_shared_tvraneff_dag.stan",
+                     data = stan.dat.rw5a,
+                     warmup = 100,
+                     iter = 300,
+                     cores = 1,
+                     chains = 1,
+                     seed = 123,
+                     control = list(adapt_delta = 0.9,
+                                    max_treedepth = 20))
+#save(rw_5a, file = here::here('output', 'models', 'dyn', 'sockeye', 'rw-model-compare', paste0('rw_5a_', Sys.Date(), '.RData')))
+
+
+# Diagnostics
+rstan::check_hmc_diagnostics(rw_5a)
+ppc.y <- stan.dat.rw5a$y
+ppc.yrep <- rstan::extract(rw_5a)$yrep
+#shinystan::launch_shinystan(rw_5a)
+mcmc_pairs(rw_5a, pars=c(paste0("d_gamma_it[1,", 1:4, "]"), paste0("sigma_gamma_it[", 10:14, "]")))
+ppc_hist(ppc.y, ppc.yrep[1:10,]) + xlim(-100,100)
+ppc_dens_overlay(ppc.y, ppc.yrep[1:100,]) + xlim(-100,100)
+
+
+# Extract gammas/kappas
+probs <- c(0.025, 0.975)
+summ.g <- rstan::summary(rw_5a, pars = c("gamma", "kappa"), probs = probs)[[1]]
+summ.g.i <- rstan::summary(rw_5a, pars=c("gamma_it", "kappa_it"), probs=probs)[[1]]
+rw.5a.dat <- data.frame(BY = unique((rw.dat[,c("Ocean.Region2", "BY")]))$BY,
+                        mu = summ.g[, "mean"],
+                        lower = summ.g[, "2.5%"],
+                        upper = summ.g[ , "97.5%"],
+                        var = sub("\\[.*", "", rownames(summ.g)),
+                        stock = NA)
+rw.5a.dat <- rbind(rw.5a.dat, data.frame(BY = rep(min(rw.dat$BY):max(rw.dat$BY),19*2),
+                                         mu = summ.g.i[, "mean"],
+                                         lower = summ.g.i[, "2.5%"],
+                                         upper = summ.g.i[ , "97.5%"],
+                                         var = sub("_.*", "", rownames(summ.g.i)) ,
+                                         stock = rep(unique(rw.dat$Stock), each=66)
+))
+
+# Plot gamma & kappa time series
+ggplot(rw.5a.dat[is.na(rw.5a.dat$stock),]) +
+  geom_line(aes(x=BY, y=mu), col = "navyblue", linewidth=1) + 
+  geom_line(data=rw.5a.dat[!is.na(rw.5a.dat$stock),], aes(x=BY, y=mu, group=stock), col="grey40") + 
+  geom_ribbon(aes(x=BY, y=mu, ymin=lower, ymax=upper), fill="navyblue", alpha=0.2) +
+  facet_wrap(vars(var)) + 
+  ylim(-2,1.2) + 
   theme_minimal() + labs(x="brood year", y="covar coefficient est.")
 
