@@ -93,13 +93,13 @@ rstan::check_hmc_diagnostics(rw_2a)
 probs <- c(0.025, 0.975)
 summ.g <- rstan::summary(rw_2a, pars = c("gamma", "kappa"), probs = probs)[[1]]
 summ.g.i <- rstan::summary(rw_2a, pars=c("gamma_i", "kappa_i"), probs=probs)[[1]]
-rw.2a.dat <- data.frame(BY = unique((rw.dat[,c("Ocean.Region2", "BY")]))$BY,
+rw.2a.dat.r <- data.frame(BY = unique((rw.dat[,c("Ocean.Region2", "BY")]))$BY,
                         mu = summ.g[, "mean"],
                         lower = summ.g[, "2.5%"],
                         upper = summ.g[ , "97.5%"],
                         var = sub("\\[.*", "", rownames(summ.g)),
                         stock = NA)
-rw.2a.dat <- rbind(rw.2a.dat, data.frame(BY = NA,
+rw.2a.dat <- rbind(rw.2a.dat.r, data.frame(BY = NA,
                                          mu = summ.g.i[, "mean"],
                                          lower = summ.g.i[, "2.5%"],
                                          upper = summ.g.i[ , "97.5%"],
@@ -149,15 +149,15 @@ ppc_dens_overlay(ppc.y, ppc.yrep[1:100,]) + xlim(-100,100)
 
 # Extract gammas/kappas
 probs <- c(0.025, 0.975)
-summ.g <- rstan::summary(rw_5a, pars = c("gamma", "kappa"), probs = probs)[[1]]
+summ.g <- rstan::summary(rw_5a, pars = c("gamma", "kappa", "mu_alpha"), probs = probs)[[1]]
 summ.g.i <- rstan::summary(rw_5a, pars=c("gamma_it", "kappa_it"), probs=probs)[[1]]
-rw.5a.dat <- data.frame(BY = unique((rw.dat[,c("Ocean.Region2", "BY")]))$BY,
+rw.5a.dat.r <- data.frame(BY = unique((rw.dat[,c("Ocean.Region2", "BY")]))$BY,
                         mu = summ.g[, "mean"],
                         lower = summ.g[, "2.5%"],
                         upper = summ.g[ , "97.5%"],
                         var = sub("\\[.*", "", rownames(summ.g)),
                         stock = NA)
-rw.5a.dat <- rbind(rw.5a.dat, data.frame(BY = rep(min(rw.dat$BY):max(rw.dat$BY),19*2),
+rw.5a.dat <- rbind(rw.5a.dat.r, data.frame(BY = rep(min(rw.dat$BY):max(rw.dat$BY),19*2),
                                          mu = summ.g.i[, "mean"],
                                          lower = summ.g.i[, "2.5%"],
                                          upper = summ.g.i[ , "97.5%"],
@@ -173,4 +173,55 @@ ggplot(rw.5a.dat[is.na(rw.5a.dat$stock),]) +
   facet_wrap(vars(var)) + 
   ylim(-2,1.2) + 
   theme_minimal() + labs(x="brood year", y="covar coefficient est.")
+
+
+## -- Multivariate model 
+
+load(here::here('output', 'models', 'dyn', 'sockeye', 'mvrw_fraser.RData'), verbose=T)
+
+# Get data
+probs <- c(0.025, 0.975)
+summ <- rstan::summary(mvrw.fr, pars=c("gamma_t_m", "kappa_t_m"), probs=probs)$summary
+mvrw.out <- data.frame(BY = unique(mvrw.dat$BY),
+                       mu = summ[, "mean"],
+                       lower = summ[, "2.5%"],
+                       upper = summ[, "97.5%"],
+                       var = sub("_.*", "", rownames(summ)),
+                       stock = NA)
+
+
+
+## -- Independent ('original') model
+load(here::here('output', 'models', 'dyn', 'sockeye', 'hbm_dyn_2c_sub.RData'), verbose=T)
+
+# Get data
+probs <- c(0.025, 0.975)
+summ <- rstan::summary(dyn.2c.sub, pars = c("gamma", "kappa"), probs = probs)[[1]]
+ind.rw.out <- data.frame(BY = sock$BY,
+                           mu = summ[, "mean"],
+                           lower = summ[, "2.5%"],
+                           upper = summ[ , "97.5%"],
+                           var = sub("\\[.*", "", rownames(summ)),
+                           stock = sock$Stock
+                           )
+ind.rw.out <- ind.rw.out %>% filter(stock %in% rw.dat$Stock) %>% dplyr::summarize(mu = mean(mu, na.rm=T), lower=mean(lower, na.rm=T), upper=mean(upper, na.rm = T), .by=c(BY, var))
+
+
+## Compare models ------------------------------------------ ## 
+df_all <- bind_rows(rw.2a.dat.r, rw.5a.dat.r, mvrw.out, ind.rw.out, .id="model") 
+rownames(df_all) <- NULL
+df_all <- mutate(df_all, model=case_when(model==1 ~ "shared rw + stat. dev. (2a)",
+                                         model==2 ~ "shared rw + time-var dev. (5a)",
+                                         model==3 ~ "multivariate",
+                                         model==4 ~ "independent rw avg"))
+
+ggplot(df_all) + geom_line(aes(x=BY, y=mu, col=model), linewidth=.75, alpha=0.7) +
+  geom_ribbon(aes(x=BY, ymin=lower, ymax=upper, fill=model), alpha=0.1) +
+  geom_hline(yintercept=0, col="grey70") +
+  facet_wrap(vars(var)) + theme_sleek() 
+
+# Make comparison table
+
+# add alpha
+# add 
 
