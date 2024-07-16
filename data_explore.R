@@ -70,6 +70,24 @@ print(g)
 dev.off()
 
 
+## Avg prod x covar correlations FIRST-DIFFERENCED
+
+cor.stock.diff <- plyr::ddply(data_fill, .(Stock.ID), plyr::summarize,
+                        Ocean.Region2 = unique(Ocean.Region2),
+                        early_sst = cor(diff(lnRS), diff(early_sst), use = "pairwise.complete.obs"),
+                        np_pinks_sec = cor(diff(lnRS), diff(np_pinks_sec), use = "pairwise.complete.obs"))
+
+cor.stock.diff$Stock.ID <- NULL
+cor.stock.diff <- reshape2::melt(cor.stock.diff, id.vars = "Ocean.Region2")
+
+cor.ocean.diff <- plyr::ddply(cor.stock.diff, .(Ocean.Region2, variable), summarize,
+                         cor.avg = mean(value))
+barchart(cor.avg ~ variable, data = cor.ocean.diff, groups = Ocean.Region2,
+         origin = 0, par.settings = theme.mjm(),
+         auto.key = list(space = "right"),
+         ylab = "Average correlation",
+         main = "Across stock average correlation b/w first-differenced lnRS and covariate")
+
 
 ## Avg covar correlations ----------------------------------
 ## Plot the average cross correlation of the specified covariate indices. The
