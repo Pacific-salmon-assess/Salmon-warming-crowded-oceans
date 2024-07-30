@@ -88,11 +88,11 @@ model{
 }
 generated quantities{
 corr_matrix[J] Cor_J = multiply_lower_tri_self_transpose(Lcorr);
-vector[N] log_lik;
+//vector[N] log_lik;
 vector[L] gamma_t_m; //average gamma through time
 vector[L] kappa_t_m; // average kappa through time
 
-for(i in 1:N) log_lik[i] = normal_lpdf(R_S[i]|to_vector(g_t)[J_ii[i]] - S[i]*b, sigma[J_i[i]]);
+//for(i in 1:N) log_lik[i] = normal_lpdf(R_S[i]|to_vector(g_t)[J_ii[i]] - S[i]*b, sigma[J_i[i]]);
 for(t in 1:L) gamma_t_m[t]=sum(g_t[t,])/J; //arithmetic mean of g_t at each time-step
 for(t in 1:L) kappa_t_m[t]=sum(k_t[t,])/J; //arithmetic mean of k_t at each time-step
 }
