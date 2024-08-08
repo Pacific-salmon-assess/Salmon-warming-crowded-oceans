@@ -522,10 +522,10 @@ df.dyn.st.2c <- ocean_region_lab(df.dyn.st.2c)
 mvrw.dat <- filter(data_dyn, Stock.ID %in% 10:28)
 
 #stock-year index for model
-stock_year=expand.grid(unique(rw.dg.dat$Stock),unique(rw.dg.dat$BY))
+stock_year=expand.grid(unique(mvrw.dat$Stock),unique(mvrw.dat$BY))
 stock_year= stock_year[order(stock_year[,1]),]
 stock_year[,3]=paste(stock_year[,1],stock_year[,2],sep="_")
-mvrw.dat$stock_yr=match(paste(rw.dg.dat$Stock,rw.dg.dat$BY,sep='_'),stock_year[,3])
+mvrw.dat$stock_yr=match(paste(mvrw.dat$Stock,mvrw.dat$BY,sep='_'),stock_year[,3])
 # Make design matrices
 X_s=make_design_matrix(mvrw.dat$S, grp=mvrw.dat$Stock)
 X_x=make_design_matrix(mvrw.dat$early_sst_stnd, grp=mvrw.dat$Stock)
