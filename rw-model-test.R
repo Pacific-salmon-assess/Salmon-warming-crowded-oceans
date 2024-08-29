@@ -270,12 +270,83 @@ corr_ff <- lapply(corr_ff, function(cor){for(i in 1:nrow(cor)){cor[i,i] <- 0}
 png(here::here(rw.compare.dir, paste0('Lcorr_', Sys.Date(), '.png')), width=1300, height=739, res=195)
 par(mfrow=c(1,2))
 corrplot::corrplot(corr_ff$gamma, diag=FALSE, method='shade', is.corr=F, 
-                   col.lim = c(-0.2,0.2), title="gamma",
+                   col.lim = c(-0.2,0.4), title="gamma",
                    addCoef.col = 'black', tl.srt=0, tl.cex = 0.9, type='upper')
 corrplot::corrplot(corr_ff$kappa, diag=FALSE, method='shade', is.corr=F, 
-                   col.lim = c(-0.2,0.2), title="kappa",
+                   col.lim = c(-0.2,0.4), title="kappa",
                    addCoef.col = 'black', tl.srt=0, tl.cex = 0.9, type='upper')
 dev.off()
+
+
+#### 'Global' multivariate model ####
+
+
+all.sock <- sock %>% group_by(Ocean.Region2) %>% arrange(Stock, BY, by_group=T) # this line may not be necessary
+
+#stock-year index for model
+stk_yr <- ddply(all.sock, .(factor(Ocean.Region2, levels=unique(all.sock$Ocean.Region2))), function(x){
+  stock_year = expand.grid(unique(x$Stock),unique(x$BY))
+  stock_year = stock_year[order(stock_year[,2]),]
+  stock_year= stock_year[order(stock_year[,1]),] 
+  stock_year[,3] = paste(stock_year[,1],stock_year[,2],sep="_")
+  return(stock_year)
+})
+all.sock$stock_yr=match(paste(all.sock$Stock,all.sock$BY,sep='_'),stk_yr[,4])
+
+
+# Make design matrices
+X_s=make_design_matrix(all.sock$S, grp=all.sock$Stock)
+# smax priors
+smax_prior=all.sock%>%group_by(Stock) %>%dplyr::summarize(m=max(S))
+
+# summarizes years and stocks by region
+rw.sum <- all.sock %>% group_by(Ocean.Region2) %>% summarize(L = n_distinct(BY), J = n_distinct(Stock)) %>% arrange(factor(Ocean.Region2, levels=c("WC", "SEAK", "GOA", "BS")))
+
+# Make indices for stan
+j_l <- vector()
+j_init <- vector()
+Lstart <- vector()
+Lend <- vector()
+pos=1
+for(r in 1:4){
+  mat <- matrix(pos:(pos+(rw.sum$L*rw.sum$J)[r]-1), nrow=rw.sum$J[r], ncol=rw.sum$L[r], byrow=T)  
+  j_l <- c(j_l, as.vector(mat))
+  j_init <- c(j_init, as.vector(mat[,1]))
+  Lstart <- c(Lstart, seq(from=pos, by=rw.sum$J[r], length.out=rw.sum$L[r]))
+  Lend <- c(Lend, seq(from=(pos-1+rw.sum$J[r]), by=rw.sum$J[r], length.out=rw.sum$L[r]))
+  pos = max(mat)+1
+}
+
+# Get stan data
+stan.dat <- list(N=nrow(all.sock), #number of observations
+                 L= rw.sum$L,
+                 J = rw.sum$J,
+                 R = 4,
+                 L_tot = sum(rw.sum$L),
+                 J_tot = sum(rw.sum$J),
+                 L_c = cumsum(rw.sum$L),
+                 Ng = sum(rw.sum$L*rw.sum$J),
+                 J_l = j_l,
+                 j_init = j_init,
+                 Lstart = Lstart,
+                 Lend = Lend,
+                 J_i=as.numeric(factor(all.sock$Stock)), #stock index
+                 J_ii=all.sock$stock_yr, #stock-year index
+                 R_S=all.sock$lnRS,
+                 S=X_s,
+                 X1=all.sock$early_sst_stnd,
+                 X2=all.sock$np_pinks_sec_stnd,
+                 pSmax_mean=smax_prior$m*0.5,
+                 pSmax_sig=smax_prior$m*0.5)
+
+## Run MCMC  
+mvrw <- rstan::stan(file = "./stan/rwa_mv_2c_sep_Lcorr_Reg.stan",
+                    data = stan.dat,
+                    warmup = 10,
+                    iter = 50, 
+                    #cores = 4,
+                    chains = 1)
+
 
 
 #### Independent ('original') model ####
@@ -314,7 +385,7 @@ ggplot(df_all) + geom_line(aes(x=BY, y=mu, col=model), linewidth=.75, alpha=0.7)
   #geom_line(data=n_stk_yr, aes(x=BY, y=0.6, linewidth=n), col="grey", alpha=0.5) +
   scale_linewidth(range=c(0.5,2)) +
   geom_ribbon(aes(x=BY, ymin=lower, ymax=upper, fill=model), alpha=0.1) +
-  geom_hline(yintercept=0, col="grey70") + lims(x=c(1950,2020)) +
+  geom_hline(yintercept=0, col="grey70") + #lims(x=c(1950,2020)) +
   facet_wrap(vars(var), labeller=as_labeller(c("gamma"="SST", "kappa"="Competitors"))) + theme_sleek() + labs(x="Brood Year", y="Mean Effect", col="Model", fill="Model")
 dev.off()
 
