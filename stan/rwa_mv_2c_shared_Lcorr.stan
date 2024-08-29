@@ -80,9 +80,9 @@ model{
   
   //variance terms
   sigma ~ gamma(2,2);
-  sigma_g_s ~ gamma(1,2); //-HH
+  sigma_g_s ~ gamma(1,2);  
   sigma_k_s ~ gamma(1,2);
-  
+  // likelihood
   R_S ~ normal(log_a[J_i] - S*b + to_vector(g_t)[J_ii] .*X1 + to_vector(k_t)[J_ii] .*X2, sigma[J_i]); // HH
   
 }
