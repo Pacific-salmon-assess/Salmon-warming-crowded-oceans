@@ -12,6 +12,7 @@ rw.compare.dir <- here::here('output', 'models', 'dyn', 'sockeye', 'rw-model-com
 
 # -- Get (sockeye) data 
 all.sock <- read.csv(here::here('data', 'sockeye', 'master_sockeye_brood_table_covar.csv'))
+all.sock <- geographic.order(all.sock)
 sample.ids <- c(67:68,72:78) #c(58:66, 69, 79, 80) # fit to BS stks #10:28 # fit to 19 fraser stocks 
 rw.dat <- all.sock %>% filter(Stock.ID %in% sample.ids) # make rw.dat dataframe 
 n_stk_yr <- rw.dat %>% group_by(BY) %>% dplyr::summarize(n=n())
@@ -231,7 +232,7 @@ mvrw <- rstan::stan(file = "./stan/rwa_mv_2c_sep_Lcorr.stan",
 save(mvrw, file=here::here(rw.compare.dir, paste0('mvrw_2corr_', Sys.Date(), '.RData')))
 
 # OR load an old version:
-#load(here::here('output', 'models', 'dyn', 'sockeye', 'rw-model-compare', 'mvrw_2corr_2024-07-31.RData'), verbose=T)
+#load(here::here('output', 'models', 'dyn', 'sockeye', 'rw-model-compare', 'mvrw_2corr_2024-08-07.RData'), verbose=T)
 
 # Get output
 probs <- c(0.025, 0.975)
@@ -245,6 +246,8 @@ mvrw.out <- data.frame(BY = sort(unique(rw.dat$BY)),
                        )
 summ.i <- rstan::summary(mvrw, pars=c("g_t", "k_t"), probs=probs)$summary
 mvrw.out.i <- data.frame(mu = summ.i[,"mean"],
+                         lower = summ.i[,"2.5%"],
+                         upper = summ.i[,"97.5%"],
                          Stock = rep(unique(rw.dat$Stock), times=stan.dat$L),
                          BY = rep(sort(unique(rw.dat$BY)), each=n_distinct(rw.dat$Stock)),
                          var = rep(c("gamma", "kappa"), each=stan.dat$L*stan.dat$J),
@@ -253,10 +256,12 @@ mvrw.out.i <- data.frame(mu = summ.i[,"mean"],
 
 
 #Plot results 
-ggplot() + geom_line(data= mvrw.out, aes(x=BY, y=mu), linewidth=1, col="navyblue") +
+ggplot() + 
   hline_0(col="grey50") +
-  geom_ribbon(data=mvrw.out, aes(x=BY, ymin=lower, ymax=upper, y=mu), fill="navyblue", alpha=0.2) +
   geom_line(data=mvrw.out.i, aes(x=BY, y=mu, group=Stock), col="grey20") +
+  geom_ribbon(data=mvrw.out.i, aes(x=BY, ymin=lower, ymax=upper, group=Stock), fill="grey50", alpha=0.05) +
+  geom_line(data= mvrw.out, aes(x=BY, y=mu), linewidth=1, col="navyblue") +
+  geom_ribbon(data=mvrw.out, aes(x=BY, ymin=lower, ymax=upper, y=mu), fill="navyblue", alpha=0.2) +
   theme_sleek() +
   facet_wrap(vars(var))
 
@@ -280,10 +285,11 @@ dev.off()
 
 #### 'Global' multivariate model ####
 
+## Wrangle data for Stan 
 
-all.sock <- sock %>% group_by(Ocean.Region2) %>% arrange(Stock, BY, by_group=T) # this line may not be necessary
+all.sock <- all.sock %>% group_by(Ocean.Region2) %>% dplyr::arrange(Stock, BY, by_group=T) # Data must be arranged by Ocean Region, then Stock, then ascending Brood Yr
 
-#stock-year index for model
+#stock-year index for stan model - adapted for multi-region
 stk_yr <- ddply(all.sock, .(factor(Ocean.Region2, levels=unique(all.sock$Ocean.Region2))), function(x){
   stock_year = expand.grid(unique(x$Stock),unique(x$BY))
   stock_year = stock_year[order(stock_year[,2]),]
@@ -300,36 +306,30 @@ X_s=make_design_matrix(all.sock$S, grp=all.sock$Stock)
 smax_prior=all.sock%>%group_by(Stock) %>%dplyr::summarize(m=max(S))
 
 # summarizes years and stocks by region
-rw.sum <- all.sock %>% group_by(Ocean.Region2) %>% summarize(L = n_distinct(BY), J = n_distinct(Stock)) %>% arrange(factor(Ocean.Region2, levels=c("WC", "SEAK", "GOA", "BS")))
+rw.sum <- all.sock %>% group_by(Ocean.Region2) %>% dplyr::summarize(L = n_distinct(BY), J = n_distinct(Stock)) %>% dplyr::arrange(factor(Ocean.Region2, levels=c("WC", "SEAK", "GOA", "BS")))
 
 # Make indices for stan
-j_l <- vector()
-j_init <- vector()
-Lstart <- vector()
-Lend <- vector()
-pos=1
+j_start <- j_end <- j_in <- L_in <- vector()
 for(r in 1:4){
-  mat <- matrix(pos:(pos+(rw.sum$L*rw.sum$J)[r]-1), nrow=rw.sum$J[r], ncol=rw.sum$L[r], byrow=T)  
-  j_l <- c(j_l, as.vector(mat))
-  j_init <- c(j_init, as.vector(mat[,1]))
-  Lstart <- c(Lstart, seq(from=pos, by=rw.sum$J[r], length.out=rw.sum$L[r]))
-  Lend <- c(Lend, seq(from=(pos-1+rw.sum$J[r]), by=rw.sum$J[r], length.out=rw.sum$L[r]))
-  pos = max(mat)+1
+  j_start <- c(j_start, seq(pos, by=rw.sum$L[r], length.out=rw.sum$J[r]))
+  j_end <- c(j_end, seq(from=(pos-1+rw.sum$L[r]), by=rw.sum$L[r], length.out=rw.sum$J[r]))
+  j_in <- c(j_in, 1:rw.sum$J[r])
+  L_in <- c(L_in, rep(1:rw.sum$L[r],times=rw.sum$J[r]))
 }
 
-# Get stan data
+# Make stan data
 stan.dat <- list(N=nrow(all.sock), #number of observations
                  L= rw.sum$L,
                  J = rw.sum$J,
+                 J_c = cumsum(rw.sum$J),
                  R = 4,
                  L_tot = sum(rw.sum$L),
                  J_tot = sum(rw.sum$J),
-                 L_c = cumsum(rw.sum$L),
                  Ng = sum(rw.sum$L*rw.sum$J),
-                 J_l = j_l,
-                 j_init = j_init,
-                 Lstart = Lstart,
-                 Lend = Lend,
+                 j_start=j_start,
+                 j_end=j_end,
+                 j_in=j_in,
+                 L_in=L_in,
                  J_i=as.numeric(factor(all.sock$Stock)), #stock index
                  J_ii=all.sock$stock_yr, #stock-year index
                  R_S=all.sock$lnRS,
@@ -339,14 +339,31 @@ stan.dat <- list(N=nrow(all.sock), #number of observations
                  pSmax_mean=smax_prior$m*0.5,
                  pSmax_sig=smax_prior$m*0.5)
 
-## Run MCMC  
-mvrw <- rstan::stan(file = "./stan/rwa_mv_2c_sep_Lcorr_Reg.stan",
+## Compile model
+#mod <- cmdstanr::cmdstan_model("./stan/rwa_mv_2c_sep_Lcorr_Reg.stan", compile = F)
+#mod$format(overwrite_file = TRUE, canonicalize=T) # rewrite for compatibility with cmdstanr
+#mod2 <- cmdstanr::cmdstan_model("./stan/rwa_mv_2c_sep_Lcorr_Reg.stan", compile = T)
+mod3 <- cmdstanr::cmdstan_model("./stan/rwa_mv_2c_sep_Lcorr_Reg_v2.stan")
+
+## Fit - CmdStan
+fit <- mod3$sample(
+  data = stan.dat,
+  seed = 1, 
+  chains = 1, 
+  iter_warmup = 1, 
+  iter_sampling = 10, # how many samples after warmp
+  parallel_chains = 1, 
+)
+
+
+
+## Fit - rstan (crashes R session)
+mvrw <- rstan::stan(file = "./stan/rwa_mv_2c_sep_Lcorr_Reg_fixed.stan",
                     data = stan.dat,
                     warmup = 10,
                     iter = 50, 
                     #cores = 4,
                     chains = 1)
-
 
 
 #### Independent ('original') model ####
