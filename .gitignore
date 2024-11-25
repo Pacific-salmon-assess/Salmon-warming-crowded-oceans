@@ -9,6 +9,7 @@ data-downloaded/sst_raw
 figures
 output
 pub
+sensitivity-analyses/pdo-npgo
 #folder for messing around
 hannahland
 #!archive/**/*.stan #ignore all archived items except stan models # this doesn't work?
