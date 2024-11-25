@@ -3,6 +3,12 @@
 if(!dir.exists("./figures/detrend-covars/"))
     dir.create("./figures/detrend-covars/")
 
+brood <- if(speciesFlag=="sockeye"){
+    bt.complete} else if(speciesFlag=="pink") {
+      bt.complete.pink } else if (speciesFlag=="chum"){
+        bt.complete.chum  }
+
+
 ## Pink abundance ------------------------------------------
 
 ## Get pink abundance data
@@ -136,7 +142,7 @@ for(i in unique(sst.dat$Stock.ID)) {
     sst.lst[[ind]] <- sst.dat.i
     ind <- ind + 1
 }
-sst.detrend <- plyr::rbind.fill(sst.lst)
+sst.detrend <- plyr::rbind.fill(sst.lst) # detrended data = residuals of models
 sst.predict <- plyr::rbind.fill(sst.pred)
 write.csv(sst.detrend, "./data/sst_yr_1_stock_anomalies_detrend.csv", row.names = FALSE)
 
@@ -221,7 +227,7 @@ dev.off()
 #### Join covariate data ####
 
 ## SST during early marine life 
-sst.dt <- clim.wgt.avg(brood.table = bt.complete,
+sst.dt <- clim.wgt.avg(brood.table = brood,
                           env.data = sst.detrend,
                           env.covar = "sst_lm",
                           type = "first_year",
@@ -231,7 +237,7 @@ sst.dt <- clim.wgt.avg(brood.table = bt.complete,
 ## Age weighted competitor index: Pinks in 2nd yr marine life
 
 ## competitors in second year of marine life
-comp.dt <- pink.wgt.avg(brood.table = bt.complete,
+comp.dt <- pink.wgt.avg(brood.table = brood,
                             pink.data = comp.dat,
                             pink.covar = "pink_gam",
                             type = "second_year",
@@ -239,13 +245,13 @@ comp.dt <- pink.wgt.avg(brood.table = bt.complete,
 
 
 ## Merge datasets 
-sock.detrend <- dplyr::left_join(bt.complete, sst.dt, by=c("BY","Stock.ID"))
-sock.detrend <- dplyr::left_join(sock.detrend, comp.dt, by=c("BY","Stock.ID"))
-sock.detrend <- geographic.order(sock.detrend) 
+detrend <- dplyr::left_join(brood, sst.dt, by=c("BY","Stock.ID"))
+detrend <- dplyr::left_join(detrend, comp.dt, by=c("BY","Stock.ID"))
+detrend <- geographic.order(detrend) 
 
 
 ## Add derived columns
-sock.detrend <- ddply(sock.detrend, .(Stock), transform,
+detrend <- ddply(detrend, .(Stock), transform,
                       RS = R/S,
                       RS_stnd = scale(R/S)[ , 1],
                       lnRS = log(R/S),
@@ -258,7 +264,7 @@ sock.detrend <- ddply(sock.detrend, .(Stock), transform,
 ## stationary model detrended ---------------------------------------
 
 ## Run MCMC
-stan.dat <- stan_data_stat(sock.detrend,
+stan.dat <- stan_data_stat(detrend,
                           scale.x1 = TRUE,
                           var.x2 = "early_sst_lm_stnd", # use lm detrend for sst
                           var.x3 = "np_pinks_gam_sec_stnd", # use gam detrend for comp
@@ -281,7 +287,7 @@ save(stat_detrend, file = "./output/models/stat_detrend.RData")
 
 ## eras model detrended -----------------------------------------------
 ## Run MCMC
-stan.dat <- stan_data_dyn(sock.detrend,
+stan.dat <- stan_data_dyn(detrend,
                           breakpoint2 = 2011,
                           scale.x1 = TRUE,
                           var.x2 = "early_sst_lm_stnd", # use lm detrend for sst
@@ -299,12 +305,13 @@ era_detrend <- rstan::stan(file = "./stan/hbm_era_2c.stan",
 save(era_detrend, file = "./output/models/era_detrend.RData")
 
 # Density dataframes - detrended
+#load(file = "./output/models/era_detrend.RData", verbose=T)
 df.s.dt <- era_hb_param_df(era_detrend, par=c("gamma", "kappa"))
 df.reg.dt <- era_hb_param_df(era_detrend, par=c("gamma", "kappa"), mu=T, neras=3)
 
 
 # load *NOT DETRENDED* era model fits
-load(file="./output/models/dyn/sockeye/hbm_era_2c_3sub.RData", verbose=T)
+load(file=here('output','models', 'dyn', speciesFlag, 'hbm_era_2c_3sub.RData', verbose=T)) 
 # Eras df by stock
 era.stk <- era_hb_param_df(era.2c.3sub, par=c("gamma", "kappa"))
 era.reg <- era_hb_param_df(era.2c.3sub, par=c("gamma", "kappa"), mu = TRUE)
@@ -343,16 +350,21 @@ print(g)
 dev.off()
 
 ## Detrended time series
-par(mfrow=c(2,1))
-ggplot(sock.detrend) + 
-  geom_line(data=sock, aes(x=BY, y=early_sst, group=Stock), col="grey50", alpha=0.5) +
-  geom_line(aes(x=BY, y=early_sst_lm, group=Stock), col="slategray4") +
-  theme_sleek()
+g1 <- ggplot(ocean_region_lab(detrend)) + 
+    hline_0(lty="dashed", col="gray50", alpha=0.5) +
+    geom_line(data=data_master, aes(x=BY, y=early_sst, group=Stock), col="orange", alpha=0.7) +
+    geom_line(aes(x=BY, y=early_sst_lm, group=Stock), col="navyblue", alpha=0.7) +
+    facet_wrap(vars(Ocean.Region2)) + labs(x="Brood Year", y="SST Index (anomalies)") +
+    theme_sleek()
 
-ggplot(sock.detrend) + 
-  geom_line(data=sock, aes(x=BY, y=np_pinks_sec, group=Stock), col="grey50", alpha=0.5) +
-  geom_line(aes(x=BY, y=np_pinks_gam_sec, group=Stock), col="slategray4") +
-  theme_sleek()
+g2 <- ggplot(detrend) + 
+  hline_0(lty="dashed", col="gray50", alpha=0.5) +
+  geom_line(data=data_master, aes(x=BY, y=np_pinks_sec, group=Stock), col="orange", alpha=0.7) +
+  geom_line(aes(x=BY, y=np_pinks_gam_sec, group=Stock), col="navyblue", alpha=.7) +
+  theme_sleek() + labs(x="Brood Year", y="NP Pink Abundance")
 
+png(filename=here(fig.dir, 'detrended_covars.png'), width=900*2, height=400*2, res=72*3)
+cowplot::plot_grid(g1,g2)
+dev.off()
 
 
