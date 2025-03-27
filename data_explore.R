@@ -467,11 +467,13 @@ dev.off()
 
 comp.fig <- ggplot(raw.comp) + 
         geom_line(aes(x=Year, y=pink_numbers_np), col="darkred") +
-        geom_vline(xintercept=c(1989,2011), color = "grey80", linetype = 1, linewidth = 0.25, alpha=0.8) +
-        labs(x="Year", y="Pink abundance (millions)") +
+        geom_vline(xintercept=c(1989,2011), color = "grey80", linetype = 2, linewidth = 0.25, alpha=0.8) +
+        labs(x="Year", y="Pink abundance \n (millions)") +
         scale_y_continuous(limits=c(0,800), breaks = seq(0,750,250)) +
-        theme_sleek() +
-        theme(aspect.ratio=0.35)
+        cowplot::theme_cowplot() +
+        theme(aspect.ratio=0.35,
+              axis.text=element_text(size=7),
+              axis.title = element_text(size=9))
 # for presentation
 comp.fig.pres <- comp.fig + theme(aspect.ratio=0.55)
 png(here("figures", "spp-explore", "comp-pres.png"), width=550*2, height=300*2, res=72*4)
@@ -479,7 +481,7 @@ print(comp.fig.pres)
 dev.off()
   
 
-# 2) SST with raw data
+# 2) SST with raw anomalies (not sst index) from unique ocean entry points
 
 # Load data
 unique.oc.entry <- distinct(map.info, lat, lon, .keep_all=TRUE)
@@ -489,10 +491,10 @@ sst_anom <- sst.averager(unique.oc.entry, sst.anom, distance = 400)
 sst_anom <- left_join(sst_anom, unique.oc.entry[,c("Stock.ID", "Ocean.Region2")], by=c("stock.id" = "Stock.ID"))
 
 sst.fig <- 
-  ggplot(sst_anom) +
+  ggplot(ocean_region_lab(sst_anom)) +
   geom_line(aes(x=year, y=sst.anom, col=ocean_region_lab, group=stock.id), alpha=0.2) +
-  geom_hline(aes(yintercept=0), linetype="dashed", col="gray50") +
-  geom_vline(xintercept=c(1989,2011), color = "grey80", linetype = 1, linewidth = 0.25, alpha=0.8) +
+  geom_hline(aes(yintercept=0), linetype=1, col="gray50") +
+  geom_vline(xintercept=c(1989,2011), color = "grey80", linetype = 2, linewidth = 0.25, alpha=0.8) +
   facet_grid(rows=vars(as.character(ocean_region_lab)), switch="y") +
   scale_colour_manual(values=col.region) +
   labs(x="Year", y="SST anomalies") +
@@ -502,12 +504,63 @@ sst.fig <-
   theme(legend.position="none")
 
 
+# 3) SST with raw values from all ocean entry points
+sst.anom <- read.csv("data/sst_raw_anomalies_extend.csv")
+sst_full <- sst.averager(map.info, sst.anom, distance=400)
+sst_full <- left_join(sst_full, map.info[,c("Stock.ID", "Ocean.Region2")], by=c("stock.id" = "Stock.ID"))
 
+sst.raw <- 
+  ggplot(ocean_region_lab(sst_full)) +
+  geom_line(aes(x=year, y=sst, col=ocean_region_lab, group=stock.id), alpha=0.2) +
+  #geom_hline(aes(yintercept=0), linetype="dashed", col="gray50") +
+  geom_vline(xintercept=c(1989,2011), color = "grey80", linetype = 1, linewidth = 0.25, alpha=0.8) +
+  facet_grid(rows=vars(as.character(ocean_region_lab)), scale="free_y") +
+  scale_colour_manual(values=col.region) +
+  labs(x="Year", y="SST (degrees C)") +
+  coord_cartesian(xlim=c(1950,2020)) +
+  theme_sleek() +
+  theme(legend.position="none")
+
+
+# 4) Average time series mean SST
+sst_mean <- sst_full %>% dplyr::summarize(ts_mean=mean(sst), .by=c(stock.id, Ocean.Region2))
+sst_raw_inset <- ggplot(ocean_region_lab(sst_mean)) + 
+                 geom_boxplot(aes(y=ts_mean, x=ocean_region_lab, fill=ocean_region_lab), alpha=0.8) +
+                  scale_fill_manual(values=col.region, guide="none") +
+                  theme_sleek() +
+                  labs(y="Mean SST (°C)", x="") +
+                  theme(axis.text.x=element_blank(),
+                        plot.background=element_rect(fill="transparent"),
+                        axis.title=element_text(size=7))
+                  
+
+# Put together in 3-panel plot
 left <- cowplot::plot_grid(map.alt, comp.fig, ncol=1, rel_heights = c(1.7, 1), labels="auto", label_x = 0.075, label_y=1.03)
 full.intro <- cowplot::plot_grid(left, sst.fig, ncol=2, rel_widths = c(1, .7), labels=list("", "c"))
 
 png(here("figures", "spp-explore", "multi-intro.png"), height=721*1.5, width=1000*1.5, res=72*3)
 print(full.intro)
 dev.off()
+
+
+# Put together with inset plots
+grid_plot <- cowplot::plot_grid(map.alt, sst.fig, ncol=2, rel_widths=c(1,.45))
+full_inset <- cowplot::ggdraw(grid_plot) + cowplot::draw_plot(comp.fig, 0.15,0.1,0.35,0.35) +
+  cowplot::draw_plot(sst_raw_inset, .5,.6,.17,.35)
+
+png(here("figures", "spp-explore", "inset-intro-anom.png"), height=500*2, width=969*2, res=72*2)
+print(full_inset)
+dev.off()
+
+
+# Put together with just one inset plot
+grid_raw <- cowplot::plot_grid(map.alt, sst.raw, ncol=2, rel_widths=c(1,.45))
+raw_inset <- cowplot::ggdraw(grid_raw) + cowplot::draw_plot(comp.fig, 0.15,0.1,0.35,0.35)
+
+png(here("figures", "spp-explore", "inset-intro-raw.png"), height=500*2, width=969*2, res=72*2)
+print(raw_inset)
+dev.off()
+
+
 
 
