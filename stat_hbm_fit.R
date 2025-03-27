@@ -51,7 +51,7 @@ stat_a <- rstan::stan(file = "./stan/hbm_stat_2c.stan",
                      warmup = 1000,
                      iter = 2000,
                      cores = 4,
-                     chains = 1,
+                     chains = 4,
                      seed = 123,
                      control = list(adapt_delta = 0.99,
                                     max_treedepth = 20)) # increased treedepth

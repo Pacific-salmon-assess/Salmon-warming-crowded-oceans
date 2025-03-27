@@ -488,6 +488,229 @@ hb05_density_df <- function(stanfit, ocean.regions = 3, info_master=info_master,
 }
 
 
+## hb07_density_df -------------------------------------
+hb07_density_df <- function(stanfit, ocean.regions = 4, info=info_master, data=data_master) {
+  
+  # this function has been modified a lot to fit specific purposes but needs work
+  # to make it more generally applicable
+  # Get stanfit name 
+  fitnam <- deparse(substitute(stanfit))
+  
+  ## Get posterior matrices
+  lst.f <- hb.posterior.list(stanfit)
+  
+  ## Density smoothness
+  adjust <- 1.5
+  
+  if(ocean.regions == 3) region_col <- info_master$Ocean.Region 
+  else if (ocean.regions == 4) region_col <- info_master$Ocean.Region2
+  
+  ## Define region column indices
+  if (fitnam == "stat_ctrl"){ #Use 2020 data for control model
+    control_dat <- distinct(ctrl_dat[,c("Stock", "Ocean.Region")])
+    ind.wc  <- which(control_dat$Ocean.Region == "WC")
+    ind.goa <- which(control_dat$Ocean.Region == "GOA")
+    ind.bs  <- which(control_dat$Ocean.Region == "BS")
+    
+  } else if( fitnam == "stat_tr"){
+    ind.wc  <- match(info_master$Stock[which(region_col == "WC" & info_master$yr_end >= 1975)], levels(data_master$Stock) ) 
+    ind.goa <- match(info_master$Stock[which(region_col == "GOA" & info_master$yr_end >= 1975)], levels(data_master$Stock) )
+    ind.bs  <- match(info_master$Stock[which(region_col == "BS" & info_master$yr_end >= 1975)], levels(data_master$Stock) )
+    ind.seak <- match(info_master$Stock[which(region_col == "SEAK" & info_master$yr_end >= 1975)], levels(data_master$Stock))
+    ind.reg <- list(ind.bs, ind.goa, ind.wc, ind.seak)
+    
+  } else {
+    ind.wc  <- match(info_master$Stock[which(region_col == "WC")], levels(data_master$Stock) ) 
+    ind.goa <- match(info_master$Stock[which(region_col == "GOA")], levels(data_master$Stock) )
+    ind.bs  <- match(info_master$Stock[which(region_col == "BS")], levels(data_master$Stock) )
+    ind.seak <- match(info_master$Stock[which(region_col == "SEAK")], levels(data_master$Stock))
+    ind.reg <- ifelse(ocean.regions == 3, list(ind.bs, ind.goa, ind.wc), list(ind.bs, ind.goa, ind.wc, ind.seak) )
+  }
+  
+  
+  ## Extract stock-specific param matrices
+  s.alpha <- lst.f[["alpha"]]
+  s.sigma <- lst.f[["sigma"]]
+  s.gamma <- lst.f[["gamma"]]
+  s.kappa <- lst.f[["kappa"]]
+  s.chi   <- lst.f[["chi"]]
+  
+  ## Extract regional-level param matrices
+  m.gamma <- lst.f[["mu_gamma"]]
+  m.kappa <- lst.f[["mu_kappa"]]
+  m.chi   <- lst.f[["mu_chi"]]
+  
+  ## Get percent change values
+  pc.s.gamma <- (exp(s.gamma) - 1) * 100
+  pc.s.kappa <- (exp(s.kappa) - 1) * 100
+  pc.s.chi   <- (exp(s.chi) - 1) * 100
+  
+  pc.m.gamma <- (exp(m.gamma) - 1) * 100
+  pc.m.kappa <- (exp(m.kappa) - 1) * 100
+  pc.m.chi   <- (exp(m.chi) - 1) * 100
+  
+  pc.s.joint <- (exp(s.gamma + s.kappa ) - 1) * 100
+  pc.m.joint <- (exp(m.gamma + m.kappa ) - 1) * 100
+  
+  
+  ## Calculate kernel densities
+  s.den.wc.gamma  <- col_density(pc.s.gamma[ , ind.wc], plot.it = FALSE, adjust = adjust)
+  s.den.goa.gamma <- col_density(pc.s.gamma[ , ind.goa], plot.it = FALSE, adjust = adjust)
+  s.den.bs.gamma  <- col_density(pc.s.gamma[ , ind.bs], plot.it = FALSE, adjust = adjust)
+  if(ocean.regions == 4) s.den.seak.gamma <- col_density(pc.s.gamma[ , ind.seak], plot.it = FALSE, adjust = adjust)
+  s.den.wc.kappa  <- col_density(pc.s.kappa[ , ind.wc], plot.it = FALSE, adjust = adjust)
+  s.den.goa.kappa <- col_density(pc.s.kappa[ , ind.goa], plot.it = FALSE, adjust = adjust)
+  s.den.bs.kappa  <- col_density(pc.s.kappa[ , ind.bs], plot.it = FALSE, adjust = adjust)
+  if(ocean.regions == 4) s.den.seak.kappa <- col_density(pc.s.kappa[ , ind.seak], plot.it = FALSE, adjust = adjust)
+  s.den.wc.chi    <- col_density(pc.s.chi[ , ind.wc], plot.it = FALSE, adjust = adjust)
+  s.den.goa.chi   <- col_density(pc.s.chi[ , ind.goa], plot.it = FALSE, adjust = adjust)
+  s.den.bs.chi    <- col_density(pc.s.chi[ , ind.bs], plot.it = FALSE, adjust = adjust)
+  if(ocean.regions == 4) s.den.seak.chi <- col_density(pc.s.chi[ , ind.seak], plot.it = FALSE, adjust = adjust)
+  s.den.wc.joint  <- col_density(pc.s.joint[ , ind.wc], plot.it = FALSE, adjust = adjust)
+  s.den.goa.joint <- col_density(pc.s.joint[ , ind.goa], plot.it = FALSE, adjust = adjust)
+  s.den.bs.joint  <- col_density(pc.s.joint[ , ind.bs], plot.it = FALSE, adjust = adjust)
+  
+  if(ocean.regions == 4)  s.den.seak.joint  <- col_density(pc.s.joint[ , ind.seak], plot.it = FALSE, adjust = adjust)
+  
+  m.den.gamma <- col_density(pc.m.gamma, plot.it = FALSE, adjust = adjust)
+  m.den.kappa <- col_density(pc.m.kappa, plot.it = FALSE, adjust = adjust)
+  m.den.chi   <- col_density(pc.m.chi, plot.it = FALSE, adjust = adjust)
+  m.den.joint <- col_density(pc.m.joint, plot.it = FALSE, adjust = adjust)
+  
+  ## Density data frame for mu
+  m.lst <- list(m.den.gamma,
+                m.den.kappa,
+                m.den.chi,
+                m.den.joint)
+  m.lst.df <- lapply(seq_along(m.lst), function(i) {
+    x <- m.lst[[i]]
+    x.df <- reshape2::melt(x$x, varnames = c("n", "region"), value.name = "x")
+    y.df <- reshape2::melt(x$y, varnames = c("n", "region"), value.name = "y")
+    if(ocean.regions == 4) {
+      x.df$region <- dplyr::case_when(x.df$region == 1 ~ "West Coast",
+                                      x.df$region == 2 ~ "Southeast Alaska",
+                                      x.df$region == 3 ~ "Gulf of Alaska",
+                                      x.df$region == 4 ~ "Bering Sea" )
+    } else {
+      x.df$region <- dplyr::case_when( x.df$region == 1 ~ "West Coast",
+                                       x.df$region == 2 ~ "Gulf of Alaska",
+                                       x.df$region == 3 ~ "Bering Sea" )
+    }
+    
+    y.df$region <- x.df$region
+    var  <- ifelse(i == 1, "SST", NA)
+    var  <- ifelse(i == 2, "Comp", var)
+    var  <- ifelse(i == 3, "SST x Comp", var)
+    var  <- ifelse(i == 4, "SST + Comp", var)
+    x.df$var <- var
+    y.df$var <- var
+    merge(x.df, y.df, by = c("n", "region", "var"), sort = FALSE)
+  })
+  m.df <- do.call(rbind, m.lst.df)
+  
+  
+  ## Density data frame for mu
+  s.wc.lst <- list(s.den.wc.gamma,
+                   s.den.wc.kappa,
+                   s.den.wc.chi,
+                   s.den.wc.joint)
+  s.wc.lst.df <- lapply(seq_along(s.wc.lst), function(i) {
+    x <- s.wc.lst[[i]]
+    x.df <- reshape2::melt(x$x, varnames = c("n", "stock"), value.name = "x")
+    y.df <- reshape2::melt(x$y, varnames = c("n", "stock"), value.name = "y")
+    x.df$region <- "West Coast"
+    y.df$region <- "West Coast"
+    var  <- ifelse(i == 1, "SST", NA)
+    var  <- ifelse(i == 2, "Comp", var)
+    var  <- ifelse(i == 3, "SST x Comp", var)
+    var  <- ifelse(i == 4, "SST + Comp", var)
+    x.df$var <- var
+    y.df$var <- var
+    merge(x.df, y.df, by = c("n", "stock", "region", "var"), sort = FALSE)
+  })
+  s.wc.df <- do.call(rbind, s.wc.lst.df)
+  
+  s.goa.lst <- list(s.den.goa.gamma,
+                    s.den.goa.kappa,
+                    s.den.goa.chi,
+                    s.den.goa.joint)
+  s.goa.lst.df <- lapply(seq_along(s.goa.lst), function(i) {
+    x <- s.goa.lst[[i]]
+    x.df <- reshape2::melt(x$x, varnames = c("n", "stock"), value.name = "x")
+    y.df <- reshape2::melt(x$y, varnames = c("n", "stock"), value.name = "y")
+    x.df$region <- "Gulf of Alaska"
+    y.df$region <- "Gulf of Alaska"
+    var  <- ifelse(i == 1, "SST", NA)
+    var  <- ifelse(i == 2, "Comp", var)
+    var  <- ifelse(i == 3, "SST x Comp", var)
+    var  <- ifelse(i == 4, "SST + Comp", var)
+    x.df$var <- var
+    y.df$var <- var
+    merge(x.df, y.df, by = c("n", "stock", "region", "var"), sort = FALSE)
+  })
+  s.goa.df <- do.call(rbind, s.goa.lst.df)
+  
+  s.bs.lst <- list(s.den.bs.gamma,
+                   s.den.bs.kappa,
+                   s.den.bs.chi,
+                   s.den.bs.joint)
+  s.bs.lst.df <- lapply(seq_along(s.bs.lst), function(i) {
+    x <- s.bs.lst[[i]]
+    x.df <- reshape2::melt(x$x, varnames = c("n", "stock"), value.name = "x")
+    y.df <- reshape2::melt(x$y, varnames = c("n", "stock"), value.name = "y")
+    x.df$region <- "Bering Sea"
+    y.df$region <- "Bering Sea"
+    var  <- ifelse(i == 1, "SST", NA)
+    var  <- ifelse(i == 2, "Comp", var)
+    var  <- ifelse(i == 3, "SST x Comp", var)
+    var  <- ifelse(i == 4, "SST + Comp", var)
+    x.df$var <- var
+    y.df$var <- var
+    merge(x.df, y.df, by = c("n", "stock", "region", "var"), sort = FALSE)
+  })
+  s.bs.df <- do.call(rbind, s.bs.lst.df)
+  
+  if(ocean.regions == 4) {
+    s.seak.lst <- list(s.den.seak.gamma,
+                       s.den.seak.kappa,
+                       s.den.seak.chi,
+                       s.den.seak.joint)
+    s.seak.lst.df <- lapply(seq_along(s.seak.lst), function(i) {
+      x <- s.seak.lst[[i]]
+      x.df <- reshape2::melt(x$x, varnames = c("n", "stock"), value.name = "x")
+      y.df <- reshape2::melt(x$y, varnames = c("n", "stock"), value.name = "y")
+      x.df$region <- "Southeast Alaska"
+      y.df$region <- "Southeast Alaska"
+      var  <- ifelse(i == 1, "SST", NA)
+      var  <- ifelse(i == 2, "Comp", var)
+      var  <- ifelse(i == 3, "SST x Comp", var)
+      var  <- ifelse(i == 4, "SST + Comp", var)
+      x.df$var <- var
+      y.df$var <- var
+      merge(x.df, y.df, by = c("n", "stock", "region", "var"), sort = FALSE)
+    })
+    s.seak.df <- do.call(rbind, s.seak.lst.df)
+  }
+  
+  ## Combine region stock-specific data frames
+  if(ocean.regions == 3) s.df <- rbind(s.wc.df, s.goa.df, s.bs.df) else
+    if(ocean.regions == 4) s.df <- rbind(s.wc.df, s.goa.df, s.bs.df, s.seak.df)
+  
+  ## Set factor levels
+  s.df$var <- factor(s.df$var, levels = c("SST", "Comp" , "SST x Comp", "SST + Comp")) #, "SST + Comp + SST x Comp"))
+  m.df$var <- factor(m.df$var, levels = c("SST", "Comp" , "SST x Comp", "SST + Comp")) #, "SST + Comp + SST x Comp"))
+  #m.df$region <- factor(m.df$region, levels=c("West Coast", "Gulf of Alaska", "Bering Sea", "Southeast Alaska"))
+  #s.df$region <- factor(s.df$region, levels=c("West Coast", "Gulf of Alaska", "Bering Sea", "Southeast Alaska"))
+  
+  
+  out <- list(stock = s.df,
+              region = m.df)
+  return(out)
+}
+
+
+
+
 ## era_density_df -----------------------------------------
 era_density_df <- function(stanfit, par, region.var="Ocean.Region2", mu = FALSE, percent.change=FALSE, neras=3, info=info_master){
   

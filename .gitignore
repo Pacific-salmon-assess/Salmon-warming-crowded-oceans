@@ -11,6 +11,7 @@ output
 pub
 sensitivity-analyses/pdo-npgo
 sensitivity-analyses/fits
+sensitivity-analyses/*/*/*.pdf
 #folder for messing around
 hannahland
 #!archive/**/*.stan #ignore all archived items except stan models # this doesn't work?

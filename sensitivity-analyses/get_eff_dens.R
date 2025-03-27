@@ -39,3 +39,30 @@ ggplot(competitors_long, aes(Year, value, color = species)) +
   labs(x = "year", title = "Competitor indicies") +
   scale_color_manual(values = c("darkgrey", "salmon")) +
   theme(legend.position = "bottom")
+
+
+
+## Hannah's version
+
+comp.data <- read.csv("data-downloaded/competitor_indices_2024.csv")
+wt.data <- read.csv("data-downloaded/avg_salmon_wt_2024.csv")
+
+dens.data <- cbind(comp.data, wt.data[,2:5])
+dens.data <- dens.data %>% filter(Continent=="North America") %>% 
+  dplyr::rename(wt_pink = Pink, wt_chum = Chum, wt_sockeye = Sockeye) %>%
+  mutate(recalc_bio_na = pink_numbers_na*1000*wt_pink) %>%
+  mutate(eff_dens_na = ((wt_pink)^(2/3))*pink_numbers_na)
+
+ggplot(dens.data) + geom_line(aes(x=Year, y=pink_numbers_na)) + 
+  geom_line(aes(x=Year, y=eff_dens_na), lty="dashed") 
+
+ggplot(dens.data) + geom_line(aes(x=Year, y=wt_pink))
+
+ggplot() + geom_line(aes(x=dens.data$Year[2:nrow(dens.data)], y=diff(dens.data$wt_pink, lag=1)))
+
+ggplot(dens.data) + geom_line(aes(x=Year, y=wt_pink))
+ggplot(dens.data) + geom_line(aes(x=Year, y=pink_numbers_na))
+
+
+
+

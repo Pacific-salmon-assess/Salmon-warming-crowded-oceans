@@ -1,14 +1,14 @@
 ## comparison plots across species##
 
-# 1) Boxplots of effects
+#### 1) Boxplots of effects ####
 
 # Load era model fits
 
 #sockeye
-load(here('output', 'models', 'dyn', 'sockeye', 'hbm_era_2c_3sub.RData'), verbose=T) # eras
-sock.box <- era_density_df(era.2c.3sub, par=c("gamma", "kappa"), mu=T, info=sock.info)
-load(here('output', 'models', 'stat', 'sockeye', 'stat_sub.RData'), verbose=T) # stationary 
-s.dens <- hb05_density_df(stat_sub, ocean.regions = 4, info_master=sock.info.sub, data_master=sock.sub)$region
+load(here('output', 'models', 'dyn', 'sockeye', 'hbm_era_2c.RData'), verbose=T) # eras
+sock.box <- era_density_df(era.2c, par=c("gamma", "kappa"), mu=T, info=sock.info)
+load(here('output', 'models', 'stat', 'sockeye', 'stat_a.RData'), verbose=T) # stationary 
+s.dens <- hb05_density_df(stat_a, ocean.regions = 4, info_master=sock.info.sub, data_master=sock.sub)$region
 s.dens <- s.dens %>% filter(var %in% c("SST", "Comp"))
 s.df <- data.frame(n=factor(s.dens$n),
                    Ocean.Region2=rep(c("WC", "SEAK", "GOA", "BS"), each=max(s.dens$n)),
@@ -20,7 +20,7 @@ s.df <- data.frame(n=factor(s.dens$n),
 #pink
 load(here('output', 'models', 'dyn', 'pink', 'hbm_era_2c.RData'), verbose=T) # eras
 pink.box <- era_density_df(era.2c, par=c("gamma", "kappa"), mu=T, info=pink.info)
-pink.box <- dplyr::filter(pink.box, !(Ocean.Region2 %in% c("BS", "GOA") & era=="Late"))
+pink.box <- dplyr::filter(pink.box, !(Ocean.Region2 %in% c("BS", "GOA", "SEAK") & era=="Late"))
 load(here('output', 'models', 'stat', 'pink', 'stat_a.RData'), verbose=T) # stationary 
 p.dens <- hb05_density_df(stat_a, ocean.regions = 4, info_master=pink.info, data_master=pink)$region
 p.dens <- p.dens %>% filter(var %in% c("SST", "Comp"))
@@ -37,7 +37,7 @@ load(here('output', 'models', 'dyn', 'pink', 'hbm_era_2c_odd.RData'), verbose=T)
 pink.box <- era_density_df(era.2c.odd, par=c("gamma", "kappa"), mu=T, info=pink.info[grep("-Odd", pink.info$Stock),])
 pink.box.odd <- dplyr::filter(pink.box, !(Ocean.Region2 %in% c("BS", "GOA") & era=="Late"))
 load(here('output', 'models', 'stat', 'pink', 'stat_a_odd.RData'), verbose=T) # stationary 
-p.dens <- hb05_density_df(stat_a_odd, ocean.regions = 4, data_master=data_master, info_master=info_master)$region
+p.dens <- hb05_density_df(stat_a_odd, ocean.regions = 4, data_master=pink[grep("-Odd", pink$Stock),], info_master=pink.info[grep("-Odd", pink.info$Stock),])$region
 p.dens <- p.dens %>% filter(var %in% c("SST", "Comp"))
 p.odd.df <- data.frame(n=factor(p.dens$n),
                    Ocean.Region2=rep(c("WC", "SEAK", "GOA", "BS"), each=max(p.dens$n)),
@@ -51,8 +51,8 @@ p.odd.df <- data.frame(n=factor(p.dens$n),
 load(here('output', 'models', 'dyn', 'pink', 'hbm_era_2c_even.RData'), verbose=T) # eras
 pink.box <- era_density_df(era.2c.even, par=c("gamma", "kappa"), mu=T, info=pink.info[grep("-Even", pink.info$Stock),])
 pink.box.even <- dplyr::filter(pink.box, !(Ocean.Region2 %in% c("BS", "GOA") & era=="Late"))
-load(here('output', 'models', 'stat', 'pink', 'stat_a_even.RData'), verbose=T) # stationary 
-p.dens <- hb05_density_df(stat_a_even, ocean.regions = 4, data_master=data_master, info_master=info_master)$region
+load(here('output', 'models', 'stat', 'pink', 'stat_a_even.RData'), verbose=T) # stationary
+p.dens <- hb05_density_df(stat_a_even, ocean.regions = 4, data_master=pink[grep("-Even", pink$Stock),], info_master=pink.info[grep("-Even", pink.info$Stock),])$region
 p.dens <- p.dens %>% filter(var %in% c("SST", "Comp"))
 p.even.df <- data.frame(n=factor(p.dens$n),
                    Ocean.Region2=rep(c("WC", "SEAK", "GOA", "BS"), each=max(p.dens$n)),
@@ -80,11 +80,11 @@ c.df <- data.frame(n=factor(c.dens$n),
                    varnam=gsub("Comp", "Competitors", c.dens$var),
                    sp.id="chum")
 
-box.lst <- list(sock.box, pink.box.odd, pink.box.even, chum.box)
-names(box.lst) <- c("sockeye", "pink-odd", "pink-even", "chum")
+box.lst <- list(sock.box, pink.box, chum.box)
+names(box.lst) <- c("sockeye", "pink", "chum")
 box.eras <- bind_rows(box.lst, .id="sp.id")
 
-box.stat <- bind_rows(s.df, p.odd.df, p.even.df, c.df)
+box.stat <- bind_rows(s.df, p.df, p.df, c.df)
 box.stat$x <- log((box.stat$x/100)+1)
 box <- bind_rows(box.eras, box.stat)
 
@@ -100,30 +100,133 @@ full.box <-  ggplot(box) +
   labs(y="Covariate Effect", x="", fill="") +
   scale_fill_manual(values=col.box) +
   theme_sleek()
-png(here('figures', 'spp-explore', 'boxplot-2c-compare-evenodd.png'), width=650, height=600)
+png(here('figures', 'spp-explore', 'boxplot-2c-compare.png'), width=650, height=600)
 print(full.box)
 dev.off()
 
 
-# Boxplots with overlaid RW lines - works but looks shitty
+#### 2) Boxplots with overlaid RW lines #### 
 
-rw.mov$sp.id <- rw.mov$spp
-box %>% filter(varnam=="SST") %>% mutate(BY = case_when(era=="Early" ~ 1980,
+#rw.mov$sp.id <- rw.mov$spp
+rw.mov <- rw.mov %>% mutate(sp.id = case_when(spp=="sockeye" ~ "sockeye",
+                                              spp=="pink-even" ~ "pink",
+                                              spp=="pink-odd" ~ "pink",
+                                              spp=="chum" ~ "chum"))
+box <- ocean_region_lab(box)
+rw.mov <- ocean_region_lab(rw.mov)
+
+# SST plot
+sst_rw_box <- box %>% 
+  filter(varnam=="SST", era != "All") %>% mutate(BY = case_when(era=="Early" ~ 1975,
                                                         era=="Middle" ~ 2000,
-                                                        era=="Late" ~ 2015,
-                                                        era=="All" ~ 2030)) %>%
+                                                        era=="Late" ~ 2015)) %>%
+  mutate(regxera = paste0(ocean_region_lab, sep=".", era)) %>%
   ggplot() +
-  geom_hline(aes(yintercept=0), linetype="dashed", colour="gray50") +
-  geom_line(data=filter(rw.mov, varnam=="SST"), aes(x=BY, y=mov_avg), linewidth=1, col="grey70", alpha=0.8) +
-  geom_boxplot(aes(x=BY, y=x, fill=factor(era, levels=c("Early", "Middle", "Late", "All"))), position=position_dodge2(preserve="single"), alpha=0.7) +
+  geom_hline(aes(yintercept=0), linewidth=1, colour="grey95") +
+  geom_line(data=filter(rw.mov, varnam=="SST"), aes(x=BY, y=mov_avg, group=spp, col=ocean_region_lab), linewidth=1, alpha=0.4) +
+  #geom_boxplot(aes(x=BY, y=x, fill=factor(era, levels=c("Early", "Middle", "Late", "All"))), position=position_dodge2(preserve="single"), alpha=0.7) +
+  geom_boxplot(aes(x=BY, y=x, fill=regxera), position=position_dodge2(preserve="single"), alpha=0.7) +
+  scale_y_continuous(limits=c(-1, 1), breaks=c(-1,-.5, 0, .5, 1), labels = c(-1,-.5, 0, .5, 1)) + 
+  facet_grid(rows=vars(Ocean.Region2), cols=vars(sp.id), switch="x") +
+  labs(y="Covariate Effect", x="", fill="", title="SST") +
+  scale_fill_manual(values=col.eras) + 
+  scale_colour_manual(values=col.region, guide="none") +
+  scale_x_continuous(breaks=c(1970, 1990, 2010)) +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        strip.background = element_rect(fill="transparent", colour="transparent"),
+        strip.text.y = element_blank(),
+        panel.spacing.x = unit(0, unit="pt"),
+        panel.spacing.y = unit(30, unit="pt"),
+        panel.background = element_rect(fill="white"),
+        panel.grid.major.y = element_line(colour="grey95", size=0.5),
+        panel.grid.major.x = element_blank(),
+        legend.position = "none",
+        legend.key = element_blank(),
+        plot.title = element_text(hjust=0.5, size=10, colour="grey20"))
+
+comp_rw_box <- box %>% 
+  filter(varnam=="Competitors", era != "All") %>% mutate(BY = case_when(era=="Early" ~ 1975,
+                                                                era=="Middle" ~ 2000,
+                                                                era=="Late" ~ 2015)) %>%
+  mutate(regxera = paste0(ocean_region_lab, sep=".", era)) %>%
+  ggplot() +
+  geom_hline(aes(yintercept=0), linewidth=1, colour="grey95") +
+  geom_line(data=filter(rw.mov, varnam=="Competitors"), aes(x=BY, y=mov_avg, group=spp, col=ocean_region_lab), linewidth=1, alpha=0.4) +
+  #geom_boxplot(aes(x=BY, y=x, fill=factor(era, levels=c("Early", "Middle", "Late", "All"))), position=position_dodge2(preserve="single"), alpha=0.7) +
+  geom_boxplot(aes(x=BY, y=x, fill=regxera), position=position_dodge2(preserve="single"), alpha=0.7) +
   scale_y_continuous(limits=c(-1, 1)) + 
-  facet_grid(rows=vars(Ocean.Region2), cols=vars(sp.id)) +
+  facet_grid(rows=vars(factor(ocean_region_lab, levels=rev(unique(box$ocean_region_lab)))), cols=vars(sp.id), switch="x") +
+  labs(y="", x="", fill="", title="Competitors") +
+  scale_fill_manual(values=col.eras) + 
+  scale_colour_manual(values=col.region, guide="none") +
+  scale_x_continuous(breaks=c(1970, 1990, 2010)) +
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        strip.background = element_rect(fill="transparent", colour="transparent"),
+        strip.text.y = element_text(margin=margin(l=10)),
+        strip.text.x = element_text(margin=margin(b=10,t=5)),
+        panel.spacing.x = unit(0, unit="pt"),
+        panel.spacing.y = unit(30, unit="pt"),
+        panel.background = element_rect(fill="white"),
+        panel.grid.major.y = element_line(colour="grey95", size=0.5),
+        panel.grid.major.x = element_blank(),
+        legend.position = "none",
+        legend.key = element_blank(),
+        plot.margin = margin(l=0),
+        plot.title = element_text(hjust=0.5, size=10, colour="grey20", margin=margin(t=5,b=5)))
+# still want to get the lines to change colour. easiest way would be to attach a colour scale based on year to the data frame rw.mov
+
+# Put SST and Comp together
+main_box <- cowplot::plot_grid(sst_rw_box, comp_rw_box)
+
+
+# Make a legend manually
+lgnd.dat <- data.frame(name=names(col.eras),
+                     region=str_extract(names(col.eras), "[^.]+"),
+                     era=str_extract(names(col.eras), "\\w*$"))
+
+lgnd1 <- lgnd.dat %>% mutate(era_lab = paste(era, case_when(era=="Early" ~ "\n <1988",
+                                                            era=="Middle" ~ "\n    1989-2010",
+                                                            era=="Late" ~ "\n        2011-2019"))) %>%
+  ggplot() + geom_tile(aes(x=region, y=1, 
+                               fill=name), col="white") +
+  scale_fill_manual(values=col.eras, guide="none") + labs(x="", y="") +
+  facet_grid(rows=vars(factor(era_lab, levels=unique(era_lab))), switch="x") +
+  labs(title="Era") +
+  theme(panel.background=element_rect(fill="white"),
+        axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        strip.background = element_rect(fill="white"),
+        strip.text.y.right = element_text(angle=0, margin=margin(l=-15)),
+        plot.title = element_text(hjust=0.5)
+        ) 
+blank <- ggplot() + theme(panel.background = element_rect(fill="white")) # blank grob to put legend on
+legend <- cowplot::ggdraw(blank) + cowplot::draw_plot(lgnd1, 0,0.4,1,0.2)
+
+
+p <- cowplot::plot_grid(main_box, legend, ncol=2, rel_widths = c(1,0.19))
+png(here('figures', 'spp-explore', 'main-fig-12-24.png'), height=700*2, width=900*2, res=72*2)
+print(p)
+dev.off()
+
+
+
+
+# Plain boxplot
+box %>% filter(era != "All") %>%
+  mutate(regxera = factor(paste0(ocean_region_lab, sep=".", era), 
+                             levels=names(col.eras)[matrix(1:12, nrow=3, byrow=T)])
+  ) %>%
+  ggplot() + 
+  geom_hline(aes(yintercept=0), linetype="dashed", colour="gray50") +
+  geom_boxplot(aes(x=sp.id, y=x, fill=regxera, col=ocean_region_lab), position=position_dodge2(preserve="single"), alpha=0.7) +
+  scale_y_continuous(limits=c(-1, 1)) + 
+  facet_grid(rows=vars(Ocean.Region2), cols=vars(varnam)) +
   labs(y="Covariate Effect", x="", fill="") +
-  scale_fill_manual(values=col.box) +
+  scale_fill_manual(values=col.eras) +
+  scale_colour_manual(values=unname(col.eras[9:12]), guide="none") +
   theme_sleek()
-
-
-
 
 # Figures
 sst.box <- box %>% filter(par %in% paste0("mu_gamma", 1:3)) %>%
@@ -152,7 +255,7 @@ dev.off()
 
 
 
-# 2) Random walk smoothed - all species
+#### 3) Random walk smoothed - all species #####
 
 
 # a) sockeye
@@ -304,12 +407,113 @@ png(here('figures', 'spp-explore', 'sock_rw_eras_trim.png'), width=548*3, height
 print(overlay2)
 dev.off()
 
+#### 4) Map + covars re-design ####
 
-# Comparison table of ERA results
+## Fig: Map + covars (Hannah's version) --------------------
+
+# colours 
+col.dk <- rev(chroma::qpal(7, luminance = 20)[c(1, 3, 5, 7)])
+names(col.dk) <- unique(info_master$ocean_region_lab)
+
+
+# Downlad map and convert to sp
+na_map <- rnaturalearth::ne_states(country = c("United States of America", "Canada"), returnclass="sf")
+
+axes <- list( xlims=c(-165.5, -121), 
+              ylims=c(47, 61),
+              xbreaks=seq(-160,-120,10), 
+              xlabels=as.character(seq(-160,-120,10)),
+              seq(45, 65, 5), 
+              ybreaks=seq(50, 60, 5),
+              ylabels=as.character(seq(50,60,5)))
+
+#make map data
+map.info <- info_master %>% select(Stock, lon, lat, ocean_region_lab) %>% 
+  mutate(stock.no = 1:nrow(info_master)) %>% 
+  dplyr::summarize(n.stk = n_distinct(Stock),
+                   first.stk = first(stock.no),
+                   last.stk = last(stock.no),
+                   .by= c("lat", "lon", "ocean_region_lab")) #%>%
+#filter(!(first.stk %in% c(54:56))) # remove some overlapping points
+map.info[map.info$first.stk %in% c(52:56, 41:45), c("first.stk", "last.stk")] <- NA
+map.info <- map.info %>% mutate(num = ifelse(first.stk == last.stk, first.stk, paste(first.stk, last.stk, sep="-")))
+misc.lab <- data.frame(x=c(-157.9, -152.5), y=c(59.5, 57.25), label=c("52-56", "41-45"))
+
+map <- ggplot(map.info) + 
+  geom_sf(data=na_map, color="grey30", fill="white", linewidth=0.1, ) + 
+  ggspatial::geom_spatial_point(aes(x=lon, y=lat, col=ocean_region_lab, shape=ocean_region_lab, fill=ocean_region_lab), 
+                                crs=4326, size=1, stroke=1.75, alpha=0.7) +
+  #geom_text(aes(x=lon, y=lat, label=num), vjust=1.4, col="gray20", size=3) +
+  #ggrepel::geom_text_repel(aes(x=lon, y=lat, label=num), col="gray20", size=2.5, min.segment.length = 0.25, box.padding=0.1) +
+  #geom_text(data=misc.lab, aes(x, y, label=label), col="gray20", size=2.5) +
+  coord_sf(xlim=axes$xlims, ylim=axes$ylims) +
+  scale_x_continuous(breaks=axes$xbreaks, labels=axes$xlabels) +
+  scale_y_continuous(breaks=axes$ybreaks, labels=axes$ylabels) +
+  scale_colour_manual(values=col.region, name="Ocean Region Grouping") + 
+  scale_fill_manual(values=col.dk, name="Ocean Region Grouping") + 
+  scale_shape_manual(values=c(22, 24, 21, 23), name="Ocean Region Grouping") +
+  labs(x="Longitude (°E)", y="Latitude (°N)") +
+  theme_sleek() + 
+  theme(panel.grid = element_blank(),
+        plot.title = element_text(hjust=0.5),
+        legend.position = "none"
+  )
+
+## Make dataframe of covariate info
+covar.dat.st <- data_master %>% select(Stock, BY, Ocean.Region2, early_sst, np_pinks_sec) %>% tidyr::pivot_longer(cols=c(early_sst, np_pinks_sec), names_to = "covar") %>% mutate(covar_nam = ifelse(covar=="early_sst", "SST Index", "Competitor Index"))
+covar.dat.st <- ocean_region_lab(covar.dat.st)
+covar.dat.reg <- dplyr::summarize(.data=covar.dat.st, mean_covar = mean(value), .by = c("BY", "ocean_region_lab", "covar_nam"))
+
+# plot comp 
+comp.covar <- covar.dat.st %>% filter(covar_nam == "Competitor Index") %>%
+  ggplot() + 
+  geom_vline(xintercept=c(1976,1988), color = "grey50", linetype = 2, linewidth = 0.25) +
+  geom_line(aes(x=BY, y=value, group=Stock), linewidth=0.5, alpha=0.4, col="darkred") +
+  #geom_line(data=covar.dat.reg, aes(x=BY, y=mean_covar, col=ocean_region_lab), linewidth=0.5) +
+  scale_colour_manual(values=col.region) +
+  scale_y_continuous(n.breaks=4) +
+  theme_sleek() + 
+  theme(legend.position="none",
+        axis.title.x = element_text(size=8),
+        axis.text = element_text(size=5),
+        axis.line.x.top = element_blank(),
+        plot.margin = margin(0,0,0,0)) +
+  labs(x= "Brood Year", y="")
+
+# plot SST
+sst.covar <- covar.dat.st %>% filter(covar_nam == "SST Index") %>% ggplot() + 
+  geom_vline(xintercept=c(1976,1988), color = "grey50", linetype = 2, linewidth = 0.25) +
+  geom_line(aes(x=BY, y=value, group=Stock, colour=ocean_region_lab), linewidth=0.5, alpha=0.4) +
+  #geom_line(data=covar.dat.reg, aes(x=BY, y=mean_covar, col=ocean_region_lab), linewidth=0.5) +
+  facet_grid(rows=vars(factor(ocean_region_lab, levels=rev(unique(ocean_region_lab)))), scales="free_y") +
+  scale_colour_manual(values=col.region) +
+  scale_y_continuous(n.breaks=4) +
+  theme_sleek() + theme(legend.position="none") +
+  labs(x= "Brood Year", y="")
+
+main <- cowplot::ggdraw(map) + cowplot::draw_plot(comp.covar, x=.2,y=.2,width=.4,height=.4)
+
+full <- cowplot::plot_grid(main, sst.covar, ncol=2, nrow=1, rel_widths = c(2, 1), rel_heights=c(1.3,1))
+
+
+#### Avg productivity (lnRS) / time ####
+
+# Also try productivity residuals?
+
+sock %>% summarize(mean_RS = mean(RS_stnd), .by=c("Ocean.Region2", "BY")) %>% 
+  ggplot() +
+  geom_point(aes(x=BY, y=Ocean.Region2, size=abs(mean_RS), col=mean_RS), alpha=0.5) +
+  scale_color_distiller(palette="RdBu") +
+  scale_size_continuous(guide="none") +
+  theme_sleek() + theme() +
+  labs(x="Brood Year", y="Region", col="Average stnd R/S")
+
+
+#### Comparison table of ERA results ####
 
 # load sockeye
-load(here('output', 'models', 'dyn', 'sockeye', 'hbm_era_2c_3sub.RData'), verbose=T) 
-stbl <- rstan::summary(era.2c.3sub, par=c("mu_alpha", paste0("mu_gamma", 1:3), paste0("mu_kappa", 1:3)))$summary
+load(here('output', 'models', 'dyn', 'sockeye', 'hbm_era_2c.RData'), verbose=T) 
+stbl <- rstan::summary(era.2c, par=c("mu_alpha", paste0("mu_gamma", 1:3), paste0("mu_kappa", 1:3)))$summary
 stbl <- as.data.frame(stbl)
 stbl$species <- "sockeye"
 stbl$id <- rownames(stbl)
@@ -343,8 +547,8 @@ View(full_tbl)
 
 # Get stationary estimates to compare to eras
 statmeans <- list(NA)
-load(here('output', 'models', 'stat', 'sockeye', 'stat_sub.RData'), verbose=T)
-statmeans[1] <- rstan::summary(stat_sub, par=c("mu_gamma"))$summary[1,1]
+load(here('output', 'models', 'stat', 'sockeye', 'stat_a.RData'), verbose=T)
+statmeans[1] <- rstan::summary(stat_a, par=c("mu_gamma"))$summary[1,1]
 load(here('output', 'models', 'stat', 'chum', 'stat_a.RData'), verbose=T)
 statmeans[2] <- rstan::summary(stat_a, par=c("mu_gamma"))$summary[1,1]
 load(here('output', 'models', 'stat', 'pink', 'stat_a_even.RData'), verbose=T)

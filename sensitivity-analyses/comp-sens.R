@@ -7,7 +7,7 @@ raw.comp <- read.csv(file="data-downloaded/competitor_indices_2024.csv", header 
 
 
 comp.sec <- data.frame(BY=NA, Stock.ID=NA)
-comp.cols <- names(raw.comp)[-1]
+comp.cols <- names(raw.comp)[-1] # Test with 2: comp.cols <- comp.cols[c(2,4)]
 comp.cols.stnd <- paste0(comp.cols, "_stnd")
 
 for( ind in comp.cols) { # This loop creates and binds stock-specific comp indices
@@ -49,9 +49,10 @@ row.names(cor.covars) <- c(comp.cols, "lnRS")
 colnames(cor.covars) <- c(comp.cols, "lnRS")
 
 cols <- chroma::dpal(500, hue = c(240, 0), chroma = 70, power = 1.0)
-levelplot(cor.covars, xlab = "", ylab = "",
+# Plot correlation between Comp covariates
+g <- levelplot(cor.covars[comp.cols, comp.cols], xlab = "", ylab = "",
                col.regions = cols,
-               at = seq(-0.3, 1, 0.1),
+               #at = seq(-0.3, 1, 0.1),
                main = "Average stock-specific covariate correlations",
                scales = list(x=list(rot=45)),
                panel = function(x, y, ...) {
@@ -59,10 +60,24 @@ levelplot(cor.covars, xlab = "", ylab = "",
                  panel.abline(v = seq(1.5, max(x) - 0.5), col = "grey50")
                  panel.abline(h = seq(1.5, max(y) - 0.5), col = "grey50")
                })
-# better to split the above into 2 figs due to different cor values
+pdf(here('sensitivity-analyses', 'corr-comp-covars.pdf'))
+print(g)
+dev.off()
 
+# Plot correlation between each and lnRS
+g <- ggplot(data.frame(covar=comp.cols,
+                       cor=cor.covars[comp.cols,"lnRS"])) + 
+  geom_col(aes(x=covar, y=cor, fill=covar), position=position_dodge(), alpha=0.7) +
+  scale_fill_brewer(palette="Paired") +
+  theme_sleek() + theme(axis.text.x=element_text(angle=90),
+                        legend.position="none") +
+  labs(x="", y="Average Correlation", fill="Covariate",
+                       title="All Years")
+pdf(here('sensitivity-analyses', 'corr-comp-lnRS.pdf'))
+print(g)
+dev.off()
 
-# Run senstivity analyses
+# Run sensitivity analyses
 
 # Set up model params
 pars_era_2c <- c("alpha", "beta", "sigma", "phi", "mu_alpha", "sigma_alpha",
@@ -105,7 +120,8 @@ for(i in 1:length(comp.cols)){
 fit_list <- vector("list", length = length(comp.cols))
 summary_list <- vector("list", length = length(comp.cols))
 names(fit_list) <- comp.cols
-for(i in 1:length(comp.cols)){
+
+for(i in 1:length(comp.cols)){ # Loop to run stan models:
   fit <- rstan::stan(file = "./stan/hbm_era_2c.stan",
                                data = data_list[[i]],
                                pars = c(pars_era_2c, pars.gen.quant),
@@ -116,16 +132,53 @@ for(i in 1:length(comp.cols)){
                                seed = 123,
                                control = list(adapt_delta = 0.9,
                                               max_treedepth = 20))
-  fit.list[[i]] <- fit  
-  save(fit.list[[i]], file=here('sensitivity-analyses', 'fits', paste0(comp_, comp.cols[i], .RData)))
-  
+    
+    save(fit, file=here('sensitivity-analyses', 'fits', paste0("comp_", comp.cols[i], ".RData")))
+    fit_list[[i]] <- fit  
+
   summary_list[[i]] <- rstan::summary(fit, pars=c("alpha", "beta", "sigma",
                                                   "mu_gamma1", "mu_gamma2", "mu_gamma3", "sigma_gamma", 
-                                                  "mu_kappa1", "mu_kappa2", "mu_kappa3", "sigma_kappa", "log_lik"), probs=c(0.025, 0.5, 97.5))$summary
+                                                  "mu_kappa1", "mu_kappa2", "mu_kappa3", "sigma_kappa", "log_lik"), probs=c(0.025, 0.5, 0.975))$summary
   
 }
 
-# Run model selection
 # Make master comparison table
+
+comp_tbl_list <- list()
+comp_tbl_list <- lapply(summary_list, function(x){ # =summary_list[[i]]
+        summ <- x[c(grepl("^mu_|sigma_", rownames(x))),
+                          c("mean", "2.5%", "50%", "97.5%")]
+        df <- data.frame(
+                   Parameter = case_when(grepl("^mu_gamma", rownames(summ)) ~ "Regional SST effect",
+                                         grepl("^sigma_gamma", rownames(summ)) ~ "SST effect SD",
+                                         grepl("^mu_kappa", rownames(summ)) ~ "Regional competitor effect",
+                                         grepl("^sigma_kappa", rownames(summ)) ~ "Competitor effect SD"),
+                   Era = case_when(str_sub(rownames(summ), start=-4, end=-4) == "1" ~ "Early",
+                                   str_sub(rownames(summ), start=-4, end=-4) == "2" ~ "Middle",
+                                   str_sub(rownames(summ), start=-4, end=-4) == "3" ~ "Late"),
+                   Region = case_when(str_sub(rownames(summ), start=-2,end=-2) == "1" ~ "West Coast",
+                                      str_sub(rownames(summ), start=-2,end=-2) == "2" ~ "Southeast AK",
+                                      str_sub(rownames(summ), start=-2,end=-2) == "3" ~ "Gulf of AK",
+                                      str_sub(rownames(summ), start=-2,end=-2) == "4" ~ "Bering Sea",),
+                   Posterior_Mean = summ[,"mean"],
+                   Lower_2.5_CI = summ[,"2.5%"],
+                   Posterior_Median = summ[,"50%"],
+                   Upper_97.5_CI = summ[,"97.5%"],
+                   row.names=NULL)
+        return(df)
+      }
+    )
+names(comp_tbl_list) <- comp.cols
+comp_tbl <- bind_rows(comp_tbl_list, .id="Competitor index")
+
+write.csv(comp_tbl, file=here('sensitivity-analyses', 'full-comp-index-fit-compare.csv'))
+
+
+
+
+
+
+
+
 
 
