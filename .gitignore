@@ -15,4 +15,6 @@ sensitivity-analyses/fits
 hannahland
 #!archive/**/*.stan #ignore all archived items except stan models # this doesn't work?
 archive
-
+#stan model executables
+*.exe
+*.bak*
