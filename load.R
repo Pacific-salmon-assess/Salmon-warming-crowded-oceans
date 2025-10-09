@@ -16,6 +16,7 @@ library(here)
 require(fields)
 require(plotrix)
 require(data.table)
+library(ggsidekick)
 data(countriesLow)
 
 ## bayesian model packages
@@ -47,4 +48,4 @@ if(!dir.exists("./output/"))
 
 
 ## Set bayesplot theme
-bayesplot::bayesplot_theme_set(new = theme_sleek())
+bayesplot::bayesplot_theme_set(new = ggsidekick::theme_sleek())
