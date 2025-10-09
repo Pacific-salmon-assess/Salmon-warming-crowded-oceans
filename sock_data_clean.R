@@ -6,8 +6,8 @@
 ## this script is a master brood table for the analysis and a summary info table
 
 ## Read in downloaded data
-data_full <- read.csv("./data-downloaded/salmon_productivity_compilation2024-01-12.csv", row.names=1) 
-info_full <- read.csv("./data-downloaded/stock_info2024-01-12.csv", row.names=1)
+data_full <- read.csv("./data-downloaded/salmon_productivity_compilation2025-09-25.csv", row.names=1)
+info_full <- read.csv("./data-downloaded/stock_info2025-09-25.csv", row.names=1)
 # Data source: https://github.com/Pacific-salmon-assess/dfo_salmon_compilation
 
 ## Filter for Sockeye
@@ -36,7 +36,7 @@ sapply(s.brood, class)
 
 #Rename some columns
 names(s.brood) <- str_to_title(names(s.brood))
-s.brood <- dplyr::rename(s.brood, "BY" = "Broodyear", "Stock.ID"="Stock.id", 
+s.brood <- dplyr::rename(s.brood, "BY" = "Broodyear", "Stock.ID"="Stock.id",
                          "R" = "Recruits", "S" = "Spawners")
 head(s.brood)
 
@@ -69,7 +69,7 @@ s.brood <- s.brood %>% dplyr::mutate(detailFlag = if_else(rowSums(.[r.cols])==0,
 
 # make Recruits the sum of RX.X cols (if populated)
 s.brood.2 <- s.brood
-s.brood.2[s.brood.2$detailFlag==1, "R"] <- rowSums(s.brood.2[s.brood.2$detailFlag==1, r.cols]) 
+s.brood.2[s.brood.2$detailFlag==1, "R"] <- rowSums(s.brood.2[s.brood.2$detailFlag==1, r.cols])
 summary(s.brood$R - s.brood.2$R)
 
 # Call function to calculate proportion entering ocean at age 0, 1, ...4
@@ -84,12 +84,12 @@ r2 <- grep("^R[[:digit:]]\\.[[:digit:]]", names(bt), value = TRUE)
 all.equal(sort(r1), sort(r2))
 
 
-# More cleaning steps 
+# More cleaning steps
 bt.out.1 <- bt[complete.cases(bt),]                # drop years with missing data
 (nrow(bt) - nrow(bt.out.1)) # how many rows dropped
 bt.out.2 <- subset(bt.out.1, !(Stock.ID %in% c( 7, # Frazer - hatchery influence
                                                 29:36, #misc. Fraser stocks - too short
-                                                38, 41, # Babine-Fulton and Babine-Pinkut - hatchery influence 
+                                                38, 41, # Babine-Fulton and Babine-Pinkut - hatchery influence
                                                 43, 46, 47, # Johnston, McDonnell & Kitwancool - gappy
                                                 49, 51, 54, # Swan-Stephens, Bear-Skeena, Sustut - gappy
                                                 50, 52, 53, 55 # Asitika, Damshilgwit, Motase, Upper Nass - too short
