@@ -15,18 +15,18 @@ if(speciesFlag=="pink") {
           info_master <- sock.info }
 
 
-# Set paths to output locations - dependent on species 
+# Set paths to output locations - dependent on species
 fig.dir <- here("sensitivity-analyses", "interaction", speciesFlag) # place to store figures generated in this script
 fit.dir <- here("sensitivity-analyses", "fits", speciesFlag) # place to store model fits
 diag.dir <- here("sensitivity-analyses", "interaction", speciesFlag) # place to store diagnostics
 
-# Make them if they don't exist 
+# Make them if they don't exist
 if(!dir.exists(fig.dir))
-  dir.create(fig.dir, recursive = TRUE) 
+  dir.create(fig.dir, recursive = TRUE)
 if(!dir.exists(fit.dir))
-  dir.create(fit.dir, recursive = TRUE) 
+  dir.create(fit.dir, recursive = TRUE)
 if(!dir.exists(diag.dir))
-  dir.create(diag.dir, recursive = TRUE) 
+  dir.create(diag.dir, recursive = TRUE)
 
 ## Monitor params
 pars.stat <- c("alpha", "beta", "sigma", "phi", "mu_alpha", "sigma_alpha",
@@ -102,7 +102,7 @@ g <- m.df %>% filter(var != "SST + Comp") %>%
   geom_path(data = s.df[s.df$var != "SST + Comp",],
             aes(x = x, y = y, group = stock, color = region), alpha=0.3,
             na.rm = TRUE) +
-  geom_path(aes(x = x, y = y, color = region), linewidth = 1, alpha=1, 
+  geom_path(aes(x = x, y = y, color = region), linewidth = 1, alpha=1,
             na.rm = TRUE) +
   scale_colour_manual(name = "Ocean Region", values=col.region, guide="legend") +
   labs(x = "Percent change in R/S",
@@ -141,3 +141,21 @@ dev.off()
 pdf( here(fig.dir, "stat_inter_dens.pdf"))
 print(g)
 dev.off()
+
+
+# Boxplots instead of density
+m.df %>% filter(var=="Comp") %>%
+  ggplot() +
+  geom_hline(aes(yintercept=0), linetype="dashed", colour="gray50") +
+  geom_vline(aes(xintercept=0), linetype="dashed", colour="gray50") +
+  geom_boxplot(aes(x=region, y=x, col=region, fill=region),
+               position=position_dodge2(preserve="single"), alpha=0.4, linewidth=0.80) +
+  #scale_y_continuous(limits=c(-50,50), labels=seq(-50,50,25)) +
+  coord_cartesian(ylim=c(-50,150)) +
+  scale_fill_manual(values=sp.col, aesthetics = c("fill", "col")) +
+  labs(y="Percent change in R/S", x="", col="Species", fill="Species") +
+  theme_sleek() +
+  theme(legend.position="right",
+        panel.background = element_rect(fill='transparent'),
+        plot.background = element_rect(fill='transparent', color=NA))
+

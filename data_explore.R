@@ -1,4 +1,4 @@
-## Exploratory graphics and summaries for salmon and covariate data 
+## Exploratory graphics and summaries for salmon and covariate data
 
 # Species
 if(speciesFlag=="pink") {
@@ -14,7 +14,7 @@ if(speciesFlag=="pink") {
           info_master <- sock.info }
 
 
-# Set paths to output locations - dependent on species 
+# Set paths to output locations - dependent on species
 fig.dir <- here("figures", "spp-explore", speciesFlag) # place to store figures generated in this script
 
 # Make it if it doesn't exist
@@ -25,8 +25,8 @@ if(!dir.exists(fig.dir))  dir.create(fig.dir, recursive = T)
 head(data_master)
 tail(data_master)
 levels(data_master$Stock)
-paste("brood tbl ordered geographically? -", all(levels(data_master$Stock) == unique(data_master$Stock))) 
-paste("info tbl ordered geographically? -", all(levels(info_master$Stock) == unique(info_master$Stock))) 
+paste("brood tbl ordered geographically? -", all(levels(data_master$Stock) == unique(data_master$Stock)))
+paste("info tbl ordered geographically? -", all(levels(info_master$Stock) == unique(info_master$Stock)))
 paste("levels in brood tbl and info tbl the same? -", all(levels(info_master$Stock) == levels(data_master$Stock)))
 summary(data_master)
 
@@ -36,7 +36,7 @@ max(data_master$BY)
 
 data_fill <- fill.time.series(data_master)
 stk.summary <- plyr::ddply(data_fill, .(Stock), summarize,
-                stock.id = unique(Stock.ID),           
+                stock.id = unique(Stock.ID),
                 min.yr = min(BY),
                 max.yr = max(BY),
                 n.total = length(BY),
@@ -221,14 +221,14 @@ dev.off()
 require(ggforce)
 
 # make high R/S rule, i.e. points >50 get highlighted
-data_fill <- data_fill %>% group_by(Stock) %>% 
+data_fill <- data_fill %>% group_by(Stock) %>%
   mutate(outlier = ifelse(RS>50, RS, NA))
 # get right number of pages to put plots on
 pg <- ceiling(nlevels(data_master$Stock)/18)
 
 pdf(here(fig.dir, "productivity_detail.pdf"))
 for(i in 1:pg){
-g<- ggplot(data_fill) + geom_line(aes(x=BY, y=RS)) + 
+g<- ggplot(data_fill) + geom_line(aes(x=BY, y=RS)) +
     geom_point(aes(x=BY, y=outlier), col="red") +
     ggforce::facet_wrap_paginate(vars(Stock), scales="free_y", nrow=6, ncol=3, page=i) + theme_sleek()
 print(g)
@@ -316,8 +316,8 @@ if(speciesFlag == "sockeye") {
               })
   print(g)
   dev.off()
-  
-  
+
+
   pdf(here(fig.dir, "age_class_proportions.pdf"), width = 19, height = 14)
   oc <- subset(data_master, select = c("Stock", "BY", grep("^R[0-9]", names(data_master), value = TRUE)))
   oc <- reshape2::melt(oc, id.vars = c("Stock", "BY"))
@@ -386,11 +386,11 @@ dev.off()
 na_map <- rnaturalearth::ne_countries(country = c("United States of America", "Canada"), scale='medium', returnclass="sf")
 
 
-axes <- list( xlims=c(-167, -121), 
+axes <- list( xlims=c(-167, -121),
               ylims=c(46, 67),
-              xbreaks=seq(-160,-120,10), 
+              xbreaks=seq(-160,-120,10),
               xlabels=as.character(seq(-160,-120,10)),
-              seq(45, 65, 5), 
+              seq(45, 65, 5),
               ybreaks=seq(45, 65, 5),
               ylabels=as.character(seq(45,65,5)))
 
@@ -407,23 +407,23 @@ col.dk <- rev(chroma::qpal(7, luminance = 20)[c(1, 3, 5, 7)])
 names(col.dk) <- unique(info_master$ocean_region_lab)
 
 
-map <- ggplot(map.info) + 
-  geom_sf(data=na_map, color="grey40", fill="white", linewidth=0.1) + 
-  ggspatial::geom_spatial_point(aes(x=lon, y=lat, col=Species, shape=Species), 
+map <- ggplot(map.info) +
+  geom_sf(data=na_map, color="grey40", fill="white", linewidth=0.1) +
+  ggspatial::geom_spatial_point(aes(x=lon, y=lat, col=Species, shape=Species),
                                 crs=4326, size=1.5, alpha=0.8, position=position_jitter(w=0.2, h=0.2)) +
   coord_sf(xlim=axes$xlims, ylim=axes$ylims) +
   scale_x_continuous(breaks=axes$xbreaks, labels=axes$xlabels) +
   scale_y_continuous(breaks=axes$ybreaks, labels=axes$ylabels) +
-  #scale_colour_brewer(palette="Dark2") + 
+  #scale_colour_brewer(palette="Dark2") +
   scale_colour_manual(values=sp.col, labels=c("Chum (n=44)", "Pink (n=70)", "Sockeye (n=52)")) +
   scale_shape_manual(values=c(15,16,17), labels=c("Chum (n=44)", "Pink (n=70)", "Sockeye (n=52)")) +
   labs(x="Longitude (°E)", y="Latitude (°N)") +
-  theme_sleek() + 
+  theme_sleek() +
   theme(panel.grid = element_blank(),
         plot.title = element_text(hjust=0.5),
         legend.position = c(0.85,0.75),
         legend.background = element_rect(colour="grey75"),
-        aspect.ratio = 0.55) 
+        aspect.ratio = 0.55)
 
 png(here('figures', 'spp-explore', "all_sp_map_pres.png"), res=288, height=1216, width=2192)
 print(map)
@@ -435,20 +435,20 @@ ggsave(here('figures', 'spp-explore', "all_sp_map_pres.png"), map)
 #dev.off()
 
 
-map.alt <- 
-  ggplot(map.info) + 
-  geom_sf(data=na_map, color="grey40", fill="white", linewidth=0.2) + 
-  ggspatial::geom_spatial_point(aes(x=lon, y=lat, col=ocean_region_lab, fill=ocean_region_lab, shape=Species), 
+map.alt <-
+  ggplot(map.info) +
+  geom_sf(data=na_map, color="grey40", fill="white", linewidth=0.2) +
+  ggspatial::geom_spatial_point(aes(x=lon, y=lat, col=ocean_region_lab, fill=ocean_region_lab, shape=Species),
                                 crs=4326, size=1.2, alpha=0.6, position=position_jitter(w=0.5, h=0.2)) +
   coord_sf(xlim=axes$xlims, ylim=axes$ylims) +
   scale_x_continuous(breaks=axes$xbreaks, labels=axes$xlabels) +
   scale_y_continuous(breaks=axes$ybreaks, labels=axes$ylabels) +
-  #scale_colour_brewer(palette="Dark2") + 
+  #scale_colour_brewer(palette="Dark2") +
   scale_colour_manual(values=col.dk) +
   scale_fill_manual(values=col.region) +
   scale_shape_manual(values=c(22,21,24)) +
   labs(x="Longitude (°E)", y="Latitude (°N)") +
-  theme_sleek() + 
+  theme_sleek() +
   theme(panel.grid = element_blank(),
         plot.title = element_text(hjust=0.5),
         legend.position = "none",
@@ -459,16 +459,45 @@ pdf(here("figures", "spp-explore", "all_sp_map_alt.pdf"), height=4, width=7)
 print(map.alt)
 dev.off()
 
+# Map with Albers projection
+na_map_albers <- sf::st_transform(na_map, crs=3579) # transform map
+#transform points:
+points_albers <- sf::st_as_sf(map.info, coords=c("lon", "lat"), crs="EPSG:4326")
+points.transformed <- sf::st_transform(points_albers,
+                                       crs="EPSG:3579")
+st_crs(points.transformed)
+# transform axis limits:
+lims <- data.frame(x=axes$xlims, y=axes$ylims)
+lims_proj <- st_as_sf(lims, coords=c("x", "y"), crs="EPSG:4326")
+lims_alb <- st_transform(lims_proj, crs="EPSG:3579")
 
+
+map_albers <-
+ggplot(points.transformed) +
+  geom_sf(data=na_map_albers, color="grey40", fill="white", linewidth=0.2) +
+  geom_sf(aes(col=ocean_region_lab, fill=ocean_region_lab, shape=Species),size=1.2, alpha=0.6) +
+  coord_sf(xlim=axes$xlims, ylim=axes$ylims, default_crs = st_crs(4326)) +
+  scale_x_continuous(breaks=axes$xbreaks, labels=axes$xlabels) +
+  scale_y_continuous(breaks=axes$ybreaks, labels=axes$ylabels) +
+  scale_colour_manual(values=col.dk) +
+  scale_fill_manual(values=col.region) +
+  scale_shape_manual(values=c(22,21,24)) +
+  labs(x="Longitude (°E)", y="Latitude (°N)") +
+  theme_sleek() +
+  theme(panel.grid = element_blank(),
+        plot.title = element_text(hjust=0.5),
+        legend.position = "none",
+        legend.background = element_rect(colour="grey75"),
+        aspect.ratio = 0.7)
 
 ## Fig: Time series of covariates
 
 # 1) Competitor time series with raw data
 
-comp.fig <- ggplot(raw.comp) + 
+comp.fig <- ggplot(raw.comp) +
         geom_line(aes(x=Year, y=pink_numbers_np), col="darkred") +
         geom_vline(xintercept=c(1989,2011), color = "grey80", linetype = 2, linewidth = 0.25, alpha=0.8) +
-        labs(x="Year", y="Pink abundance \n (millions)") +
+        labs(x="Year", y="Pink salmon \n (millions)") +
         scale_y_continuous(limits=c(0,800), breaks = seq(0,750,250)) +
         cowplot::theme_cowplot() +
         theme(aspect.ratio=0.35,
@@ -479,27 +508,28 @@ comp.fig.pres <- comp.fig + theme(aspect.ratio=0.55)
 png(here("figures", "spp-explore", "comp-pres.png"), width=550*2, height=300*2, res=72*4)
 print(comp.fig.pres)
 dev.off()
-  
+
 
 # 2) SST with raw anomalies (not sst index) from unique ocean entry points
 
 # Load data
 unique.oc.entry <- distinct(map.info, lat, lon, .keep_all=TRUE)
 sst.anom <- read.csv("data/sst_raw_anomalies_extend.csv")
-## Calculate average SST anomaly within area where stock spends first few months of marine life 
+## Calculate average SST anomaly within area where stock spends first few months of marine life
 sst_anom <- sst.averager(unique.oc.entry, sst.anom, distance = 400)
 sst_anom <- left_join(sst_anom, unique.oc.entry[,c("Stock.ID", "Ocean.Region2")], by=c("stock.id" = "Stock.ID"))
 
-sst.fig <- 
+sst.fig <-
   ggplot(ocean_region_lab(sst_anom)) +
   geom_line(aes(x=year, y=sst.anom, col=ocean_region_lab, group=stock.id), alpha=0.2) +
   geom_hline(aes(yintercept=0), linetype=1, col="gray50") +
   geom_vline(xintercept=c(1989,2011), color = "grey80", linetype = 2, linewidth = 0.25, alpha=0.8) +
-  facet_grid(rows=vars(as.character(ocean_region_lab)), switch="y") +
+  facet_grid(rows=vars(as.character(ocean_region_lab)), switch="y",
+             scales="free_y") +
   scale_colour_manual(values=col.region) +
   labs(x="Year", y="SST anomalies") +
   coord_cartesian(xlim=c(1950,2020)) +
-  scale_y_continuous(breaks=seq(-3, 3, 3), labels=c("-3", " 0", " 3"), position="right") +
+  scale_y_continuous(breaks=seq(-4,4,1), labels=c("", "-3", "", "-1", "", " 1", " ", " 3", ""), position="right") +
   theme_sleek() +
   theme(legend.position="none")
 
@@ -509,7 +539,7 @@ sst.anom <- read.csv("data/sst_raw_anomalies_extend.csv")
 sst_full <- sst.averager(map.info, sst.anom, distance=400)
 sst_full <- left_join(sst_full, map.info[,c("Stock.ID", "Ocean.Region2")], by=c("stock.id" = "Stock.ID"))
 
-sst.raw <- 
+sst.raw <-
   ggplot(ocean_region_lab(sst_full)) +
   geom_line(aes(x=year, y=sst, col=ocean_region_lab, group=stock.id), alpha=0.2) +
   #geom_hline(aes(yintercept=0), linetype="dashed", col="gray50") +
@@ -524,7 +554,7 @@ sst.raw <-
 
 # 4) Average time series mean SST
 sst_mean <- sst_full %>% dplyr::summarize(ts_mean=mean(sst), .by=c(stock.id, Ocean.Region2))
-sst_raw_inset <- ggplot(ocean_region_lab(sst_mean)) + 
+sst_raw_inset <- ggplot(ocean_region_lab(sst_mean)) +
                  geom_boxplot(aes(y=ts_mean, x=ocean_region_lab, fill=ocean_region_lab), alpha=0.8) +
                   scale_fill_manual(values=col.region, guide="none") +
                   theme_sleek() +
@@ -532,7 +562,7 @@ sst_raw_inset <- ggplot(ocean_region_lab(sst_mean)) +
                   theme(axis.text.x=element_blank(),
                         plot.background=element_rect(fill="transparent"),
                         axis.title=element_text(size=7))
-                  
+
 
 # Put together in 3-panel plot
 left <- cowplot::plot_grid(map.alt, comp.fig, ncol=1, rel_heights = c(1.7, 1), labels="auto", label_x = 0.075, label_y=1.03)
@@ -540,6 +570,32 @@ full.intro <- cowplot::plot_grid(left, sst.fig, ncol=2, rel_widths = c(1, .7), l
 
 png(here("figures", "spp-explore", "multi-intro.png"), height=721*1.5, width=1000*1.5, res=72*3)
 print(full.intro)
+dev.off()
+
+# Alternative 3-panel plot 2025
+
+# sst plot horizontal
+sst_mean <- sst_full %>% dplyr::summarize(ts_mean=mean(sst), .by=c(stock.id, Ocean.Region2))
+sst_raw_inset_hor <- ggplot(ocean_region_lab(sst_mean)) +
+  geom_boxplot(aes(x=ts_mean, y=ocean_region_lab, fill=ocean_region_lab), alpha=0.8) +
+  scale_fill_manual(values=col.region, guide="none") +
+  scale_y_discrete(position="right",
+                   labels=c("West \n Coast",
+                            "Southeast \n Alaska",
+                            "Gulf of \n Alaska",
+                            "Bering \n Sea")) +
+  theme_sleek() +
+  labs(x="Mean SST (°C)", y="") +
+  theme(plot.background=element_rect(fill="transparent"),
+        axis.title=element_text(size=10),
+        axis.title.y = element_blank(),
+        plot.margin = margin(l=18, t=10))
+
+right <- cowplot::plot_grid(sst.fig, sst_raw_inset_hor, rel_heights=c(2.5,1), nrow=2, labels=c("c", "d"))
+left <- cowplot::plot_grid(map_albers, (comp.fig + theme_sleek()), ncol=1, rel_heights = c(2.5, 1), labels="auto")
+intro.plot.2025 <- cowplot::plot_grid(left, right, ncol=2, rel_widths = c(1.8, 1))
+png(here("figures", "spp-explore", "multi-intro-2025-al.png"), height=721*1.5, width=1000*1.5, res=72*3)
+print(intro.plot.2025)
 dev.off()
 
 
