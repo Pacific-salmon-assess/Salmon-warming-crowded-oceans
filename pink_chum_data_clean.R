@@ -6,11 +6,12 @@
 
 ## Should R be sum of RX.X columns?!
 
-data_full <- read.csv("./data-downloaded/salmon_productivity_compilation2024-01-12.csv") 
+data_full <- read.csv("./data-downloaded/salmon_productivity_compilation2025-09-25.csv", row.names=1)
 
-info_full <- read.csv("./data-downloaded/stock_info2024-01-12.csv")
+info_full <- read.csv("./data-downloaded/stock_info2025-09-25.csv", row.names=1)
+# Data source: https://github.com/Pacific-salmon-assess/dfo_salmon_compilation
 
-## PINKS!!
+## PINK ----------------------------------------------------------------------
 
 ## Read in downloaded data
 p.brood <- data_full %>% dplyr::filter(species %in% c("Pink-Odd", "Pink-Even"))
@@ -37,7 +38,7 @@ bt <- data.frame(Stock.ID = p.brood$stock.id,
                  R0.1 = p.brood$recruits,
                  R = p.brood$recruits,
                  S = p.brood$spawners )
-                
+
 bt.out.1 <- bt[!is.na(bt$S),]  # drop years with missing data
 summary(bt.out.1)
 
@@ -52,25 +53,27 @@ bt.out.3 <- left_join(bt.out.2, coord.lookup, by=c("Stock"="Stock.name"))
 head(bt.out.3)
 
 ## Add ocean.region groupings
-bt.out.4 <- bt.out.3
-bt.out.4$Ocean.Region2 <- p.info$ocean.basin[match(bt.out.3$Stock, p.info$stock.name)]
-# Add SEAK grouping
-bt.out.4$Ocean.Region2[bt.out.4$Lat >= 54.09 & bt.out.4$Lon > -140] <- "SEAK" 
+bt.out.3$ocean.basin <- p.info$ocean.basin[match(bt.out.3$Stock, p.info$stock.name)]
+bt.out.4 <- bt.out.3 %>% mutate(Ocean.Region2 = case_when(ocean.basin == "SC" ~ "WC",
+                                                          ocean.basin == "NC" ~ "SEAK",
+                                                          ocean.basin == "GoA" ~ "GOA",
+                                                          ocean.basin == "BS" ~ "BS"))
 
 ## Order stocks geographically to make plotting easier
 bt.out.5 <- geographic.order(bt.out.4)
 bt.out.6 <- dplyr::arrange(bt.out.5, factor(Stock, levels=levels(bt.out.5$Stock)))
 
-# Simplify stock names
-bt.out.7 <- bt.out.6
+# Remove short or gappy time series
+p.info <- p.info %>% filter(end < 2015 | begin > 1984)
+bt.out.7 <- bt.out.6[!(bt.out.6$Stock.ID %in% p.info$stock.id),]
 #bt.out.7$Even.Odd <- stringr::str_extract(bt.out.7$Stock, "\\w{3,4}$")
+# Simplify stock names
 bt.out.7$Stock <- stringr::str_remove(bt.out.7$Stock, ".\\(\\w{3,4}\\)")
 bt.out.7$Stock <- stringr::str_remove(bt.out.7$Stock, "-Pink")
 
-# Drop stocks (temporarily?!):
+
 bt.out.7[bt.out.7$R==0, "R"] # check for zero recruits
 bt.out.7[bt.out.7$S==0, "S"] # check for zero spawners
-bt.out.7 <- bt.out.7 %>% filter(!Stock.ID %in% c(149:150) )# Humpy stocks - too short
 
 # Summary
 bt.out <- bt.out.7
@@ -124,7 +127,6 @@ names(coord.lookup) <- str_to_title(names(coord.lookup))
 
 
 ## Clean-up master brood table -----------------------------
-c.brood <- c.brood[,names(c.brood)!="X"]
 head(c.brood)
 tail(c.brood)
 sapply(c.brood, class)
@@ -137,9 +139,8 @@ c.brood <- c.brood[,!names(c.brood) %in% r.cols.old]
 
 #Rename some columns
 names(c.brood) <- str_to_title(names(c.brood))
-names(c.brood)[names(c.brood) %in% c("Broodyear", "Stock.id")] <- c("BY", "Stock.ID")
-names(c.brood)[names(c.brood) %in% c("Spawners", "Recruits")] <- c("S", "R")
-
+c.brood <- c.brood |> dplyr::rename(BY = Broodyear, Stock.ID = Stock.id,
+                             S = Spawners, R = Recruits)
 
 head(c.brood)
 tail(c.brood)
@@ -151,8 +152,9 @@ bt <- c.brood
 r.cols <- names(bt)[grepl("R0.\\d$", names(bt))]
 # Replace NAs with 0 in recruitment cols
 bt[ , r.cols][is.na(c.brood[,r.cols])] <- 0
-rowSums(bt[,r.cols]) == bt$R
+rowSums(bt[,r.cols]) == bt$R # why is this here?
 bt[,r.cols] <- lapply(bt[,r.cols], function(x) x/bt$R) # Make "R" columns proportions
+summary(rowSums(bt[,r.cols])) # median should be 1, there are many 0s and some issues resulting in high #s for Skeena pops
 
 bt.out.1 <- bt[complete.cases(bt),]                # drop years with missing data
 bt.out.2 <- subset(bt.out.1, BY <= 2019) # currently have pink-NP data up to 2021 (+2 yr)
@@ -168,20 +170,21 @@ bt.out.3 <- left_join(bt.out.2, coord.lookup, by=c("Stock"="Stock.name"))
 head(bt.out.3)
 
 # Add ocean regions
-bt.out.4 <- subset(bt.out.3, !(Stock.ID %in% c( 95:97, # Kadashan, Chilkat, and E Alsek - too short
-                                                119    # Togiak - too short
-)))
-bt.out.4$Ocean.Region2 <- c.info$ocean.basin[match(bt.out.4$Stock, c.info$stock.name)]
-# Add SEAK grouping
-#bt.out.4$Ocean.Region2[bt.out.4$Ocean.Region2=="WC" & bt.out.4$Lat >= 54.09] <- "SEAK" # Removing SEAK for now
+bt.out.3$ocean.basin <- c.info$ocean.basin[match(bt.out.3$Stock, c.info$stock.name)]
+bt.out.4 <- bt.out.3 %>% mutate(Ocean.Region2 = case_when(ocean.basin == "SC" ~ "WC",
+                                                          ocean.basin == "NC" ~ "SEAK",
+                                                          ocean.basin == "GoA" ~ "GOA",
+                                                          ocean.basin == "BS" ~ "BS"))
 
 
 ## Order stocks geographically to make plotting easier
 bt.out.5 <- geographic.order(bt.out.4)
 bt.out.6 <- dplyr::arrange(bt.out.5, factor(Stock, levels=levels(bt.out.5$Stock)))
 
+# Filter out short/gappy time series
+c.info <- c.info %>% filter(end < 2015 | begin > 1984)
+bt.out.7 <- bt.out.6[!(bt.out.6$Stock.ID %in% c.info$stock.id),]
 # Simplify stock names
-bt.out.7 <- bt.out.6
 bt.out.7$Stock <- stringr::str_remove(bt.out.7$Stock, "-Chum")
 
 

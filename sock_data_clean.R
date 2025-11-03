@@ -87,13 +87,17 @@ all.equal(sort(r1), sort(r2))
 # More cleaning steps
 bt.out.1 <- bt[complete.cases(bt),]                # drop years with missing data
 (nrow(bt) - nrow(bt.out.1)) # how many rows dropped
-bt.out.2 <- subset(bt.out.1, !(Stock.ID %in% c( 7, # Frazer - hatchery influence
-                                                29:36, #misc. Fraser stocks - too short
-                                                38, 41, # Babine-Fulton and Babine-Pinkut - hatchery influence
-                                                43, 46, 47, # Johnston, McDonnell & Kitwancool - gappy
-                                                49, 51, 54, # Swan-Stephens, Bear-Skeena, Sustut - gappy
-                                                50, 52, 53, 55 # Asitika, Damshilgwit, Motase, Upper Nass - too short
-)))
+bt.out.2 <- subset(bt.out.1, !(Stock %in% c("Frazer", # Frazer - hatchery influence
+                                            "Bear-Skeena", # short
+                                            "Johnston", #short
+                                            "Mcdonell", #gappy
+                                            "Kitwancool", # gappy
+                                            "Koeye", #large gaps
+                                            "Namu", #large gaps
+                                            "Kitlope", # large gap
+                                            "Hartley Bay", # gappy
+                                            "Marian-Eden" # gappy
+                                            )))
 bt.out.3 <- subset(bt.out.2,BY > 1949)        # do this because pre 1950 data is very sparse
 bt.out.4 <- subset(bt.out.3, BY<=2015) #- currently have pink-NP data up to 2021 (+6 yr)
 # Final filtering step: make sure all stks extend thru all time periods
@@ -104,6 +108,9 @@ bt.out.5 <- subset(bt.out.4, Stock.ID %in% stk.sub$Stock.ID)
 bt.out.5$Ocean.Region2 <- s.info$ocean.basin[match(bt.out.5$Stock, s.info$stock.name)]
 # Add SEAK grouping
 bt.out.5$Ocean.Region2[bt.out.5$Lat >= 54.09 & bt.out.5$Lon > -140] <- "SEAK"
+bt.out.5$Ocean.Region2[bt.out.5$Ocean.Region2 %in% c("SC", "NC")] <- "WC"
+bt.out.5$Ocean.Region2[bt.out.5$Ocean.Region2 == "GoA"] <- "GOA"
+
 
 ## Order stocks geographically to make plotting easier
 bt.out.6 <- geographic.order(bt.out.5)
@@ -121,8 +128,8 @@ write.csv(bt.out, "./data/sockeye/master_sockeye_brood_table.csv", row.names = F
 
 
 ## Create stock info table ---------------------------------
-s.info.brood <- ddply(bt.out, .(Stock.ID), plyr::summarize,
-                            Stock = unique(Stock),
+s.info.brood <- ddply(bt.out, .(Stock), plyr::summarize,
+                            Stock.ID = unique(Stock.ID),
                             Ocean.Region2 = unique(Ocean.Region2),
                             lat = unique(Lat),
                             lon = unique(Lon),
