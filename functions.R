@@ -2,11 +2,11 @@
 ## ---------------------- ##
 
 
-## Design matrix for MV RW 
-make_design_matrix=function(x,grp){
-  x2=matrix(nrow=length(x),ncol=length(unique(grp)))
+## Design matrix for MV RW
+make_design_matrix <- function(x,grp) {
+  x2 <- matrix(nrow = length(x), ncol = length(unique(grp)))
   for(i in 1:length(unique(grp))){
-    x2[,i]=ifelse(grp==levels(factor(grp))[i],1,0)*x
+    x2[,i] <- ifelse(grp == levels(factor(grp))[i], 1, 0)*x
   }
   return(x2)
 }
@@ -16,37 +16,37 @@ make_design_matrix=function(x,grp){
 moving_average_df <- function(x, value, lag = 2, Ocean.Region="Ocean.Region2", var_col="varnam", vars=c("SST", "Competitors")) {
   # x = a dataframe you want returned with a mov_avg column
   # lag = lag (past only) for moving average, e.g. a lag=2 gives a 3-year average
-  
+
   out <- data.frame(NULL)
-  
+
   for(var in vars){
     xvar <- x[x[[var_col]] == var,] # isolate a variable (loop 1)
-    
+
     xreg.out <- data.frame(NULL) # make df for next loop
-    
+
     for(reg in unique(xvar[[Ocean.Region]])){ # isolate a region (group) (loop 2)
-      
+
       xreg <- xvar[xvar[[Ocean.Region]]==reg, ]
       xreg <- arrange(xreg, BY)
-      
+
       mov_avg <- NA # make vector for next loop
-      
+
       for(i in c(lag+1):c(nrow(xreg))){ # rolling mean (loop 3)
-        
+
         sub <- xreg[c(i-lag):i, value]
         mov_avg[i] <- mean(sub)
       } # end loop 3
-      
+
       xreg.out <- rbind(xreg.out, cbind(xreg, mov_avg))
-      
-    } # end loop 2 
-    
+
+    } # end loop 2
+
     out <- rbind(out, xreg.out)
-    
+
   } # end loop 1
-  
+
   return(out)
-  
+
 }
 
 
@@ -54,11 +54,11 @@ moving_average_df <- function(x, value, lag = 2, Ocean.Region="Ocean.Region2", v
 ## get_ocean_entry_prop -------------------------------------
 
 get_ocean_entry_prop <- function(data=s.brood, r.cols=r.cols){
-  
-  ## This function takes a sockeye brood table (data) and calculates the 
+
+  ## This function takes a sockeye brood table (data) and calculates the
   # proportion of recruits entering the ocean at age 0, 1, ... 4
   # under three potential data scenarios (for a given stock)
-  
+
   # 1. There is only total recruits data, not broken down by age class ('detailed')
   # 2. There is detailed recruitment data for some years, but missing at beginning or end of timeseries
   # 3. There is full detailed recruitment data available (e.g. 'RX.X' columns contain data)
@@ -66,18 +66,18 @@ get_ocean_entry_prop <- function(data=s.brood, r.cols=r.cols){
   # It accepts data with columns 'RX.X', 'Recruits' as age-specific and total recruits, respectively
   # It returns the dataframe with cols 'ocean_X' , proportion of recruits entering ocean at year X for a given brood yr
   # It also makes the 'Recruits' column the sum of all age classes if available, or does not change Recruits if RX.X cols are empty
-  
+
   # load skeena age proportions
   skeena_lh <- read.csv("./data-downloaded/skeena_sockeye_lifehistory_prop.csv")
-  
+
   # create Ocean_X columns
   ocean.cols <- paste("ocean", 0:4, sep="_")
   data[, ocean.cols] <- NA
-  
+
   data.out <- ddply(data, .(Stock), function(x){
-    
+
     if(all(x$detailFlag==0)) { # if the whole timeseries is missing age data (Skeena)
-      
+
       if(unique(x$Stock) %in% skeena_lh$hh_stock_names){ # if there is estimate for it
         p1 <- skeena_lh$prop_age1[skeena_lh$hh_stock_names == unique(x$Stock)]
         p2 <- skeena_lh$prop_age2[skeena_lh$hh_stock_names == unique(x$Stock)]
@@ -90,41 +90,41 @@ get_ocean_entry_prop <- function(data=s.brood, r.cols=r.cols){
         out <- mutate(x, ocean_1 = mu_p1,
                       ocean_2 = mu_p2)
       }
-      
+
     } else if(length(unique(x$detailFlag))==2) { ## if only PART of the timeseries is missing age data
-      
+
       # fill ocean_x columns
       x <- x %>% dplyr::mutate(ocean_0 = rowSums(.[grep("^R0\\.", names(.), value=T)],na.rm=T)/R,
                                ocean_1 = rowSums(.[grep("^R1\\.", names(.), value=T)],na.rm=T)/R,
                                ocean_2 = rowSums(.[grep("^R2\\.", names(.), value=T)],na.rm=T)/R,
                                ocean_3 = rowSums(.[grep("^R3\\.", names(.), value=T)],na.rm=T)/R,
                                ocean_4 = rowSums(.[grep("^R4\\.", names(.), value=T)],na.rm=T)/R)
-      
+
       # years without detail
       nd_yrs <- x$BY[x$detailFlag==0]
-      
+
       # if no detail at the start of the timeseries, use the average of the first 10 years with age comp detail
       if(min(x$BY) %in% nd_yrs){
-        
+
         x$ocean_0[x$detailFlag==0] <- mean(head(x$ocean_0[x$detailFlag==1], 10))
         x$ocean_1[x$detailFlag==0] <- mean(head(x$ocean_1[x$detailFlag==1], 10))
         x$ocean_2[x$detailFlag==0] <- mean(head(x$ocean_2[x$detailFlag==1], 10))
         x$ocean_3[x$detailFlag==0] <- mean(head(x$ocean_3[x$detailFlag==1], 10))
         x$ocean_4[x$detailFlag==0] <- mean(head(x$ocean_4[x$detailFlag==1], 10))
-        
+
         out <- x
-        
+
       } else if(max(x$BY) %in% nd_yrs){       # if no detail at the end, use the average of the last 10 years
-        
+
         x$ocean_0[x$detailFlag==0] <- mean(tail(x$ocean_0[x$detailFlag==1], 10))
         x$ocean_1[x$detailFlag==0] <- mean(tail(x$ocean_1[x$detailFlag==1], 10))
         x$ocean_2[x$detailFlag==0] <- mean(tail(x$ocean_2[x$detailFlag==1], 10))
         x$ocean_3[x$detailFlag==0] <- mean(tail(x$ocean_3[x$detailFlag==1], 10))
         x$ocean_4[x$detailFlag==0] <- mean(tail(x$ocean_4[x$detailFlag==1], 10))
-        
+
         out <- x
       }
-      
+
     } else { # If whole timeseries has recruitment detail
       # fill ocean_x columns
       x <- x %>% dplyr::mutate(ocean_0 = rowSums(.[grep("^R0\\.", names(.), value=T)],na.rm=T)/R,
@@ -134,53 +134,53 @@ get_ocean_entry_prop <- function(data=s.brood, r.cols=r.cols){
                                ocean_4 = rowSums(.[grep("^R4\\.", names(.), value=T)],na.rm=T)/R)
       out <- x
     }
-    
+
     # set remaining NAs in ocean.cols to 0
     out[ocean.cols][is.na(out[ocean.cols])] <- 0
     return(out)
   })
-  
+
 }
 
 
 
 ## trim.era.ts ----------------------
-trim.era.ts <- function(data=data_master, info=info_master, 
+trim.era.ts <- function(data=data_master, info=info_master,
                         breakpoint1 = 1989, breakpoint2 = NULL){
   ## This trims time series to be more compatible with 'era' models
   ## by removing short periods of overlap (<5 years) with an era
   # outputs dataframe with 'tail' years removed.
   # requires 'data' table with columns Stock, BY
   # requires 'info' table with columns yr_end, yr_start
-  
+
   # Get eras
   era1 <- min(info$yr_start):(breakpoint1-1)
   era2 <- if(is.null(breakpoint2)) (breakpoint1):max(info$yr_end) else breakpoint1:(breakpoint2-1)
   era3 <- if(is.null(breakpoint2)) NULL else breakpoint2:max(info$yr_end)
-  
+
   # How many years of data in each era by Stock
   yr_split <- plyr::ddply(data, .(Stock), dplyr::summarize,
                           n_era1 = sum(BY %in% era1),
                           n_era2 = sum(BY %in% era2),
                           n_era3 = sum(BY %in% era3))
-  
-  # Stocks to trim in each era 
+
+  # Stocks to trim in each era
   trim_1 <- yr_split$Stock[yr_split$n_era1 %in% 1:4]
   trim_2 <- yr_split$Stock[yr_split$n_era2 %in% 1:4]
   trim_3 <- if(!is.null(breakpoint2)) yr_split$Stock[yr_split$n_era3 %in% 1:4]
-  
+
   # Trim necessary timeseries and stitch together
   data_out <- plyr::ddply(data, .(Stock), function(x){
     if(unique(x$Stock) %in% trim_1) x <- x[x$BY >= breakpoint1, ]
     if(unique(x$Stock) %in% trim_2) x <- x[x$BY >= breakpoint2 | x$BY< breakpoint1, ]
     if(!is.null(trim_3)){
       if(unique(x$Stock) %in% trim_3) x <- x[x$BY < breakpoint2, ] }
-    
+
     return(x)
   } )
-  
+
   return(data_out)
-  
+
 }
 
 
@@ -192,8 +192,8 @@ stock.plot.lab <- function(data, var="Stock", numbered=TRUE){
   ##
   ## data = a data.frame with a "Stock" column
   ## Returns original dataframe with a new factor column, 'stock_lab'
-  
-  
+
+
   stock <- as.character(unique(data[[var]]))
 
   # replace words with shortened versions
@@ -207,19 +207,19 @@ stock.plot.lab <- function(data, var="Stock", numbered=TRUE){
   if(numbered){
     lab <- paste0(1:length(lab), ". ", lab)
   }
-  
+
   # Make lookup table to join with original dataframe
   lab.df <- data.frame(stock_lab = lab)
   lab.df[[var]] <- stock
 
   data.out <- dplyr::left_join(data, lab.df, by=c(var))
-  
-  # Convert back to factors 
+
+  # Convert back to factors
   data.out[[var]] <- factor(data.out[[var]], levels=unique(data.out$Stock))
   data.out$stock_lab <- factor(data.out$stock_lab, levels=unique(data.out$stock_lab))
-  
+
   return(data.out)
-  
+
 }
 
 ## geographic.order --------------------------------------
@@ -227,10 +227,10 @@ stock.plot.lab <- function(data, var="Stock", numbered=TRUE){
 geographic.order <- function(x) {
   # Accepts a dataframe with the columns Stock, Ocean.Region, Lat, Lon
   # Returns Stock as an ordered factor appropriate for plotting
-      # i.e. 1 is southmost stk on WC, max is northmost in BS, and 
-                                # GOA are ordered E->W 
+      # i.e. 1 is southmost stk on WC, max is northmost in BS, and
+                                # GOA are ordered E->W
   x$Stock <- as.character(x$Stock)
-  
+
   wc.ind <- bs.ind <- seak.ind <- which(names(x) %in% c("Stock", "Lat", "lat")) # WC and BS stocks organized by latitude
   goa.ind <- which(names(x) %in% c("Stock", "Lon", "lon")) # GOA stocks organized by longitude
 
@@ -239,14 +239,14 @@ geographic.order <- function(x) {
   SEAK_stk <- unique( x[ which (x$Ocean.Region2=="SEAK"), seak.ind  ] )
   GOA_stk <- unique( x[ which (x$Ocean.Region2=="GOA"), goa.ind ] )
   BS_stk <- unique( x[ which (x$Ocean.Region2=="BS"), bs.ind ] )
-  
+
   # Rank by Lat (WC, BS) or Lon (GOA)
   wc.ind <- which(names(WC_stk) %in% c("Lat", "lat"))
   seak.ind <- which(names(SEAK_stk) %in% c("Lat", "lat"))
   goa.ind <- which(names(GOA_stk) %in% c("Lon", "lon"))
   bs.ind <- which(names(BS_stk) %in% c("Lat", "lat"))
-  
-  
+
+
   WC_stk$geo_id <- data.table::frankv(WC_stk, cols=wc.ind, ties.method = "first")
   SEAK_stk$geo_id <- nrow(WC_stk) + data.table::frankv(SEAK_stk, cols=seak.ind, ties.method = "first")
   GOA_stk$geo_id <- nrow(WC_stk) + nrow(SEAK_stk) + data.table::frankv(GOA_stk, cols=goa.ind, order=-1L, ties.method = "first")
@@ -255,82 +255,87 @@ geographic.order <- function(x) {
   #combine them
   geo.id <-  rbind(WC_stk[, c("Stock", "geo_id")], SEAK_stk[, c("Stock", "geo_id")], GOA_stk[, c("Stock", "geo_id")], BS_stk[, c("Stock", "geo_id")])
   geo.id <- geo.id[order(geo.id$geo_id), ] # sort in ascending order
-  
+
   stockcol <- factor(x$Stock, levels = geo.id$Stock)
-  
+
   df = x
   #if(!all(df$Stock == x$Stock)) print("Problem!!")
   df$Stock <- stockcol
-  
+
   return(df)
 }
 
 
 
 ## hb05_density_df -----------------------------------------
-hb05_density_df <- function(stanfit, ocean.regions = 3, info_master=info_master, data_master=data_master) {
+hb05_density_df <- function(stanfit, ocean.regions = 3, info=info_master, data=data_master) {
 
     # this function has been modified a lot to fit specific purposes but needs work
   # to make it more generally applicable
-  # Get stanfit name 
+  # Get stanfit name
   fitnam <- deparse(substitute(stanfit))
-  
+
   ## Get posterior matrices
   lst.f <- hb.posterior.list(stanfit)
-  
+
   ## Density smoothness
   adjust <- 1.5
-  
-  if(ocean.regions == 3) region_col <- info_master$Ocean.Region 
-  else if (ocean.regions == 4) region_col <- info_master$Ocean.Region2
-  
+
+  #if(ocean.regions == 3) region_col <- info$Ocean.Region
+  #else if (ocean.regions == 4)
+  region_col <- info$Ocean.Region2
+
   ## Define region column indices
   if (fitnam == "stat_ctrl"){ #Use 2020 data for control model
     control_dat <- distinct(ctrl_dat[,c("Stock", "Ocean.Region")])
     ind.wc  <- which(control_dat$Ocean.Region == "WC")
     ind.goa <- which(control_dat$Ocean.Region == "GOA")
     ind.bs  <- which(control_dat$Ocean.Region == "BS")
-    
+
   } else if( fitnam == "stat_tr"){
-    ind.wc  <- match(info_master$Stock[which(region_col == "WC" & info_master$yr_end >= 1975)], levels(data_master$Stock) ) 
-    ind.goa <- match(info_master$Stock[which(region_col == "GOA" & info_master$yr_end >= 1975)], levels(data_master$Stock) )
-    ind.bs  <- match(info_master$Stock[which(region_col == "BS" & info_master$yr_end >= 1975)], levels(data_master$Stock) )
-    ind.seak <- match(info_master$Stock[which(region_col == "SEAK" & info_master$yr_end >= 1975)], levels(data_master$Stock))
+    ind.wc  <- match(info$Stock[which(region_col == "WC" & info$yr_end >= 1975)], levels(data$Stock) )
+    ind.goa <- match(info$Stock[which(region_col == "GOA" & info$yr_end >= 1975)], levels(data$Stock) )
+    ind.bs  <- match(info$Stock[which(region_col == "BS" & info$yr_end >= 1975)], levels(data$Stock) )
+    ind.seak <- match(info$Stock[which(region_col == "SEAK" & info$yr_end >= 1975)], levels(data$Stock))
     ind.reg <- list(ind.bs, ind.goa, ind.wc, ind.seak)
-    
+
   } else {
-    ind.wc  <- match(info_master$Stock[which(region_col == "WC")], levels(data_master$Stock) ) 
-    ind.goa <- match(info_master$Stock[which(region_col == "GOA")], levels(data_master$Stock) )
-    ind.bs  <- match(info_master$Stock[which(region_col == "BS")], levels(data_master$Stock) )
-    ind.seak <- match(info_master$Stock[which(region_col == "SEAK")], levels(data_master$Stock))
-    ind.reg <- ifelse(ocean.regions == 3, list(ind.bs, ind.goa, ind.wc), list(ind.bs, ind.goa, ind.wc, ind.seak) )
+    ind.wc  <- match(info$Stock[which(region_col == "WC")], levels(data$Stock) )
+    ind.goa <- match(info$Stock[which(region_col == "GOA")], levels(data$Stock) )
+    ind.bs  <- match(info$Stock[which(region_col == "BS")], levels(data$Stock) )
+    ind.seak <- match(info$Stock[which(region_col == "SEAK")], levels(data$Stock))
+    if(ocean.regions == 3){
+      ind.reg <- list(ind.bs, ind.goa, ind.wc)
+      } else {
+      ind.reg <- list(ind.bs, ind.goa, ind.wc, ind.seak)
+      }
   }
-  
-  
+
+
   ## Extract stock-specific param matrices
   s.alpha <- lst.f[["alpha"]]
   s.sigma <- lst.f[["sigma"]]
   s.gamma <- lst.f[["gamma"]]
   s.kappa <- lst.f[["kappa"]]
   #s.chi   <- lst.f[["chi"]]
-  
+
   ## Extract regional-level param matrices
   m.gamma <- lst.f[["mu_gamma"]]
   m.kappa <- lst.f[["mu_kappa"]]
   #m.chi   <- lst.f[["mu_chi"]]
-  
+
   ## Get percent change values
   pc.s.gamma <- (exp(s.gamma) - 1) * 100
   pc.s.kappa <- (exp(s.kappa) - 1) * 100
   #pc.s.chi   <- (exp(s.chi) - 1) * 100
-  
+
   pc.m.gamma <- (exp(m.gamma) - 1) * 100
   pc.m.kappa <- (exp(m.kappa) - 1) * 100
   #pc.m.chi   <- (exp(m.chi) - 1) * 100
-  
+
   pc.s.joint <- (exp(s.gamma + s.kappa ) - 1) * 100
   pc.m.joint <- (exp(m.gamma + m.kappa ) - 1) * 100
-  
+
 
   ## Calculate kernel densities
   s.den.wc.gamma  <- col_density(pc.s.gamma[ , ind.wc], plot.it = FALSE, adjust = adjust)
@@ -344,18 +349,18 @@ hb05_density_df <- function(stanfit, ocean.regions = 3, info_master=info_master,
   #s.den.wc.chi    <- col_density(pc.s.chi[ , ind.wc], plot.it = FALSE, adjust = adjust)
   #s.den.goa.chi   <- col_density(pc.s.chi[ , ind.goa], plot.it = FALSE, adjust = adjust)
   #s.den.bs.chi    <- col_density(pc.s.chi[ , ind.bs], plot.it = FALSE, adjust = adjust)
-  
+
   s.den.wc.joint  <- col_density(pc.s.joint[ , ind.wc], plot.it = FALSE, adjust = adjust)
   s.den.goa.joint <- col_density(pc.s.joint[ , ind.goa], plot.it = FALSE, adjust = adjust)
   s.den.bs.joint  <- col_density(pc.s.joint[ , ind.bs], plot.it = FALSE, adjust = adjust)
-  
+
   if(ocean.regions == 4)  s.den.seak.joint  <- col_density(pc.s.joint[ , ind.seak], plot.it = FALSE, adjust = adjust)
-  
+
   m.den.gamma <- col_density(pc.m.gamma, plot.it = FALSE, adjust = adjust)
   m.den.kappa <- col_density(pc.m.kappa, plot.it = FALSE, adjust = adjust)
   #m.den.chi   <- col_density(pc.m.chi, plot.it = FALSE, adjust = adjust)
   m.den.joint <- col_density(pc.m.joint, plot.it = FALSE, adjust = adjust)
-  
+
   ## Density data frame for mu
   m.lst <- list(m.den.gamma,
                 m.den.kappa,
@@ -375,7 +380,7 @@ hb05_density_df <- function(stanfit, ocean.regions = 3, info_master=info_master,
                                        x.df$region == 2 ~ "Gulf of Alaska",
                                        x.df$region == 3 ~ "Bering Sea" )
     }
-    
+
     y.df$region <- x.df$region
     var  <- ifelse(i == 1, "SST", NA)
     var  <- ifelse(i == 2, "Comp", var)
@@ -386,8 +391,8 @@ hb05_density_df <- function(stanfit, ocean.regions = 3, info_master=info_master,
     merge(x.df, y.df, by = c("n", "region", "var"), sort = FALSE)
   })
   m.df <- do.call(rbind, m.lst.df)
-  
-  
+
+
   ## Density data frame for mu
   s.wc.lst <- list(s.den.wc.gamma,
                    s.den.wc.kappa,
@@ -408,7 +413,7 @@ hb05_density_df <- function(stanfit, ocean.regions = 3, info_master=info_master,
     merge(x.df, y.df, by = c("n", "stock", "region", "var"), sort = FALSE)
   })
   s.wc.df <- do.call(rbind, s.wc.lst.df)
-  
+
   s.goa.lst <- list(s.den.goa.gamma,
                     s.den.goa.kappa,
                     #s.den.goa.chi,
@@ -428,7 +433,7 @@ hb05_density_df <- function(stanfit, ocean.regions = 3, info_master=info_master,
     merge(x.df, y.df, by = c("n", "stock", "region", "var"), sort = FALSE)
   })
   s.goa.df <- do.call(rbind, s.goa.lst.df)
-  
+
   s.bs.lst <- list(s.den.bs.gamma,
                    s.den.bs.kappa,
                    #s.den.bs.chi,
@@ -448,7 +453,7 @@ hb05_density_df <- function(stanfit, ocean.regions = 3, info_master=info_master,
     merge(x.df, y.df, by = c("n", "stock", "region", "var"), sort = FALSE)
   })
   s.bs.df <- do.call(rbind, s.bs.lst.df)
-  
+
   if(ocean.regions == 4) {
     s.seak.lst <- list(s.den.seak.gamma,
                      s.den.seak.kappa,
@@ -474,14 +479,14 @@ hb05_density_df <- function(stanfit, ocean.regions = 3, info_master=info_master,
   ## Combine region stock-specific data frames
   if(ocean.regions == 3) s.df <- rbind(s.wc.df, s.goa.df, s.bs.df) else
   if(ocean.regions == 4) s.df <- rbind(s.wc.df, s.goa.df, s.bs.df, s.seak.df)
-  
+
   ## Set factor levels
   s.df$var <- factor(s.df$var, levels = c("SST", "Comp" , "SST + Comp")) #, "SST + Comp + SST x Comp"))
   m.df$var <- factor(m.df$var, levels = c("SST", "Comp" , "SST + Comp")) #, "SST + Comp + SST x Comp"))
   #m.df$region <- factor(m.df$region, levels=c("West Coast", "Gulf of Alaska", "Bering Sea", "Southeast Alaska"))
   #s.df$region <- factor(s.df$region, levels=c("West Coast", "Gulf of Alaska", "Bering Sea", "Southeast Alaska"))
-  
-  
+
+
   out <- list(stock = s.df,
               region = m.df)
   return(out)
@@ -490,69 +495,69 @@ hb05_density_df <- function(stanfit, ocean.regions = 3, info_master=info_master,
 
 ## hb07_density_df -------------------------------------
 hb07_density_df <- function(stanfit, ocean.regions = 4, info=info_master, data=data_master) {
-  
+
   # this function has been modified a lot to fit specific purposes but needs work
   # to make it more generally applicable
-  # Get stanfit name 
+  # Get stanfit name
   fitnam <- deparse(substitute(stanfit))
-  
+
   ## Get posterior matrices
   lst.f <- hb.posterior.list(stanfit)
-  
+
   ## Density smoothness
   adjust <- 1.5
-  
-  if(ocean.regions == 3) region_col <- info_master$Ocean.Region 
+
+  if(ocean.regions == 3) region_col <- info_master$Ocean.Region
   else if (ocean.regions == 4) region_col <- info_master$Ocean.Region2
-  
+
   ## Define region column indices
   if (fitnam == "stat_ctrl"){ #Use 2020 data for control model
     control_dat <- distinct(ctrl_dat[,c("Stock", "Ocean.Region")])
     ind.wc  <- which(control_dat$Ocean.Region == "WC")
     ind.goa <- which(control_dat$Ocean.Region == "GOA")
     ind.bs  <- which(control_dat$Ocean.Region == "BS")
-    
+
   } else if( fitnam == "stat_tr"){
-    ind.wc  <- match(info_master$Stock[which(region_col == "WC" & info_master$yr_end >= 1975)], levels(data_master$Stock) ) 
+    ind.wc  <- match(info_master$Stock[which(region_col == "WC" & info_master$yr_end >= 1975)], levels(data_master$Stock) )
     ind.goa <- match(info_master$Stock[which(region_col == "GOA" & info_master$yr_end >= 1975)], levels(data_master$Stock) )
     ind.bs  <- match(info_master$Stock[which(region_col == "BS" & info_master$yr_end >= 1975)], levels(data_master$Stock) )
     ind.seak <- match(info_master$Stock[which(region_col == "SEAK" & info_master$yr_end >= 1975)], levels(data_master$Stock))
     ind.reg <- list(ind.bs, ind.goa, ind.wc, ind.seak)
-    
+
   } else {
-    ind.wc  <- match(info_master$Stock[which(region_col == "WC")], levels(data_master$Stock) ) 
+    ind.wc  <- match(info_master$Stock[which(region_col == "WC")], levels(data_master$Stock) )
     ind.goa <- match(info_master$Stock[which(region_col == "GOA")], levels(data_master$Stock) )
     ind.bs  <- match(info_master$Stock[which(region_col == "BS")], levels(data_master$Stock) )
     ind.seak <- match(info_master$Stock[which(region_col == "SEAK")], levels(data_master$Stock))
     ind.reg <- ifelse(ocean.regions == 3, list(ind.bs, ind.goa, ind.wc), list(ind.bs, ind.goa, ind.wc, ind.seak) )
   }
-  
-  
+
+
   ## Extract stock-specific param matrices
   s.alpha <- lst.f[["alpha"]]
   s.sigma <- lst.f[["sigma"]]
   s.gamma <- lst.f[["gamma"]]
   s.kappa <- lst.f[["kappa"]]
   s.chi   <- lst.f[["chi"]]
-  
+
   ## Extract regional-level param matrices
   m.gamma <- lst.f[["mu_gamma"]]
   m.kappa <- lst.f[["mu_kappa"]]
   m.chi   <- lst.f[["mu_chi"]]
-  
+
   ## Get percent change values
   pc.s.gamma <- (exp(s.gamma) - 1) * 100
   pc.s.kappa <- (exp(s.kappa) - 1) * 100
   pc.s.chi   <- (exp(s.chi) - 1) * 100
-  
+
   pc.m.gamma <- (exp(m.gamma) - 1) * 100
   pc.m.kappa <- (exp(m.kappa) - 1) * 100
   pc.m.chi   <- (exp(m.chi) - 1) * 100
-  
+
   pc.s.joint <- (exp(s.gamma + s.kappa ) - 1) * 100
   pc.m.joint <- (exp(m.gamma + m.kappa ) - 1) * 100
-  
-  
+
+
   ## Calculate kernel densities
   s.den.wc.gamma  <- col_density(pc.s.gamma[ , ind.wc], plot.it = FALSE, adjust = adjust)
   s.den.goa.gamma <- col_density(pc.s.gamma[ , ind.goa], plot.it = FALSE, adjust = adjust)
@@ -569,14 +574,14 @@ hb07_density_df <- function(stanfit, ocean.regions = 4, info=info_master, data=d
   s.den.wc.joint  <- col_density(pc.s.joint[ , ind.wc], plot.it = FALSE, adjust = adjust)
   s.den.goa.joint <- col_density(pc.s.joint[ , ind.goa], plot.it = FALSE, adjust = adjust)
   s.den.bs.joint  <- col_density(pc.s.joint[ , ind.bs], plot.it = FALSE, adjust = adjust)
-  
+
   if(ocean.regions == 4)  s.den.seak.joint  <- col_density(pc.s.joint[ , ind.seak], plot.it = FALSE, adjust = adjust)
-  
+
   m.den.gamma <- col_density(pc.m.gamma, plot.it = FALSE, adjust = adjust)
   m.den.kappa <- col_density(pc.m.kappa, plot.it = FALSE, adjust = adjust)
   m.den.chi   <- col_density(pc.m.chi, plot.it = FALSE, adjust = adjust)
   m.den.joint <- col_density(pc.m.joint, plot.it = FALSE, adjust = adjust)
-  
+
   ## Density data frame for mu
   m.lst <- list(m.den.gamma,
                 m.den.kappa,
@@ -596,7 +601,7 @@ hb07_density_df <- function(stanfit, ocean.regions = 4, info=info_master, data=d
                                        x.df$region == 2 ~ "Gulf of Alaska",
                                        x.df$region == 3 ~ "Bering Sea" )
     }
-    
+
     y.df$region <- x.df$region
     var  <- ifelse(i == 1, "SST", NA)
     var  <- ifelse(i == 2, "Comp", var)
@@ -607,8 +612,8 @@ hb07_density_df <- function(stanfit, ocean.regions = 4, info=info_master, data=d
     merge(x.df, y.df, by = c("n", "region", "var"), sort = FALSE)
   })
   m.df <- do.call(rbind, m.lst.df)
-  
-  
+
+
   ## Density data frame for mu
   s.wc.lst <- list(s.den.wc.gamma,
                    s.den.wc.kappa,
@@ -629,7 +634,7 @@ hb07_density_df <- function(stanfit, ocean.regions = 4, info=info_master, data=d
     merge(x.df, y.df, by = c("n", "stock", "region", "var"), sort = FALSE)
   })
   s.wc.df <- do.call(rbind, s.wc.lst.df)
-  
+
   s.goa.lst <- list(s.den.goa.gamma,
                     s.den.goa.kappa,
                     s.den.goa.chi,
@@ -649,7 +654,7 @@ hb07_density_df <- function(stanfit, ocean.regions = 4, info=info_master, data=d
     merge(x.df, y.df, by = c("n", "stock", "region", "var"), sort = FALSE)
   })
   s.goa.df <- do.call(rbind, s.goa.lst.df)
-  
+
   s.bs.lst <- list(s.den.bs.gamma,
                    s.den.bs.kappa,
                    s.den.bs.chi,
@@ -669,7 +674,7 @@ hb07_density_df <- function(stanfit, ocean.regions = 4, info=info_master, data=d
     merge(x.df, y.df, by = c("n", "stock", "region", "var"), sort = FALSE)
   })
   s.bs.df <- do.call(rbind, s.bs.lst.df)
-  
+
   if(ocean.regions == 4) {
     s.seak.lst <- list(s.den.seak.gamma,
                        s.den.seak.kappa,
@@ -691,18 +696,18 @@ hb07_density_df <- function(stanfit, ocean.regions = 4, info=info_master, data=d
     })
     s.seak.df <- do.call(rbind, s.seak.lst.df)
   }
-  
+
   ## Combine region stock-specific data frames
   if(ocean.regions == 3) s.df <- rbind(s.wc.df, s.goa.df, s.bs.df) else
     if(ocean.regions == 4) s.df <- rbind(s.wc.df, s.goa.df, s.bs.df, s.seak.df)
-  
+
   ## Set factor levels
   s.df$var <- factor(s.df$var, levels = c("SST", "Comp" , "SST x Comp", "SST + Comp")) #, "SST + Comp + SST x Comp"))
   m.df$var <- factor(m.df$var, levels = c("SST", "Comp" , "SST x Comp", "SST + Comp")) #, "SST + Comp + SST x Comp"))
   #m.df$region <- factor(m.df$region, levels=c("West Coast", "Gulf of Alaska", "Bering Sea", "Southeast Alaska"))
   #s.df$region <- factor(s.df$region, levels=c("West Coast", "Gulf of Alaska", "Bering Sea", "Southeast Alaska"))
-  
-  
+
+
   out <- list(stock = s.df,
               region = m.df)
   return(out)
@@ -713,12 +718,12 @@ hb07_density_df <- function(stanfit, ocean.regions = 4, info=info_master, data=d
 
 ## era_density_df -----------------------------------------
 era_density_df <- function(stanfit, par, region.var="Ocean.Region2", mu = FALSE, percent.change=FALSE, neras=3, info=info_master){
-  
+
   if(mu){ ## regional mean df
     mu.parxera <- paste0(rep(paste0("mu_", par), each=neras), 1:neras)
-    
+
     post <- rstan::extract(stanfit, pars=c(mu.parxera))
-    
+
     dens.l <- lapply(post, function(x){
       if(percent.change) {
         x<- (exp(x)- 1) * 100
@@ -729,11 +734,11 @@ era_density_df <- function(stanfit, par, region.var="Ocean.Region2", mu = FALSE,
       dens.list <- lapply(dens.out, adply, .margins=c(1,2))
       dens.df <- join(dens.list$x, dens.list$y, by=c("X1", "X2"))
       names(dens.df) <- c("n", region.var, "x", "dens")
-      
+
       return(dens.df)
     } )
-    
-    summ.dens <- bind_rows(dens.l, .id="par") 
+
+    summ.dens <- bind_rows(dens.l, .id="par")
     dens.df.reg.2c <- data.frame(summ.dens,
                                  era = case_when(
                                    str_extract(summ.dens$par, "\\d") == "1" ~ "Early",
@@ -746,9 +751,9 @@ era_density_df <- function(stanfit, par, region.var="Ocean.Region2", mu = FALSE,
                                    str_extract(summ.dens$par, "\\D+") == "mu_kappa" ~ "Competitors",
                                    .default = NA)
     )
-    
-    
-    
+
+
+
   } else { ## Stock specific df
     parxera <- paste0(rep(par, each=neras), 1:neras)
     post <- rstan::extract(stanfit, pars=parxera)
@@ -760,10 +765,10 @@ era_density_df <- function(stanfit, par, region.var="Ocean.Region2", mu = FALSE,
     dens.list <- lapply(dens.out, adply, .margins=c(1,2))
     dens.df <- join(dens.list$x, dens.list$y, by=c("X1", "X2"))
     names(dens.df) <- c("n", "stock", "x", "dens")
-    dens.df <- mutate(dens.df, stock=levels(info$Stock)[as.numeric(stock)] ) 
+    dens.df <- mutate(dens.df, stock=levels(info$Stock)[as.numeric(stock)] )
     return(dens.df)
   } )
-  summ.dens <- bind_rows(dens.l, .id="par") 
+  summ.dens <- bind_rows(dens.l, .id="par")
   dens.df.st.2c <- data.frame(summ.dens,
                               Ocean.Region2 = info[[region.var]][match(summ.dens$stock, info$Stock)],
                               era = case_when(
@@ -776,29 +781,29 @@ era_density_df <- function(stanfit, par, region.var="Ocean.Region2", mu = FALSE,
                                 str_extract(summ.dens$par, "\\D+") == "gamma" ~ "SST",
                                 str_extract(summ.dens$par, "\\D+") == "kappa" ~ "Competitors",
                                 .default = NA))
-  
+
   }
 }
 
 
 ## era_lab ------------------------------------------------
 era_lab <- function(data, data_master=data_master, breakpoint1=1989, breakpoint2=NULL) {
-  
+
   era.names <- list(type="vector")
   era.names[1] <- paste(min(data_master$BY), breakpoint1-1, sep="-")
   if(!is.null(breakpoint2)) {
-    era.names[2] <- paste(breakpoint1, breakpoint2-1, sep="-") 
+    era.names[2] <- paste(breakpoint1, breakpoint2-1, sep="-")
     era.names[3] <- paste(breakpoint2, max(data_master$BY), sep="-")
   } else {
     era.names[2] <- paste(breakpoint1, max(data_master$BY), sep="-") }
-    
-  data <- dplyr::mutate(data, 
+
+  data <- dplyr::mutate(data,
               era_lab = factor(case_when(
               era=="Early" ~ era.names[1],
               era=="Middle" ~ era.names[2],
-              era=="Late" ~ era.names[3]), 
+              era=="Late" ~ era.names[3]),
               levels=era.names))
-  
+
   return(data)
 
 }
@@ -808,18 +813,18 @@ era_lab <- function(data, data_master=data_master, breakpoint1=1989, breakpoint2
 hmm_param_df <- function(data, summary = "stock", reg.quant=c(0.1, 0.9)) {
   # Data: a list of HMM parameter summaries
   # Must contain parameters beta1, beta2, gamma
-  
+
   # summary = "stock" returns stk-lvl summary df
   # summary = "region" returns regional-lvl summary df
   # summary = "none" returns full posterior df (post.df)
-  
+
   # reg.quant = for regional summary, quantiles to calculate
   names(data) <- levels(sock$Stock)
   quant <- colnames(data[[1]])[grep('%$', colnames(data[[1]]))]
   col.names <- c(paste("beta", c("mu", gsub("%", "", quant)), sep = "_"),
                  paste("gamma", c("mu", gsub("%", "", quant[c(1,5)])), sep = "_"))
-  
-  post.df <- plyr::ldply(data, .id = "Stock", .fun=function(x) { 
+
+  post.df <- plyr::ldply(data, .id = "Stock", .fun=function(x) {
     data.frame(beta_mu = x[grep('^beta\\d', rownames(x)), "mean"][c(1,3,2,4)],
                beta_1 = x[grep('^beta\\d', rownames(x)), quant[1]][c(1,3,2,4)],
                beta_2 = x[grep('^beta\\d', rownames(x)), quant[2]][c(1,3,2,4)],
@@ -833,7 +838,7 @@ hmm_param_df <- function(data, summary = "stock", reg.quant=c(0.1, 0.9)) {
                beta_covar = rep(c("SST", "Competitors"), 2),
                row.names=NULL
     ) } )
-  post.df <- plyr::ddply(post.df, .variables="Stock", 
+  post.df <- plyr::ddply(post.df, .variables="Stock",
                          .fun=function(x){
                            BY <- rep(sock$BY[factor(sock$Stock, ordered=F) == x$Stock[1]], each=4)
                            region <- rep(sock$Ocean.Region2[factor(sock$Stock, ordered=F) == x$Stock[1]], each=4)
@@ -843,28 +848,28 @@ hmm_param_df <- function(data, summary = "stock", reg.quant=c(0.1, 0.9)) {
       names(post.df)[2:(ncol(post.df)-4)] <- col.names
       return(post.df)
   }
-  
+
   # Stock summary
-  
+
 stk.col.names <- paste("realb", c("mu", gsub("%", "", quant[c(1,5)])), sep = "_")
-stk.summ.df <- post.df %>% 
+stk.summ.df <- post.df %>%
       mutate(prod_mu = beta_mu*gamma_mu,
              prod_lower = beta_1*gamma_1,
-             prod_upper = beta_5*gamma_5 ) %>% 
+             prod_upper = beta_5*gamma_5 ) %>%
       dplyr::summarize(realb_mu = sum(prod_mu),
                        realb_lower = sum(prod_lower),
                        realb_upper = sum(prod_upper),
                        .by=c("Stock", "BY", "region", "beta_covar") )
- 
+
  if(summary == "stock"){
    names(stk.summ.df)[5:ncol(stk.summ.df)] <- stk.col.names
     return(stk.summ.df)
   }
-  
+
   # Region summary
     reg.col.names <- paste("realb", c("mu", reg.quant*100), sep = "_")
-    
-    reg.summ.df <- stk.summ.df %>% 
+
+    reg.summ.df <- stk.summ.df %>%
       dplyr::summarize(realb_reg_mu = mean(realb_mu, na.rm=T),
                        realb_reg_lower = quantile(realb_mu, reg.quant[1]),
                        realb_reg_upper = quantile(realb_mu, reg.quant[2]),
@@ -872,12 +877,12 @@ stk.summ.df <- post.df %>%
                        .by=c("BY", "region", "beta_covar")) %>%
       filter(n_stk >= 4)      # no less than 4 stocks in an avg
 
-    if(summary == "region"){  
+    if(summary == "region"){
       names(reg.summ.df)[4:(length(reg.summ.df)-1)] <- reg.col.names
       return(reg.summ.df)
-    } 
+    }
     else print("summary argument must be one of 'stock', 'region', or 'none'")
-  
+
 }
 
 
@@ -1214,7 +1219,7 @@ plot_post_pc <- function(stanfit, y,
     if(!is.null(pdf.path)) {
         pdf(pdf.path, width = 10, height = 8)
     }
-    
+
     g <- ppc_scatter_avg(y, yrep[[1]]) +
         labs(title="Observed vs. predicted")
     print(g)
@@ -1226,10 +1231,10 @@ plot_post_pc <- function(stanfit, y,
     g <- ppc_dens_overlay(y = y, yrep = yrep[[1]][1:100, ]) +
         labs(title="Y rep: posterior predictive check")
     print(g)
-    g <- ppc_dens_overlay_grouped(y = y, yrep = yrep[[1]][1:50, ], 
+    g <- ppc_dens_overlay_grouped(y = y, yrep = yrep[[1]][1:50, ],
                                   group=data$Stock)  +
         labs(title="Y rep: posterior predictive check")
-    print(g) 
+    print(g)
 
     if(!is.null(pdf.path)) {
         dev.off()
@@ -1267,25 +1272,25 @@ hb_param_df <- function(stanfit, par, region.var, var = NULL, info = info_master
 
 
 era_hb_param_df <- function(stanfit, par, mu = FALSE, region.var = "Ocean.Region2", neras = 3, info = info_master){
-  
+
   ## Parameter posteriors from Eras models, wrangle into dataframe
-  
+
   if(mu){
-    
+
     ## Regional summary dataframe (mu_gamma/ mu_kappa)
     probs <- c(0.025, 0.05, 0.10, 0.50, 0.90, 0.95, 0.975)
     reg_start <- info$Stock[match(unique(info[[region.var]]), info[[region.var]])]
-    reg_end <- c(info$Stock[match(unique(info[[region.var]]), info[[region.var]])-1], 
+    reg_end <- c(info$Stock[match(unique(info[[region.var]]), info[[region.var]])-1],
                  info$Stock[nrow(info)])
     mu.parsxera <- paste0(rep(paste0("mu_", par), each=neras), 1:neras)
     summ <- rstan::summary(stanfit, pars = mu.parsxera, probs = probs)[[1]]
     df.era.reg.2c <- data.frame(Ocean.Region2 = rep(unique(info[[region.var]]), neras),
                                 ystart = rep(reg_start, neras),
                                 yend = rep(reg_end, neras),
-                                reg_mean = summ[, "mean"], 
+                                reg_mean = summ[, "mean"],
                                 reg_se = summ[ ,"se_mean"],
                                 lower_10 = summ[ , "10%"],
-                                upper_90 = summ[ , "90%"], 
+                                upper_90 = summ[ , "90%"],
                                 var = str_extract(rownames(summ), "\\D+"),
                                 varnam = case_when(grepl("^mu_gamma", rownames(summ)) ~ "SST",
                                                    grepl("^mu_kappa", rownames(summ)) ~ "Competitors"),
@@ -1294,15 +1299,15 @@ era_hb_param_df <- function(stanfit, par, mu = FALSE, region.var = "Ocean.Region
                                                 str_extract(rownames(summ), "\\d") == "3" ~ "Late",
                                                 .ptype=factor( levels=c("Early", "Middle", "Late"))))
     return(df.era.reg.2c)
-    
-    
+
+
   } else {
-    
-  ## Stock lvl dataframe 
+
+  ## Stock lvl dataframe
   probs <- c(0.025, 0.05, 0.10, 0.50, 0.90, 0.95, 0.975)
   parxera <- paste0(rep(par, each=neras), 1:neras)
   summ <- rstan::summary(stanfit, pars = parxera, probs = probs)[[1]]
-  df.era.st.2c <- data.frame(Stock = rep(info$Stock, neras), 
+  df.era.st.2c <- data.frame(Stock = rep(info$Stock, neras),
                              Ocean.Region2 = rep(info[[region.var]], neras),
                              mu = summ[, "mean"],
                              se = summ[, "se_mean"],
@@ -1319,7 +1324,7 @@ era_hb_param_df <- function(stanfit, par, mu = FALSE, region.var = "Ocean.Region
 
   }
 }
-  
+
 
 
 
@@ -1416,7 +1421,7 @@ stan_data_stat <- function(data,
                       scale.x1 = FALSE,
                       priors.only = FALSE,
                       alpha.group = FALSE) {
-    ## Get list of data for input to Stan for stationary models 
+    ## Get list of data for input to Stan for stationary models
     ##
     ## data = data.frame of salmon data
     ## var.x2 = column name in `data` of x2 variable
@@ -1425,7 +1430,7 @@ stan_data_stat <- function(data,
     ## priors.only = logical indicating if a likelihood should be calculated
     ##               TRUE indicates prior predictive distributions will be
     ##               sampled only
-  
+
 
     sock.stan <- data
 
@@ -1506,7 +1511,7 @@ if(FALSE) {
 ## -- stan_data_dyn --------------------------------------------
 stan_data_dyn <- function(data,
                       var.x2 = "early_sst_stnd",
-                      var.x3 = "np_pinks_sec_stnd", 
+                      var.x3 = "np_pinks_sec_stnd",
                       breakpoint1 = 1989,
                       breakpoint2 = NULL,
                       scale.x1 = FALSE,
@@ -1528,40 +1533,40 @@ stan_data_dyn <- function(data,
   ## priors.only = logical indicating if a likelihood should be calculated
   ##               TRUE indicates prior predictive distributions will be
   ##               sampled only
-  
+
   sock.stan <- data
   ## Set factor levels for var.region
   sock.stan[[var.region]] <- factor(sock.stan[[var.region]],
                                    levels = unique(sock.stan[[var.region]]))
-  
-  
+
+
   ## Get start/end for each Stock
   start.end  <- levels_start_end(sock.stan$Stock)
-  
+
   ## Get grouping factor for series
   sock.stan[["OC_REGION_DUMMY"]] <- sock.stan[[var.region]]
-  
+
   grp.df <- plyr::ddply(sock.stan, .(Stock), plyr::summarize,
                         group = unique(OC_REGION_DUMMY))
   g.grp <- as.numeric(factor(grp.df$group, levels = unique(grp.df$group)))
-  
+
   if(alpha.group){
     a.grp.df <- plyr::ddply(sock.stan, .(Stock), plyr::summarize,
                             group = ifelse(round(unique(Lat), 2) == 49.12, 1, 2))
-    a.grp <- a.grp.df$group   
+    a.grp <- a.grp.df$group
   } else {
     a.grp <- rep(1, n_distinct(sock.stan$Stock))
   }
-  
-  
+
+
   ## Get start/end for group-specific gamma series
   start.end.grp.lst <- lapply(split(sock.stan, sock.stan[[var.region]]),
                               function(x) min(x$BY):max(x$BY))
   start.end.grp.vec <- unlist(lapply(seq_along(start.end.grp.lst),
                                      function(x) rep(x, length(start.end.grp.lst[[x]]))))
   start.end.grp <- levels_start_end(as.factor(start.end.grp.vec))
-  
-  
+
+
   ## Get year indices (map gamma -> y) ## Caution: Regions hard coded here?
    year.lst  <- lapply(split(sock.stan, sock.stan[[var.region]]),
                       function(x) as.numeric(as.factor(x$BY)))
@@ -1572,14 +1577,14 @@ stan_data_dyn <- function(data,
     year <- c(year, year.lst$SEAK + max(year))
     year <- c(year, year.lst$BS + max(year))
   }
-  
+
   if(scale.x1) {
     x1 <- plyr::ddply(data, .(Stock), transform,
                       x1 = scale(S)[ , 1])$x1
   } else {
     x1 = data$S
   }
-  
+
   if(is.null(breakpoint2)) {
     era1 <- ifelse(sock.stan$BY < breakpoint1, 1, 0)
     era2 <- ifelse(sock.stan$BY >= breakpoint1, 1, 0)
@@ -1590,8 +1595,8 @@ stan_data_dyn <- function(data,
                      sock.stan$BY < breakpoint2, 1, 0)
     era3 <- ifelse(sock.stan$BY >= breakpoint2, 1, 0)
   }
-  
-  
+
+
   lst <- list(y = sock.stan$lnRS,
               x1 = x1,
               x2 = sock.stan[[var.x2]],
@@ -1753,8 +1758,7 @@ clim.wgt.avg <- function(brood.table,
     ## env.covar = column name in `pink.data` for calc covar with
     ## 	type = c("first_year", "second_year")
     ## out.covar = name of column for new covar in output data.frame
-
-    if("year" %in% names(env.data))
+  if("year" %in% names(env.data))
         names(env.data)[names(env.data) == "year"] <- "Year"
 
     env.mat <- matrix(NA, length(unique(brood.table$BY)),
@@ -1867,14 +1871,14 @@ pink.wgt.avg <- function(brood.table,
         pink.covar <- rep(pink.covar, 4)
         names(pink.covar) <- unique(brood.table$Ocean.Region2)
     }
-    
+
     for (i in unique(brood.table$Stock.ID)){
         brood <- subset(brood.table, Stock.ID == i)
         for (j in unique(brood$BY)){
             if(type == "second_year") {
                 reg_i <- as.vector(unique(brood.table$Ocean.Region2[brood.table$Stock.ID == i]))
 
-                  if(brood$detailFlag[brood$BY == j] ==1){ # HH added detail condition to accommodate new stocks that don't have detailed recruit information 
+                  if(brood$detailFlag[brood$BY == j] ==1){ # HH added detail condition to accommodate new stocks that don't have detailed recruit information
                     np.pink[as.character(j),as.character(i)] <-
                       (brood$R0.1[brood$BY == j] * 0) +
                       (brood$R0.2[brood$BY == j] * pink.data[pink.data$Year == j+3, pink.covar[reg_i]]) +
@@ -1899,8 +1903,8 @@ pink.wgt.avg <- function(brood.table,
                     np.pink[as.character(j),as.character(i)] <-
                       (brood$ocean_0[brood$BY == j] * pink.data[pink.data$Year == j+3, pink.covar[reg_i]]) +
                       (brood$ocean_1[brood$BY == j] * pink.data[pink.data$Year == j+4, pink.covar[reg_i]]) +
-                      (brood$ocean_2[brood$BY == j] * pink.data[pink.data$Year == j+5, pink.covar[reg_i]]) +  
-                      (brood$ocean_3[brood$BY == j] * pink.data[pink.data$Year == j+6, pink.covar[reg_i]])  
+                      (brood$ocean_2[brood$BY == j] * pink.data[pink.data$Year == j+5, pink.covar[reg_i]]) +
+                      (brood$ocean_3[brood$BY == j] * pink.data[pink.data$Year == j+6, pink.covar[reg_i]])
                     } # end detail condition
             }
 
@@ -1954,7 +1958,7 @@ pink.wgt.avg <- function(brood.table,
 
         } # end j loop
     } # end i loop
-  
+
     long.df <- reshape2::melt(np.pink,
                               measure.vars=c((min(brood.table $BY):max(brood.table $BY)),
                                              unique(brood.table$Stock.ID)))
@@ -2010,7 +2014,7 @@ single.stock.fit <- function(formulas, years, plot.path) {
     if(!dir.exists(plot.path)) {
         dir.create(plot.path, recursive = TRUE)
     }
-  
+
 
     mod.list <- formulas
     mod.coef <- vector("list", length(mod.list))
@@ -2024,7 +2028,7 @@ single.stock.fit <- function(formulas, years, plot.path) {
     #regions <- reg1[!duplicated(reg1), ]
     reg2 <- subset(data_master, select = c("Stock", "Ocean.Region2"))
     regions2 <- reg2[!duplicated(reg2), ]
-    
+
 
     for(i in seq_along(mod.list)) {
         m.formula <- mod.list[[i]]
@@ -2038,7 +2042,7 @@ single.stock.fit <- function(formulas, years, plot.path) {
 
         i.path.f <- paste0(i.path, m.name)
         if(!dir.exists(i.path.f)) dir.create(i.path.f)
-        
+
         ##### Debug
         # cat(m.name, "\n")
         # if(m.name == "model9a") browser()
@@ -2121,7 +2125,7 @@ single.stock.fit <- function(formulas, years, plot.path) {
                          })
         print(g)
         dev.off()
-        
+
         # colours = first ocean region grouping (3 groups)
         #pdf(paste0(i.path.f, "_coef_dot_all.pdf"), width = dot.width + 2, height = 8)
         #g <- xyplot(as.factor(Stock) ~ value | variable, data = m.coef,
@@ -2141,11 +2145,11 @@ single.stock.fit <- function(formulas, years, plot.path) {
                     #})
         #print(g)
         #dev.off()
-        
+
         # colours = first ocean region grouping (3 groups)
         #if(m.name != "model1a") {
          # pdf(paste0(i.path.f, "_coef_dot_covars.pdf"), width = dot.width, height = 8)
-          
+
           #g <- xyplot(as.factor(Stock) ~ value | variable, data = m.coef,
            #           subset = !variable %in% c("(Intercept)", "S"),
             #          groups = Ocean.Region2,
@@ -2163,7 +2167,7 @@ single.stock.fit <- function(formulas, years, plot.path) {
                         #panel.xyplot(x, y, ...)
                       #})
           #print(g)
-          
+
         #  dev.off()
         #}
 
@@ -2190,7 +2194,7 @@ single.stock.fit <- function(formulas, years, plot.path) {
         # colours = second ocean region grouping (4 groups)
         if(m.name != "model1a") {
           pdf(paste0(i.path.f, "/coef_dot_covars_oc2.pdf"), width = dot.width, height = 8)
-          
+
           g <- xyplot(as.factor(Stock) ~ value | variable, data = m.coef.oc2,
                       subset = !variable %in% c("(Intercept)", "S"),
                       groups = Ocean.Region2,
@@ -2208,11 +2212,11 @@ single.stock.fit <- function(formulas, years, plot.path) {
                         panel.xyplot(x, y, ...)
                       })
           print(g)
-          
+
           dev.off()
         }
 
-        
+
         pdf(paste0(i.path.f, "/resid_scatter.pdf"), width = 10, height = 8)
         g <- xyplot(residuals ~ fitted, data = rf,
                     par.settings = theme.mjm(),
@@ -2416,7 +2420,7 @@ fill.time.series <- function(data) {
     sp <- unique(data$Species[!is.na(data$Species)])
     for(i in seq_along(id)) {
         sub <- data[data$Stock.ID == id[i], ]
-        BY <- if(sp == "Pink") seq(min(sub$BY), max(sub$BY), by=2) else 
+        BY <- if(sp == "Pink") seq(min(sub$BY), max(sub$BY), by=2) else
                      min(sub$BY):max(sub$BY)
         Stock.ID <- unique(sub$Stock.ID)
         Stock <- unique(sub$Stock)
@@ -2533,7 +2537,7 @@ sst.averager <- function(info, sst, distance = 400) {
 
         cells.sub <- cells[which(dist <= distance), ]
         sst.sub   <- sst[sst$id %in% cells.sub$id, ]
-        
+
         if(reg.i %in% c("WC", "SEAK"))
             months <- 4:7  ## WA, BC, SEAK
 
@@ -3113,9 +3117,9 @@ ocean_region_col <- function(x, stock.col="Stock", region="Ocean.Region2"){
   stk <- x[[stock.col]]
   lookup <- data.frame(Stock = sock.info$Stock, region = sock.info[[region]])
   stk <- data.frame(Stock = stk)
-  
+
   df <- left_join(stk, lookup, by="Stock")
   x$region <- df$region
   return(x)
 }
-  
+
