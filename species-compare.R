@@ -8,7 +8,7 @@
 load(here('output', 'models', 'dyn', 'sockeye', 'hbm_era_2c.RData'), verbose=T) # eras
 sock.box <- era_density_df(era.2c, par=c("gamma", "kappa"), mu=T, info=sock.info)
 load(here('output', 'models', 'stat', 'sockeye', 'stat_a.RData'), verbose=T) # stationary
-s.dens <- hb05_density_df(stat_a, ocean.regions = 4, info_master=sock.info.sub, data_master=sock.sub)$region
+s.dens <- hb05_density_df(stat_a, ocean.regions = 4, info=sock.info, data=sock)$region
 s.dens <- s.dens %>% filter(var %in% c("SST", "Comp"))
 s.df <- data.frame(n=factor(s.dens$n),
                    Ocean.Region2=rep(c("WC", "SEAK", "GOA", "BS"), each=max(s.dens$n)),
@@ -20,9 +20,8 @@ s.df <- data.frame(n=factor(s.dens$n),
 #pink
 load(here('output', 'models', 'dyn', 'pink', 'hbm_era_2c.RData'), verbose=T) # eras
 pink.box <- era_density_df(era.2c, par=c("gamma", "kappa"), mu=T, info=pink.info)
-pink.box <- dplyr::filter(pink.box, !(Ocean.Region2 %in% c("BS", "GOA", "SEAK") & era=="Late"))
 load(here('output', 'models', 'stat', 'pink', 'stat_a.RData'), verbose=T) # stationary
-p.dens <- hb05_density_df(stat_a, ocean.regions = 4, info_master=pink.info, data_master=pink)$region
+p.dens <- hb05_density_df(stat_a, ocean.regions = 4, info=pink.info, data=pink)$region
 p.dens <- p.dens %>% filter(var %in% c("SST", "Comp"))
 p.df <- data.frame(n=factor(p.dens$n),
                    Ocean.Region2=rep(c("WC", "SEAK", "GOA", "BS"), each=max(p.dens$n)),
@@ -37,7 +36,7 @@ load(here('output', 'models', 'dyn', 'pink', 'hbm_era_2c_odd.RData'), verbose=T)
 pink.box <- era_density_df(era.2c.odd, par=c("gamma", "kappa"), mu=T, info=pink.info[grep("-Odd", pink.info$Stock),])
 pink.box.odd <- dplyr::filter(pink.box, !(Ocean.Region2 %in% c("BS", "GOA") & era=="Late"))
 load(here('output', 'models', 'stat', 'pink', 'stat_a_odd.RData'), verbose=T) # stationary
-p.dens <- hb05_density_df(stat_a_odd, ocean.regions = 4, data_master=pink[grep("-Odd", pink$Stock),], info_master=pink.info[grep("-Odd", pink.info$Stock),])$region
+p.dens <- hb05_density_df(stat_a_odd, ocean.regions = 4, data=pink[grep("-Odd", pink$Stock),], info=pink.info[grep("-Odd", pink.info$Stock),])$region
 p.dens <- p.dens %>% filter(var %in% c("SST", "Comp"))
 p.odd.df <- data.frame(n=factor(p.dens$n),
                    Ocean.Region2=rep(c("WC", "SEAK", "GOA", "BS"), each=max(p.dens$n)),
@@ -52,7 +51,7 @@ load(here('output', 'models', 'dyn', 'pink', 'hbm_era_2c_even.RData'), verbose=T
 pink.box <- era_density_df(era.2c.even, par=c("gamma", "kappa"), mu=T, info=pink.info[grep("-Even", pink.info$Stock),])
 pink.box.even <- dplyr::filter(pink.box, !(Ocean.Region2 %in% c("BS", "GOA") & era=="Late"))
 load(here('output', 'models', 'stat', 'pink', 'stat_a_even.RData'), verbose=T) # stationary
-p.dens <- hb05_density_df(stat_a_even, ocean.regions = 4, data_master=pink[grep("-Even", pink$Stock),], info_master=pink.info[grep("-Even", pink.info$Stock),])$region
+p.dens <- hb05_density_df(stat_a_even, ocean.regions = 4, data=pink[grep("-Even", pink$Stock),], info=pink.info[grep("-Even", pink.info$Stock),])$region
 p.dens <- p.dens %>% filter(var %in% c("SST", "Comp"))
 p.even.df <- data.frame(n=factor(p.dens$n),
                    Ocean.Region2=rep(c("WC", "SEAK", "GOA", "BS"), each=max(p.dens$n)),
@@ -65,12 +64,10 @@ p.even.df <- data.frame(n=factor(p.dens$n),
 
 #chum
 load(here('output', 'models', 'dyn', 'chum', 'hbm_era_2c.RData'), verbose=T) # eras
-chum.info$Ocean.Region <- gsub("SEAK", "WC", chum.info$Ocean.Region2)
-chum.box <- era_density_df(era.2c, par=c("gamma", "kappa"), mu=T, info=chum.info, region.var="Ocean.Region")
-chum.box <- dplyr::filter(chum.box, !(Ocean.Region %in% c("BS", "GOA") & era=="Late"))
-chum.box <- dplyr::rename(chum.box, Ocean.Region2=Ocean.Region)
+#chum.info$Ocean.Region <- gsub("SEAK", "WC", chum.info$Ocean.Region2)
+chum.box <- era_density_df(era.2c, par=c("gamma", "kappa"), mu=T, info=chum.info, region.var="Ocean.Region2")
 load(here('output', 'models', 'stat', 'chum', 'stat_a.RData'), verbose=T) # stationary
-c.dens <- hb05_density_df(stat_a, ocean.regions = 3, info_master=chum.info, data_master=chum)$region
+c.dens <- hb05_density_df(stat_a, ocean.regions = 3, info=chum.info, data=chum)$region
 c.dens <- c.dens %>% filter(var %in% c("SST", "Comp"), !is.na(region))
 c.df <- data.frame(n=factor(c.dens$n),
                    Ocean.Region2=rep(c("WC", "GOA", "BS"), each=max(c.dens$n)),
@@ -87,7 +84,7 @@ box.eras <- bind_rows(box.lst, .id="sp.id")
 box.stat <- bind_rows(s.df, p.df, p.df, c.df)
 box.stat$x <- log((box.stat$x/100)+1)
 box <- bind_rows(box.eras, box.stat)
-
+box <- ocean_region_lab(box)
 
 
 # boxplot with both covariates and stationary estimates
@@ -112,21 +109,33 @@ rw.mov <- rw.mov %>% mutate(sp.id = case_when(spp=="sockeye" ~ "sockeye",
                                               spp=="pink-even" ~ "pink",
                                               spp=="pink-odd" ~ "pink",
                                               spp=="chum" ~ "chum"))
-box <- ocean_region_lab(box)
 rw.mov <- ocean_region_lab(rw.mov)
 
+# use raw RW instead?
+rw.reg.all <- ocean_region_lab(rw.reg.all)
+
+# transform both to % change
+box$x <-  (exp(box$x) - 1) * 100
+rw.reg.all$reg_mean <- (exp(rw.reg.all$reg_mean) - 1) * 100
+rw.reg.all$lower_10 <- (exp(rw.reg.all$lower_10) - 1) * 100
+rw.reg.all$upper_90 <- (exp(rw.reg.all$upper_90) - 1) * 100
+
+
 # SST plot
-sst_rw_box <- box %>%
+sst_rw_box
+box %>%
   filter(varnam=="SST", era != "All") %>% mutate(BY = case_when(era=="Early" ~ 1975,
                                                         era=="Middle" ~ 2000,
                                                         era=="Late" ~ 2015)) %>%
   mutate(regxera = paste0(ocean_region_lab, sep=".", era)) %>%
   ggplot() +
   geom_hline(aes(yintercept=0), linewidth=1, colour="grey95") +
-  geom_line(data=filter(rw.mov, varnam=="SST"), aes(x=BY, y=mov_avg, group=spp, col=ocean_region_lab), linewidth=1, alpha=0.4) +
+  geom_line(data=filter(rw.reg.all, varnam=="SST"), aes(x=BY, y=reg_mean, group=even_odd, col=ocean_region_lab), linewidth=1, alpha=0.4) +
+  geom_ribbon(data=filter(rw.reg.all, varnam=="SST"), aes(x=BY, ymin=lower_10, ymax=upper_90, group=even_odd, fill=ocean_region_lab), alpha=0.2) +
   #geom_boxplot(aes(x=BY, y=x, fill=factor(era, levels=c("Early", "Middle", "Late", "All"))), position=position_dodge2(preserve="single"), alpha=0.7) +
-  geom_boxplot(aes(x=BY, y=x, fill=regxera), position=position_dodge2(preserve="single"), alpha=0.7) +
-  scale_y_continuous(limits=c(-1, 1), breaks=c(-1,-.5, 0, .5, 1), labels = c(-1,-.5, 0, .5, 1)) +
+  geom_boxplot(aes(x=BY, y=x, fill=regxera), position=position_dodge2(preserve="single"), alpha=0.7, outlier.shape = NA) +
+  #coord_cartesian(ylim=c(-1,1)) +
+  scale_y_continuous(limits=c(-100, 100)) +
   facet_grid(rows=vars(Ocean.Region2), cols=vars(sp.id), switch="x") +
   labs(y="Covariate Effect", x="", fill="", title="SST") +
   scale_fill_manual(values=col.eras) +
@@ -144,6 +153,10 @@ sst_rw_box <- box %>%
         legend.position = "none",
         legend.key = element_blank(),
         plot.title = element_text(hjust=0.5, size=10, colour="grey20"))
+
+png(here('figures', 'spp-explore', 'sst-box-rw-2025.png'), height=700*2, width=900*2, res=72*2)
+print(sst_rw_box)
+dev.off()
 
 comp_rw_box <- box %>%
   filter(varnam=="Competitors", era != "All") %>% mutate(BY = case_when(era=="Early" ~ 1975,
@@ -264,17 +277,17 @@ dev.off()
 
 # a) sockeye
 
-stk.sub <- sock.info$Stock.ID[sock.info$yr_start < 1985 & sock.info$yr_end >= 2014]
-sock.sub <- sock %>% filter(Stock.ID %in% stk.sub)
-sock.info.sub <- sock.info %>% filter(Stock.ID %in% stk.sub)
+#stk.sub <- sock.info$Stock.ID[sock.info$yr_start < 1985 & sock.info$yr_end >= 2014]
+#sock.sub <- sock %>% filter(Stock.ID %in% stk.sub)
+#sock.info.sub <- sock.info %>% filter(Stock.ID %in% stk.sub)
 
 
 # load sockeye RW
-load("./output/models/dyn/sockeye/hbm_dyn_2c_sub.RData", verbose=T)
-summ <- rstan::summary(dyn.2c.sub, pars = c("gamma", "kappa"), probs = NULL)$summary
-rw.stk <- data.frame(Stock = sock.sub$Stock,
-                           Ocean.Region2 = sock.sub$Ocean.Region2,
-                           BY = sock.sub$BY,
+load("./output/models/dyn/sockeye/hbm_dyn_2c.RData", verbose=T)
+summ <- rstan::summary(dyn.2c, pars = c("gamma", "kappa"), probs = NULL)$summary
+rw.stk <- data.frame(Stock = sock$Stock,
+                           Ocean.Region2 = sock$Ocean.Region2,
+                           BY = sock$BY,
                            mu = summ[, "mean"],
                            se = summ[, "se_mean"],
                            var = str_extract(rownames(summ), "[a-z]+"),
@@ -287,9 +300,11 @@ rw.stk <- data.frame(Stock = sock.sub$Stock,
 # Summarize at regional lvl
 rw.reg <- dplyr::summarize(rw.stk,
                             reg_mean=mean(mu, na.rm=T),
+                            lower_10=quantile(mu, 0.1, na.rm=T),
+                            upper_90 = quantile(mu, 0.9, na.rm=T),
                             n_stk=n_distinct(Stock),
                             .by=c(Ocean.Region2, BY, varnam))
-rw.reg <- ddply(rw.reg, .(Ocean.Region2), dplyr::filter, n_stk >= 4)
+#rw.reg <- ddply(rw.reg, .(Ocean.Region2), dplyr::filter, n_stk >= 4)
 
 # apply moving average
 rw.reg.avg.sock <- moving_average_df(rw.reg, "reg_mean", lag=2)
@@ -314,9 +329,11 @@ rw.stk.pink <- data.frame(Stock = pink$Stock,
 # Summarize at regional lvl
 rw.reg.pink <- dplyr::summarize(rw.stk.pink,
                                   reg_mean=mean(mu, na.rm=T),
+                                lower_10=quantile(mu, 0.1, na.rm=T),
+                                upper_90 = quantile(mu, 0.9, na.rm=T),
                                   n_stk=n_distinct(Stock),
                                   .by=c(Ocean.Region2, BY, varnam, even_odd))
-rw.reg.pink <- ddply(rw.reg.pink, .(Ocean.Region2), dplyr::filter, n_stk >= 4)
+#rw.reg.pink <- ddply(rw.reg.pink, .(Ocean.Region2), dplyr::filter, n_stk >= 4) # have to remove for now since 2025 data update
 
 rw.reg.avg.pink.even <- moving_average_df(subset(rw.reg.pink, even_odd=="Even"), "reg_mean", lag=2)
 rw.reg.avg.pink.odd <- moving_average_df(subset(rw.reg.pink, even_odd=="Odd"), "reg_mean", lag=2)
@@ -339,19 +356,28 @@ rw.stk.chum <- data.frame(Stock = chum$Stock,
 # Summarize at regional lvl
 rw.reg.chum <- dplyr::summarize(rw.stk.chum,
                                 reg_mean=mean(mu, na.rm=T),
+                                lower_10=quantile(mu, 0.1, na.rm=T),
+                                upper_90 = quantile(mu, 0.9, na.rm=T),
                                 n_stk=n_distinct(Stock),
                                 .by=c(Ocean.Region2, BY, varnam))
-rw.reg.chum <- ddply(rw.reg.chum, .(Ocean.Region2), dplyr::filter, n_stk >= 4)
+#rw.reg.chum <- ddply(rw.reg.chum, .(Ocean.Region2), dplyr::filter, n_stk >= 4)
 
 rw.reg.avg.chum <- moving_average_df(rw.reg.chum, "reg_mean", lag=2)
 
 # bind all the moving average dfs
-rw.mov <- bind_rows(rw.reg.avg.sock, rw.reg.avg.pink.even, rw.reg.avg.pink.odd, rw.reg.avg.chum, .id="spp") %>%
-  mutate(spp=case_when(spp == 1 ~ "sockeye",
-                       spp == 2 ~ "pink-even",
-                       spp == 3 ~ "pink-odd",
-                       spp == 4 ~ "chum")) %>%
+rw.mov <- bind_rows(rw.reg.avg.sock, rw.reg.avg.pink.even, rw.reg.avg.pink.odd, rw.reg.avg.chum, .id="sp.id") %>%
+  mutate(spp=case_when(sp.id == 1 ~ "sockeye",
+                       sp.id == 2 ~ "pink-even",
+                       sp.id == 3 ~ "pink-odd",
+                       sp.id == 4 ~ "chum")) %>%
   tidyr::replace_na(list(even_odd = "Both"))
+
+# bind all the (raw) RW dfs
+rw.reg.all <- bind_rows(rw.reg, rw.reg.chum, rw.reg.pink, .id="sp.id")
+rw.reg.all <- rw.reg.all %>% mutate(sp.id=case_when(sp.id == 1 ~ "sockeye",
+                                                  sp.id == 2 ~ "chum",
+                                                  sp.id == 3 ~ "pink"))
+
 
 # era coefficients to overlay # not in use
 eras.all.spp <- box %>% summarize(med_x = median(x), .by=c("sp.id", "par", "Ocean.Region2", "era", "varnam")) %>%
