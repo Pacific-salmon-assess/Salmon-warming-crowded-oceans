@@ -507,8 +507,8 @@ hb07_density_df <- function(stanfit, ocean.regions = 4, info=info_master, data=d
   ## Density smoothness
   adjust <- 1.5
 
-  if(ocean.regions == 3) region_col <- info_master$Ocean.Region
-  else if (ocean.regions == 4) region_col <- info_master$Ocean.Region2
+  if(ocean.regions == 3) region_col <- info$Ocean.Region
+  else if (ocean.regions == 4) region_col <- info$Ocean.Region2
 
   ## Define region column indices
   if (fitnam == "stat_ctrl"){ #Use 2020 data for control model
@@ -518,17 +518,17 @@ hb07_density_df <- function(stanfit, ocean.regions = 4, info=info_master, data=d
     ind.bs  <- which(control_dat$Ocean.Region == "BS")
 
   } else if( fitnam == "stat_tr"){
-    ind.wc  <- match(info_master$Stock[which(region_col == "WC" & info_master$yr_end >= 1975)], levels(data_master$Stock) )
-    ind.goa <- match(info_master$Stock[which(region_col == "GOA" & info_master$yr_end >= 1975)], levels(data_master$Stock) )
-    ind.bs  <- match(info_master$Stock[which(region_col == "BS" & info_master$yr_end >= 1975)], levels(data_master$Stock) )
-    ind.seak <- match(info_master$Stock[which(region_col == "SEAK" & info_master$yr_end >= 1975)], levels(data_master$Stock))
+    ind.wc  <- match(info$Stock[which(region_col == "WC" & info$yr_end >= 1975)], levels(data$Stock) )
+    ind.goa <- match(info$Stock[which(region_col == "GOA" & info$yr_end >= 1975)], levels(data$Stock) )
+    ind.bs  <- match(info$Stock[which(region_col == "BS" & info$yr_end >= 1975)], levels(data$Stock) )
+    ind.seak <- match(info$Stock[which(region_col == "SEAK" & info$yr_end >= 1975)], levels(data$Stock))
     ind.reg <- list(ind.bs, ind.goa, ind.wc, ind.seak)
 
   } else {
-    ind.wc  <- match(info_master$Stock[which(region_col == "WC")], levels(data_master$Stock) )
-    ind.goa <- match(info_master$Stock[which(region_col == "GOA")], levels(data_master$Stock) )
-    ind.bs  <- match(info_master$Stock[which(region_col == "BS")], levels(data_master$Stock) )
-    ind.seak <- match(info_master$Stock[which(region_col == "SEAK")], levels(data_master$Stock))
+    ind.wc  <- match(info$Stock[which(region_col == "WC")], levels(data$Stock) )
+    ind.goa <- match(info$Stock[which(region_col == "GOA")], levels(data$Stock) )
+    ind.bs  <- match(info$Stock[which(region_col == "BS")], levels(data$Stock) )
+    ind.seak <- match(info$Stock[which(region_col == "SEAK")], levels(data$Stock))
     ind.reg <- ifelse(ocean.regions == 3, list(ind.bs, ind.goa, ind.wc), list(ind.bs, ind.goa, ind.wc, ind.seak) )
   }
 
