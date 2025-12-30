@@ -220,16 +220,17 @@ vars$var <- factor(vars$var, levels = c("SST", "Comp", "SST x Comp"))
 m.df$species <- factor(str_to_sentence(m.df$species), levels=c("Sockeye","Chum","Pink"))
 s.df$species <- factor(str_to_sentence(s.df$species), levels=c("Sockeye","Chum","Pink"))
 
-
+m.df.plot <- m.df
+s.df.plot <- s.df
 # sneaky trim data to display with different x-axis ranges without huge tails
 
-m.df.plot <- filter(m.df[m.df$species == "Pink",], x<=100, x>=-50) # trim pinks to -50,100
-m.df.plot <- rbind(m.df.plot, filter(m.df[m.df$species == "Chum",], x<=25, x>=-25)) # trim chum to -25,25
-m.df.plot <- rbind(m.df.plot, filter(m.df[m.df$species == "Sockeye",], x<=50, x>=-50)) # trim sockeye to -50,50
-
-s.df.plot <- filter(s.df[s.df$species == "Pink",], x<=100, x>=-50) # trim pinks to 100
-s.df.plot <- rbind(s.df.plot, filter(s.df[s.df$species == "Chum",], x<=25, x>=-25)) # trim chum to -25,25
-s.df.plot <- rbind(s.df.plot, filter(s.df[s.df$species == "Sockeye",], x<=50, x>=-50)) # trim sockeye to -50,50
+# m.df.plot <- filter(m.df[m.df$species == "Pink",], x<=100, x>=-50) # trim pinks to -50,100
+# m.df.plot <- rbind(m.df.plot, filter(m.df[m.df$species == "Chum",], x<=25, x>=-25)) # trim chum to -25,25
+# m.df.plot <- rbind(m.df.plot, filter(m.df[m.df$species == "Sockeye",], x<=50, x>=-50)) # trim sockeye to -50,50
+#
+# s.df.plot <- filter(s.df[s.df$species == "Pink",], x<=100, x>=-50) # trim pinks to 100
+# s.df.plot <- rbind(s.df.plot, filter(s.df[s.df$species == "Chum",], x<=25, x>=-25)) # trim chum to -25,25
+# s.df.plot <- rbind(s.df.plot, filter(s.df[s.df$species == "Sockeye",], x<=50, x>=-50)) # trim sockeye to -50,50
 
 
 g<-ggplot(m.df.plot) +
@@ -242,17 +243,18 @@ g<-ggplot(m.df.plot) +
        y = "Posterior density",
        color = "") +
   scale_y_continuous(breaks=NULL) +
-  facet_grid(rows=vars(var), cols=vars(species), scales="free") +
+  facet_grid(rows=vars(var), cols=vars(species)) +
+  xlim(-50,50) +
   theme_sleek(base_size = 9) +
   theme(legend.justification = c(0, 0),
-        legend.position = c(0.8, 0.05),
+        legend.position = c(0.84, 0.85),
         legend.key.size = unit(10, "pt"),
         legend.background = element_blank(),
-        legend.text = element_text(size = 8),
+        legend.text = element_text(size = 6),
         panel.spacing.y = unit(-0.5, "pt"),
         strip.background = element_blank())
 
 
-png(here('figures', 'spp-explore', "dens_stat_inter_allsp.png"), width = 900*2, height = 500*2, res=72*4)
+png(here('figures', 'spp-explore', "dens_stat_inter_allsp.png"), units = "in", width = 7.5, height = 5, res = 500)
 print(g)
 dev.off()
