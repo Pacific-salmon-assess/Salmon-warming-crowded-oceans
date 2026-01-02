@@ -228,9 +228,10 @@ pg <- ceiling(nlevels(data_master$Stock)/18)
 
 pdf(here(fig.dir, "productivity_detail.pdf"))
 for(i in 1:pg){
-g<- ggplot(data_fill) + geom_line(aes(x=BY, y=RS)) +
-    geom_point(aes(x=BY, y=outlier), col="red") +
-    ggforce::facet_wrap_paginate(vars(Stock), scales="free_y", nrow=6, ncol=3, page=i) + theme_sleek()
+g <- ggplot(data_fill) + geom_line(aes(x=BY, y=RS)) +
+     geom_vline(xintercept=c(1989,2011), linetype=2, col="grey75") +
+     geom_point(aes(x=BY, y=outlier), col="red") +
+     ggforce::facet_wrap_paginate(vars(Stock), scales="free_y", nrow=6, ncol=3, page=i) + theme_sleek()
 print(g)
 }
 dev.off()
@@ -415,8 +416,12 @@ map <- ggplot(map.info) +
   scale_x_continuous(breaks=axes$xbreaks, labels=axes$xlabels) +
   scale_y_continuous(breaks=axes$ybreaks, labels=axes$ylabels) +
   #scale_colour_brewer(palette="Dark2") +
-  scale_colour_manual(values=sp.col, labels=c("Chum (n=44)", "Pink (n=70)", "Sockeye (n=52)")) +
-  scale_shape_manual(values=c(15,16,17), labels=c("Chum (n=44)", "Pink (n=70)", "Sockeye (n=52)")) +
+  scale_colour_manual(values=sp.col, labels=c(paste0("Chum (n=", nrow(chum.info), ")"),
+                                              paste0("Pink (n=", nrow(pink.info), ")"),
+                                              paste0("Sockeye (n=", nrow(sock.info), ")"))) +
+  scale_shape_manual(values=c(15,16,17), labels=c(paste0("Chum (n=", nrow(chum.info), ")"),
+                                                  paste0("Pink (n=", nrow(pink.info), ")"),
+                                                  paste0("Sockeye (n=", nrow(sock.info), ")"))) +
   labs(x="Longitude (°E)", y="Latitude (°N)") +
   theme_sleek() +
   theme(panel.grid = element_blank(),
