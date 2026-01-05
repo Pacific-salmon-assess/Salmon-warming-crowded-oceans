@@ -118,11 +118,12 @@ g <- ggplot(data = summ.pred.all.df, aes(x = comp, y = exp(med.pred), col=sst)) 
   scale_x_continuous(breaks=c(0,1,2,3),labels=comp_label)+
   guides(color="none") +
   theme(legend.justification = c(0, 0),
-        legend.position = c(0.05, 0.35),
+        legend.position = c(0.05, 0.3),
         legend.key.size = unit(11, "pt"),
-        legend.background = element_blank())
+        legend.background = element_blank(),
+        legend.title = element_text( size = 8))
 
-png(here('figures', 'spp-explore', "sockeye-sst-inter.png"), units = "in", width = 6, height = 6, res = 500)
+png(here('figures', 'spp-explore', "sockeye-sst-inter.png"), units = "in", width = 6, height = 5, res = 500)
 print(g)
 dev.off()
 
@@ -289,9 +290,10 @@ g <- ggplot(data = summ.pred.all.df, aes(x = comp, y = exp(med.pred), col=sst)) 
   theme(legend.justification = c(0, 0),
         legend.position = c(0.05, 0.35),
         legend.key.size = unit(11, "pt"),
-        legend.background = element_blank())
+        legend.background = element_blank(),
+        legend.title = element_text( size = 8))
 
-png(here('figures', 'spp-explore', "chum-sst-inter.png"), units = "in", width = 6, height = 6, res = 500)
+png(here('figures', 'spp-explore', "chum-sst-inter.png"), units = "in", width = 6, height = 5, res = 500)
 print(g)
 dev.off()
 
@@ -416,8 +418,9 @@ g <- ggplot(data = summ.pred.all.df, aes(x = comp, y = exp(med.pred), col=sst)) 
   theme(legend.justification = c(0, 0),
         legend.position = c(0.05, 0.35),
         legend.key.size = unit(11, "pt"),
-        legend.background = element_blank())
+        legend.background = element_blank(),
+        legend.title = element_text( size = 8))
 
-png(here('figures', 'spp-explore', "pink-sst-inter.png"), units = "in", width = 6, height = 6, res = 500)
+png(here('figures', 'spp-explore', "pink-sst-inter.png"), units = "in", width = 6, height = 5, res = 500)
 print(g)
 dev.off()
