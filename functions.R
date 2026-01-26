@@ -1271,7 +1271,7 @@ hb_param_df <- function(stanfit, par, region.var, var = NULL, info = info_master
 }
 
 
-era_hb_param_df <- function(stanfit, par, mu = FALSE, region.var = "Ocean.Region2", neras = 3, info = info_master){
+era_hb_param_df <- function(stanfit, par, mu = FALSE, region.var = "Ocean.Region2", neras = 3, info = info_master, lower_CI=10, upper_CI=90){
 
   ## Parameter posteriors from Eras models, wrangle into dataframe
 
@@ -1289,8 +1289,8 @@ era_hb_param_df <- function(stanfit, par, mu = FALSE, region.var = "Ocean.Region
                                 yend = rep(reg_end, neras),
                                 reg_mean = summ[, "mean"],
                                 reg_se = summ[ ,"se_mean"],
-                                lower_10 = summ[ , "10%"],
-                                upper_90 = summ[ , "90%"],
+                                lower = summ[ , paste0(lower_CI,"%")],
+                                upper = summ[ , paste0(upper_CI, "%")],
                                 var = str_extract(rownames(summ), "\\D+"),
                                 varnam = case_when(grepl("^mu_gamma", rownames(summ)) ~ "SST",
                                                    grepl("^mu_kappa", rownames(summ)) ~ "Competitors"),
@@ -1311,8 +1311,8 @@ era_hb_param_df <- function(stanfit, par, mu = FALSE, region.var = "Ocean.Region
                              Ocean.Region2 = rep(info[[region.var]], neras),
                              mu = summ[, "mean"],
                              se = summ[, "se_mean"],
-                             lower_10 = summ[, "10%"],
-                             upper_90 = summ[ , "90%"],
+                             lower = paste0(lower_CI,"%"),
+                             upper = paste0(upper_CI,"%"),
                              var = str_extract(rownames(summ), "\\D+"),
                              varnam = case_when(grepl("^gamma", rownames(summ)) ~ "SST",
                                                 grepl("^kappa", rownames(summ)) ~ "Competitors"),

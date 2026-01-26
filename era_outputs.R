@@ -10,7 +10,6 @@ probs <- c(0.025, 0.50, 0.975)
 summ <- rstan::summary(era.2c, pars = c(paste0("gamma", 1:3), paste0("kappa", 1:3)), probs = probs)[[1]]
 sock.df <- data.frame( Species = "Sockeye",
                        Stock = rep(sock.info$Stock, times=6),
-                       Stock.ID = rep(sock.info$Stock.ID, times=6),
                        mean = summ[, "mean"],
                        lower_2.5 = summ[, "2.5%"],
                        upper_97.5 = summ[ , "97.5%"],
@@ -42,7 +41,7 @@ raw.sst.sock <- clim.wgt.avg(brood.table = sock,
                               out.covar = "early_sst")
 
 cov.dat.sock <- full_join(raw.sst.sock, sock[,c("Stock.ID", "Stock", "Ocean.Region2", "BY", "early_sst", "early_sst_stnd", "lnRS")] , by=c("Stock.ID", "BY"))
-cov.dat.sock <- cov.dat.sock %>% rename(early_sst_raw = early_sst.x, 
+cov.dat.sock <- cov.dat.sock %>% rename(early_sst_raw = early_sst.x,
                                         early_sst_anom = early_sst.y,
                                         early_sst_anom_stnd = early_sst_stnd)
 
@@ -83,10 +82,10 @@ pink.df.avg <- data.frame( Species = "pink",
 raw.sst.pink <- raw.clim.pink[, c("BY","Stock.ID", "sst_raw")]
 
 cov.dat.pink <- right_join(raw.sst.pink, pink[,c("Stock.ID", "Stock", "Ocean.Region2", "BY", "early_sst", "early_sst_stnd", "lnRS")] , by=c("Stock.ID", "BY"))
-cov.dat.pink <- cov.dat.pink %>% rename(early_sst_raw = sst_raw, 
+cov.dat.pink <- cov.dat.pink %>% rename(early_sst_raw = sst_raw,
                                         early_sst_anom = early_sst,
                                         early_sst_anom_stnd = early_sst_stnd)
-  
+
 
 
 ## Chum ##
@@ -125,7 +124,7 @@ chum.df.avg <- data.frame( Species = "chum",
 raw.sst.chum <- raw.clim.chum[, c("BY","Stock.ID", "sst_raw")]
 
 cov.dat.chum <- right_join(raw.sst.chum, chum[,c("Stock.ID", "Stock", "Ocean.Region2", "BY", "early_sst", "early_sst_stnd", "lnRS")] , by=c("Stock.ID", "BY"))
-cov.dat.chum <- cov.dat.chum %>% rename(early_sst_raw = sst_raw, 
+cov.dat.chum <- cov.dat.chum %>% rename(early_sst_raw = sst_raw,
                                         early_sst_anom = early_sst,
                                         early_sst_anom_stnd = early_sst_stnd)
 
@@ -140,7 +139,7 @@ eras_avg_out_df <- rbind(sock.df.avg, pink.df.avg, chum.df.avg)
 rownames(eras_avg_out_df) <- NULL
 
 raw_sst_out <- bind_rows(cov.dat.sock, cov.dat.pink, cov.dat.chum, .id="Species")
-raw_sst_out <- raw_sst_out %>% mutate(Species = 
+raw_sst_out <- raw_sst_out %>% mutate(Species =
                                       case_when(Species == 1 ~ "Sockeye",
                                                 Species == 2 ~ "Pink",
                                                 Species == 3 ~ "Chum")) %>%
