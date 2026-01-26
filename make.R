@@ -27,6 +27,11 @@ source("pink_chum_covariates.R")
 # Toggle one species 'ON' for #3-n
 speciesFlag = "pink" # one of "sockeye", "chum", "pink", "pinkeven", "pinkodd'
 
+# Pick colour scheme for all plots
+col.region <- rev(chroma::qpal(7, luminance = 40)[c(1, 3, 5, 7)])
+names(col.region) <- c("West Coast", "Southeast Alaska", "Gulf of Alaska", "Bering Sea")
+
+
 # 3. Exploratory plots and models
 source("data_explore.R")
 source("stat_single_stock_fit.R")
