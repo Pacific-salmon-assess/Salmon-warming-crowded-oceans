@@ -2,11 +2,11 @@
 
 #### 1) Boxplots of effects ####
 
-# Load era model fits
+# Load era  and stationary model fits
 
 #sockeye
 load(here('output', 'models', 'dyn', 'sockeye', 'hbm_era_2c.RData'), verbose=T) # eras
-sock.box <- era_density_df(era.2c, par=c("gamma", "kappa"), mu=T, info=sock.info)
+sock.box <- era_density_df(era.2c, par=c("gamma", "kappa"), mu=T, info=sock.info, percent.change = T)
 load(here('output', 'models', 'stat', 'sockeye', 'stat_a.RData'), verbose=T) # stationary
 s.dens <- hb05_density_df(stat_a, ocean.regions = 4, info=sock.info, data=sock)$region
 s.dens <- s.dens %>% filter(var %in% c("SST", "Comp"))
@@ -19,7 +19,7 @@ s.df <- data.frame(n=factor(s.dens$n),
                    sp.id="sockeye")
 #pink
 load(here('output', 'models', 'dyn', 'pink', 'hbm_era_2c.RData'), verbose=T) # eras
-pink.box <- era_density_df(era.2c, par=c("gamma", "kappa"), mu=T, info=pink.info)
+pink.box <- era_density_df(era.2c, par=c("gamma", "kappa"), mu=T, info=pink.info, percent.change = T)
 load(here('output', 'models', 'stat', 'pink', 'stat_a.RData'), verbose=T) # stationary
 p.dens <- hb05_density_df(stat_a, ocean.regions = 4, info=pink.info, data=pink)$region
 p.dens <- p.dens %>% filter(var %in% c("SST", "Comp"))
@@ -33,7 +33,7 @@ p.df <- data.frame(n=factor(p.dens$n),
 
 #pink-odd
 load(here('output', 'models', 'dyn', 'pink', 'hbm_era_2c_odd.RData'), verbose=T) # eras
-pink.box <- era_density_df(era.2c.odd, par=c("gamma", "kappa"), mu=T, info=pink.info[grep("-Odd", pink.info$Stock),])
+pink.box <- era_density_df(era.2c.odd, par=c("gamma", "kappa"), mu=T, info=pink.info[grep("-Odd", pink.info$Stock),], percent.change = T)
 pink.box.odd <- dplyr::filter(pink.box, !(Ocean.Region2 %in% c("BS", "GOA") & era=="Late"))
 load(here('output', 'models', 'stat', 'pink', 'stat_a_odd.RData'), verbose=T) # stationary
 p.dens <- hb05_density_df(stat_a_odd, ocean.regions = 4, data=pink[grep("-Odd", pink$Stock),], info=pink.info[grep("-Odd", pink.info$Stock),])$region
@@ -48,7 +48,7 @@ p.odd.df <- data.frame(n=factor(p.dens$n),
 
 #pink-even
 load(here('output', 'models', 'dyn', 'pink', 'hbm_era_2c_even.RData'), verbose=T) # eras
-pink.box <- era_density_df(era.2c.even, par=c("gamma", "kappa"), mu=T, info=pink.info[grep("-Even", pink.info$Stock),])
+pink.box <- era_density_df(era.2c.even, par=c("gamma", "kappa"), mu=T, info=pink.info[grep("-Even", pink.info$Stock),], percent.change = T)
 pink.box.even <- dplyr::filter(pink.box, !(Ocean.Region2 %in% c("BS", "GOA") & era=="Late"))
 load(here('output', 'models', 'stat', 'pink', 'stat_a_even.RData'), verbose=T) # stationary
 p.dens <- hb05_density_df(stat_a_even, ocean.regions = 4, data=pink[grep("-Even", pink$Stock),], info=pink.info[grep("-Even", pink.info$Stock),])$region
@@ -65,7 +65,7 @@ p.even.df <- data.frame(n=factor(p.dens$n),
 #chum
 load(here('output', 'models', 'dyn', 'chum', 'hbm_era_2c.RData'), verbose=T) # eras
 #chum.info$Ocean.Region <- gsub("SEAK", "WC", chum.info$Ocean.Region2)
-chum.box <- era_density_df(era.2c, par=c("gamma", "kappa"), mu=T, info=chum.info, region.var="Ocean.Region2")
+chum.box <- era_density_df(era.2c, par=c("gamma", "kappa"), mu=T, info=chum.info, region.var="Ocean.Region2", percent.change = T)
 load(here('output', 'models', 'stat', 'chum', 'stat_a.RData'), verbose=T) # stationary
 c.dens <- hb05_density_df(stat_a, ocean.regions = 3, info=chum.info, data=chum)$region
 c.dens <- c.dens %>% filter(var %in% c("SST", "Comp"), !is.na(region))
@@ -82,7 +82,6 @@ names(box.lst) <- c("sockeye", "pink", "chum")
 box.eras <- bind_rows(box.lst, .id="sp.id")
 
 box.stat <- bind_rows(s.df, p.df, p.df, c.df)
-box.stat$x <- log((box.stat$x/100)+1)
 box <- bind_rows(box.eras, box.stat)
 box <- ocean_region_lab(box)
 
@@ -92,8 +91,8 @@ col.box <- c(RColorBrewer::brewer.pal(n=4, "BuGn")[2:4], "#B0B0B0")
 full.box <-  ggplot(box) +
   geom_hline(aes(yintercept=0), linetype="dashed", colour="gray50") +
   geom_boxplot(aes(x=sp.id, y=x, fill=factor(era, levels=c("Early", "Middle", "Late", "All"))), position=position_dodge2(preserve="single")) +
-  scale_y_continuous(limits=c(-1, 1)) +
-  facet_grid(rows=vars(Ocean.Region2), cols=vars(factor(varnam, levels=c("SST","Competitors")))) +
+  #scale_y_continuous(limits=c(-1, 1)) +
+  facet_grid(rows=vars(Ocean.Region2), cols=vars(factor(varnam, levels=c("SST","Competitors"))), scales="free") +
   labs(y="Covariate Effect", x="", fill="") +
   scale_fill_manual(values=col.box) +
   theme_sleek()
@@ -112,37 +111,41 @@ rw.mov <- rw.mov %>% mutate(sp.id = case_when(spp=="sockeye" ~ "sockeye",
 rw.mov <- ocean_region_lab(rw.mov)
 
 # use raw RW instead?
-rw.reg.all <- ocean_region_lab(rw.reg.all)
+rw.reg.all <- ocean_region_lab(rw.reg.all) # rw.reg.all is created lower in this script
 
 # transform both to % change
-box$x <-  (exp(box$x) - 1) * 100
+#box$x <-  (exp(box$x) - 1) * 100 # added code to do so above
 rw.reg.all$reg_mean <- (exp(rw.reg.all$reg_mean) - 1) * 100
 rw.reg.all$lower_10 <- (exp(rw.reg.all$lower_10) - 1) * 100
 rw.reg.all$upper_90 <- (exp(rw.reg.all$upper_90) - 1) * 100
 
 
-# SST plot
-sst_rw_box
-box %>%
-  filter(varnam=="SST", era != "All") %>% mutate(BY = case_when(era=="Early" ~ 1975,
+# SST plot - have to plot species separately
+
+# pink
+pink.rw.box.fig <- box %>%
+  filter(varnam=="SST", era != "All", sp.id=="pink") %>% mutate(BY = case_when(era=="Early" ~ 1975,
                                                         era=="Middle" ~ 2000,
                                                         era=="Late" ~ 2015)) %>%
   mutate(regxera = paste0(ocean_region_lab, sep=".", era)) %>%
   ggplot() +
   geom_hline(aes(yintercept=0), linewidth=1, colour="grey95") +
-  geom_line(data=filter(rw.reg.all, varnam=="SST"), aes(x=BY, y=reg_mean, group=even_odd, col=ocean_region_lab), linewidth=1, alpha=0.4) +
-  geom_ribbon(data=filter(rw.reg.all, varnam=="SST"), aes(x=BY, ymin=lower_10, ymax=upper_90, group=even_odd, fill=ocean_region_lab), alpha=0.2) +
+  geom_line(data=filter(rw.reg.all, varnam=="SST", sp.id=="pink"), aes(x=BY, y=reg_mean, group=even_odd, col=ocean_region_lab), linewidth=1, alpha=0.4) +
+  geom_ribbon(data=filter(rw.reg.all, varnam=="SST", sp.id=="pink"), aes(x=BY, ymin=lower_10, ymax=upper_90, group=even_odd, fill=ocean_region_lab), alpha=0.2) +
   #geom_boxplot(aes(x=BY, y=x, fill=factor(era, levels=c("Early", "Middle", "Late", "All"))), position=position_dodge2(preserve="single"), alpha=0.7) +
   geom_boxplot(aes(x=BY, y=x, fill=regxera), position=position_dodge2(preserve="single"), alpha=0.7, outlier.shape = NA) +
-  #coord_cartesian(ylim=c(-1,1)) +
-  scale_y_continuous(limits=c(-100, 100)) +
-  facet_grid(rows=vars(Ocean.Region2), cols=vars(sp.id), switch="x") +
-  labs(y="Covariate Effect", x="", fill="", title="SST") +
+  #coord_cartesian(ylim=c(-100,250)) +
+  #scale_y_continuous(limits=c(-100, 500)) +
+  facet_grid(rows=vars(Ocean.Region2)) +
+  labs(y="% Change in R/S (per \u00B0C)", x="", fill="", title="Pink") +
   scale_fill_manual(values=col.eras) +
   scale_colour_manual(values=col.region, guide="none") +
   scale_x_continuous(breaks=c(1970, 1990, 2010)) +
-  theme(axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(),
+  theme_sleek() +
+  theme(#axis.text.x = element_blank(),
+        #axis.ticks.x = element_blank(),
+        axis.text=element_text(size=12),
+        axis.title=element_text(size=15),
         strip.background = element_rect(fill="transparent", colour="transparent"),
         strip.text.y = element_blank(),
         panel.spacing.x = unit(0, unit="pt"),
@@ -152,11 +155,128 @@ box %>%
         panel.grid.major.x = element_blank(),
         legend.position = "none",
         legend.key = element_blank(),
-        plot.title = element_text(hjust=0.5, size=10, colour="grey20"))
+        plot.title = element_text(hjust=0.5, size=15, colour="grey20"))
 
-png(here('figures', 'spp-explore', 'sst-box-rw-2025.png'), height=700*2, width=900*2, res=72*2)
-print(sst_rw_box)
+# chum
+chum.rw.box.fig <- box %>%
+  filter(varnam=="SST", era != "All", sp.id=="chum") %>% mutate(BY = case_when(era=="Early" ~ 1975,
+                                                                               era=="Middle" ~ 2000,
+                                                                               era=="Late" ~ 2015)) %>%
+  mutate(regxera = paste0(ocean_region_lab, sep=".", era)) %>%
+  ggplot() +
+  geom_hline(aes(yintercept=0), linewidth=1, colour="grey95") +
+  geom_line(data=filter(rw.reg.all, varnam=="SST", sp.id=="chum"), aes(x=BY, y=reg_mean, group=even_odd, col=ocean_region_lab), linewidth=1, alpha=0.4) +
+  geom_ribbon(data=filter(rw.reg.all, varnam=="SST", sp.id=="chum"), aes(x=BY, ymin=lower_10, ymax=upper_90, group=even_odd, fill=ocean_region_lab), alpha=0.2) +
+  #geom_boxplot(aes(x=BY, y=x, fill=factor(era, levels=c("Early", "Middle", "Late", "All"))), position=position_dodge2(preserve="single"), alpha=0.7) +
+  geom_boxplot(aes(x=BY, y=x, fill=regxera), position=position_dodge2(preserve="single"), alpha=0.7, outlier.shape = NA) +
+  #coord_cartesian(ylim=c(-100,100)) +
+  #scale_y_continuous(limits=c(-100, 500)) +
+  facet_grid(rows=vars(Ocean.Region2)) +
+  labs(y="% Change in R/S (per \u00B0C)", x="", fill="", title="Chum") +
+  scale_fill_manual(values=col.eras) +
+  scale_colour_manual(values=col.region, guide="none") +
+  scale_x_continuous(breaks=c(1970, 1990, 2010)) + theme_sleek() +
+  theme(#axis.text.x = element_blank(),
+        #axis.ticks.x = element_blank(),
+        axis.text=element_text(size=12),
+        axis.title=element_text(size=15),
+        strip.background = element_rect(fill="transparent", colour="transparent"),
+        strip.text.y = element_blank(),
+        panel.spacing.x = unit(0, unit="pt"),
+        panel.spacing.y = unit(30, unit="pt"),
+        panel.background = element_rect(fill="white"),
+        panel.grid.major.y = element_line(colour="grey95", size=0.5),
+        panel.grid.major.x = element_blank(),
+        legend.position = "none",
+        legend.key = element_blank(),
+        plot.title = element_text(hjust=0.5, size=15, colour="grey20"))
+
+# Sockeye
+sock.rw.box.fig <- box %>%
+  filter(varnam=="SST", era != "All", sp.id=="sockeye") %>% mutate(BY = case_when(era=="Early" ~ 1975,
+                                                                               era=="Middle" ~ 2000,
+                                                                               era=="Late" ~ 2015)) %>%
+  mutate(regxera = paste0(ocean_region_lab, sep=".", era)) %>%
+  ggplot() +
+  geom_hline(aes(yintercept=0), linewidth=1, colour="grey95") +
+  geom_line(data=filter(rw.reg.all, varnam=="SST", sp.id=="sockeye"), aes(x=BY, y=reg_mean, group=even_odd, col=ocean_region_lab), linewidth=1, alpha=0.4) +
+  geom_ribbon(data=filter(rw.reg.all, varnam=="SST", sp.id=="sockeye"), aes(x=BY, ymin=lower_10, ymax=upper_90, group=even_odd, fill=ocean_region_lab), alpha=0.2) +
+  #geom_boxplot(aes(x=BY, y=x, fill=factor(era, levels=c("Early", "Middle", "Late", "All"))), position=position_dodge2(preserve="single"), alpha=0.7) +
+  geom_boxplot(aes(x=BY, y=x, fill=regxera), position=position_dodge2(preserve="single"), alpha=0.7, outlier.shape = NA) +
+  #coord_cartesian(ylim=c(-100,100)) +
+  #scale_y_continuous(limits=c(-100, 500)) +
+  facet_grid(rows=vars(Ocean.Region2)) +
+  labs(y="% Change in R/S (per \u00B0C)", x="", fill="", title="Sockeye") +
+  scale_fill_manual(values=col.eras) +
+  scale_colour_manual(values=col.region, guide="none") +
+  scale_x_continuous(breaks=c(1970, 1990, 2010)) + theme_sleek() +
+  theme(#axis.text.x = element_blank(),
+        #axis.ticks.x = element_blank(),
+        axis.text=element_text(size=12),
+        axis.title=element_text(size=15),
+        strip.background = element_rect(fill="transparent", colour="transparent"),
+        strip.text.y = element_blank(),
+        panel.spacing.x = unit(0, unit="pt"),
+        panel.spacing.y = unit(30, unit="pt"),
+        panel.background = element_rect(fill="white"),
+        panel.grid.major.y = element_line(colour="grey95", size=0.5),
+        panel.grid.major.x = element_blank(),
+        legend.position = "none",
+        legend.key = element_blank(),
+        plot.title = element_text(hjust=0.5, size=15, colour="grey20"))
+
+# Manually make legend (this is repeated below somewhere)
+lgnd.dat <- data.frame(name=names(col.eras),
+                       region=str_extract(names(col.eras), "[^.]+"),
+                       era=str_extract(names(col.eras), "\\w*$"))
+
+lgnd1 <- lgnd.dat %>% mutate(era_lab = paste(era, case_when(era=="Early" ~ "\n <1988",
+                                                            era=="Middle" ~ "\n    1989-2010",
+                                                            era=="Late" ~ "\n        2011-2019"))) %>%
+  ggplot() + geom_tile(aes(x=region, y=1,
+                           fill=name), col="white") +
+  scale_fill_manual(values=col.eras, guide="none") + labs(x="", y="") +
+  facet_grid(rows=vars(factor(era_lab, levels=unique(era_lab))), switch="x") +
+  labs(title="Era") +
+  theme(panel.background=element_rect(fill="white"),
+        axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        strip.background = element_rect(fill="white"),
+        strip.text.y.right = element_text(angle=0, margin=margin(l=-15)),
+        plot.title = element_text(hjust=0.5)
+  )
+blank <- ggplot() + theme(panel.background = element_rect(fill="white")) # blank grob to put legend on
+legend <- cowplot::ggdraw(blank) + cowplot::draw_plot(lgnd1, 0,0.4,1,0.2)
+
+# Plot each spp with the legend
+
+# pink
+p <- cowplot::plot_grid(pink.rw.box.fig, legend, ncol=2, rel_widths = c(1,0.6))
+png(here('figures', 'spp-explore', 'sst-box-rw-pink.png'), height=700*2, width=400*2, res=72*2) # save pink
+print(p)
 dev.off()
+
+#chum
+p <- cowplot::plot_grid(chum.rw.box.fig, legend, ncol=2, rel_widths = c(1,0.6))
+png(here('figures', 'spp-explore', 'sst-box-rw-chum.png'), height=700*2, width=400*2, res=72*2) # save chum
+print(p)
+dev.off()
+
+#sockeye
+p <- cowplot::plot_grid(sock.rw.box.fig, legend, ncol=2, rel_widths = c(1,0.6))
+png(here('figures', 'spp-explore', 'sst-box-rw-sock.png'), height=700*2, width=400*2, res=72*2) # save sock
+print(p)
+dev.off()
+
+
+## Plot them together
+p <- cowplot::plot_grid(sock.rw.box.fig, chum.rw.box.fig + theme(axis.title.y=element_blank()), pink.rw.box.fig + theme(axis.title.y=element_blank()), legend, ncol=4, rel_widths = c(1,1,1,0.7))
+png(here('figures', 'spp-explore', 'sst-box-rw-2026.png'), height=700*2, width=900*2, res=72*2) # save sock
+print(p)
+dev.off()
+
+
+# Boxplot + RW for competitors
 
 comp_rw_box <- box %>%
   filter(varnam=="Competitors", era != "All") %>% mutate(BY = case_when(era=="Early" ~ 1975,
