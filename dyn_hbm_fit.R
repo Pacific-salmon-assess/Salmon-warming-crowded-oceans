@@ -73,7 +73,7 @@ era.2c <- rstan::stan(file = "./stan/hbm_era_2c.stan",
                        data = stan.dat.2c,
                        pars = c(pars_era_2c, pars.gen.quant),
                        warmup = 1000,
-                       iter = 2000,
+                       iter = ifelse(speciesFlag=="pink", 3000, 2000), # 2000 not enough for ESS - pinks
                        cores = 4,
                        chains = 4,
                        seed = 123,
@@ -81,17 +81,17 @@ era.2c <- rstan::stan(file = "./stan/hbm_era_2c.stan",
                                       max_treedepth = 20))
 save(era.2c, file = here(fit.dir, "hbm_era_2c.RData"))
 
-dyn.2c <- rstan::stan(file = "./stan/hbm_dyn_2c.stan",
-                      data = stan.dat.2c,
-                      pars = c(pars_dyn_2c, pars.gen.quant),
-                      warmup = 1000,
-                      iter = 4000, # try more iterations to fix Rhat & Neff
-                      cores = 4,
-                      chains = 4,
-                      seed = 123,
-                      control = list(adapt_delta = 0.99,
-                                     max_treedepth = 20))
-save(dyn.2c, file = here(fit.dir, "hbm_dyn_2c.Rdata"))
+#dyn.2c <- rstan::stan(file = "./stan/hbm_dyn_2c.stan",
+ #                     data = stan.dat.2c,
+  #                    pars = c(pars_dyn_2c, pars.gen.quant),
+   #                   warmup = 1000,
+    #                  iter = 4000, # try more iterations to fix Rhat & Neff
+     #                 cores = 4,
+      #                chains = 4,
+       #               seed = 123,
+        #              control = list(adapt_delta = 0.99,
+         #                            max_treedepth = 20))
+#save(dyn.2c, file = here(fit.dir, "hbm_dyn_2c.Rdata"))
 
 
 
