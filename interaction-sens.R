@@ -1,4 +1,4 @@
-## Placeholder for a script that investigates including an interaction term in the model ##
+## Script that investigates including an interaction term in the model ##
 
 plot_diagnostics = FALSE
 
@@ -247,14 +247,16 @@ g<-ggplot(m.df.plot) +
   xlim(-50,50) +
   theme_sleek(base_size = 9) +
   theme(legend.justification = c(0, 0),
-        legend.position = c(0.84, 0.85),
+        legend.position = c(0.82, 0.1),
         legend.key.size = unit(10, "pt"),
         legend.background = element_blank(),
         legend.text = element_text(size = 6),
         panel.spacing.y = unit(-0.5, "pt"),
-        strip.background = element_blank())
+        strip.background = element_blank(),
+        strip.text.x.top = element_text(size=9),
+        legend.key.spacing = unit(-0.5, "pt"))
 
 
-png(here('figures', 'spp-explore', "dens_stat_inter_allsp.png"), units = "in", width = 7.5, height = 5, res = 500)
+png(here('figures', 'spp-explore', "dens_stat_inter_allsp.png"), width = 800*2, height = 500*2, res = 72*4)
 print(g)
 dev.off()
