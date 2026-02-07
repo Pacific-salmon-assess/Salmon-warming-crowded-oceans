@@ -6,9 +6,9 @@
 
 ## Should R be sum of RX.X columns?!
 
-data_full <- read.csv("./data-downloaded/salmon_productivity_compilation2025-09-25.csv", row.names=1)
+data_full <- read.csv("./data-downloaded/salmon_productivity_compilation2026-02-05.csv", row.names=1)
 
-info_full <- read.csv("./data-downloaded/stock_info2025-09-25.csv", row.names=1)
+info_full <- read.csv("./data-downloaded/stock_info2026-02-05.csv", row.names=1)
 # Data source: https://github.com/Pacific-salmon-assess/dfo_salmon_compilation
 
 ## PINK ----------------------------------------------------------------------
@@ -84,9 +84,11 @@ summary(bt.out)
 
 write.csv(bt.out, "./data/pink/master_pink_brood_table.csv", row.names = FALSE)
 
+# Fill time series so NA years can be calculated
+bt.out.filled <- fill.time.series(bt.out)
 
 ## Make stock info table ------------------------------------
-p.info.brood <- ddply(bt.out.7, .(Stock.ID), plyr::summarize,
+p.info.brood <- ddply(bt.out.filled, .(Stock.ID), plyr::summarize,
                       Stock = unique(Stock),
                       Ocean.Region2 = unique(Ocean.Region2),
                       lat = unique(Lat),
@@ -135,7 +137,7 @@ sapply(c.brood, class)
 # Remove empty "RX.X columns and rename "RX" columns to Eur naming convention
 names(c.brood)[grepl("\\w{1}\\d{1}$", names(c.brood))] <- paste0("R0.", as.numeric(str_extract(names(c.brood)[grepl("\\w{1}\\d{1}$", names(c.brood))], "\\d$"))-1)
 r.cols.old <- names(c.brood)[grepl("^r\\d", names(c.brood))]
-c.brood <- c.brood[,!names(c.brood) %in% r.cols.old]
+c.brood <- c.brood[,!c(names(c.brood) %in% r.cols.old)]
 
 #Rename some columns
 names(c.brood) <- str_to_title(names(c.brood))
@@ -182,7 +184,7 @@ bt.out.5 <- geographic.order(bt.out.4)
 bt.out.6 <- dplyr::arrange(bt.out.5, factor(Stock, levels=levels(bt.out.5$Stock)))
 
 # Filter out short/gappy time series
-c.info <- c.info %>% filter(end < 2015 | begin > 1984)
+c.info <- c.info %>% filter(end < 2015 | begin > 1984) # filter OUT those that don't span 1984-2016
 bt.out.7 <- bt.out.6[!(bt.out.6$Stock.ID %in% c.info$stock.id),]
 # Simplify stock names
 bt.out.7$Stock <- stringr::str_remove(bt.out.7$Stock, "-Chum")
@@ -197,9 +199,11 @@ summary(bt.out)
 
 write.csv(bt.out, "./data/chum/master_chum_brood_table.csv", row.names = FALSE)
 
+# Fill time series so NA years can be calculated
+bt.out.filled <- fill.time.series(bt.out)
 
 ## Create stock info table ---------------------------------
-c.info.brood <- ddply(bt.out, .(Stock.ID), summarize,
+c.info.brood <- ddply(bt.out.filled, .(Stock.ID), summarize,
                       Stock = unique(Stock),
                       Ocean.Region2 = unique(Ocean.Region2),
                       lat = unique(Lat),

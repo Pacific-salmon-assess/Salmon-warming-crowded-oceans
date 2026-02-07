@@ -6,8 +6,8 @@
 ## this script is a master brood table for the analysis and a summary info table
 
 ## Read in downloaded data
-data_full <- read.csv("./data-downloaded/salmon_productivity_compilation2025-09-25.csv", row.names=1)
-info_full <- read.csv("./data-downloaded/stock_info2025-09-25.csv", row.names=1)
+data_full <- read.csv("./data-downloaded/salmon_productivity_compilation2026-02-05.csv", row.names=1)
+info_full <- read.csv("./data-downloaded/stock_info2026-02-05.csv", row.names=1)
 # Data source: https://github.com/Pacific-salmon-assess/dfo_salmon_compilation
 
 ## Filter for Sockeye
@@ -87,13 +87,12 @@ all.equal(sort(r1), sort(r2))
 # More cleaning steps
 bt.out.1 <- bt[complete.cases(bt),]                # drop years with missing data
 (nrow(bt) - nrow(bt.out.1)) # how many rows dropped
-bt.out.2 <- subset(bt.out.1, !(Stock %in% c("Frazer", # Frazer - hatchery influence
-                                            "Bear-Skeena", # short
-                                            "Johnston", #short
-                                            "Mcdonell", #gappy
-                                            "Kitwancool", # gappy
+bt.out.2 <- subset(bt.out.1, !(Stock %in% c("Mcdonell", #gappy
+                                            "Kitwanga", # gappy
                                             "Koeye", #large gaps
                                             "Namu", #large gaps
+                                            "Motase", # short and gappy
+                                            "Asitka", # gappy
                                             "Kitlope", # large gap
                                             "Hartley Bay", # gappy
                                             "Marian-Eden" # gappy
@@ -126,9 +125,12 @@ summary(bt.out)
 write.csv(bt.out, "./data/sockeye/master_sockeye_brood_table.csv", row.names = FALSE)
 
 
+# Fill time series so NA years can be calculated
+bt.out.filled <- fill.time.series(bt.out)
+
 
 ## Create stock info table ---------------------------------
-s.info.brood <- ddply(bt.out, .(Stock), plyr::summarize,
+s.info.brood <- ddply(bt.out.filled, .(Stock), plyr::summarize,
                             Stock.ID = unique(Stock.ID),
                             Ocean.Region2 = unique(Ocean.Region2),
                             lat = unique(Lat),
