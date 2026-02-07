@@ -24,7 +24,7 @@ make_design_matrix <- function(x,grp) {
 
 # Run and extract with rstan
 
-#Run
+# Make dataframe
 smax <- data_master %>% group_by(Stock.ID) %>% summarize(max.S = max(S))
 S.mat <- make_design_matrix(data_master$S, grp = data_master$Stock.ID)
 
@@ -32,11 +32,15 @@ stk.year <- expand.grid(levels(factor(data_master$Stock.ID)), seq(min(data_maste
 stk.year[,3] <- paste(stk.year[,1], stk.year[,2], sep='.')
 stk.year <- stk.year[order(stk.year[,1], stk.year[,2]),]
 stk.year.id <- match(paste(data_master$Stock.ID, data_master$BY, sep='.'), stk.year[,3])
+if(speciesFlag=="sockeye"){a_grp <- ifelse(info_master$lat == 49.120, 1, 2)} else { # alpha groups - fraser sockeye
+  a_grp <- rep(1, nrow(info_master))}
 
 stan.dat.rw <- list(N = nrow(data_master),
            J = length(unique(data_master$Stock.ID)),
            L = max(data_master$BY) - min(data_master$BY) + 1,
            R = length(unique(info_master$Ocean.Region2)),
+           #Na = ifelse(speciesFlag=="sockeye", 2, 1),
+           #a_grp = a_grp,
            J_i = as.numeric(factor(data_master$Stock.ID)),
            J_ii = stk.year.id,
            J_or = as.numeric(factor(info_master$Ocean.Region2,
@@ -49,15 +53,15 @@ stan.dat.rw <- list(N = nrow(data_master),
            pSmax_sig = 2*smax$max.S)
 
 
-
-rw.fit <- rstan::stan(file = "./stan/ind_tvalpha_ricker.stan",
+# Fit
+rw.fit <- rstan::stan(file = "./stan/ind_tvalpha_ricker.stan", # test running "-Copy"
                       data = stan.dat.rw,
                       warmup = 1000,
-                      iter = 2000,
+                      iter = 3000,
                       cores = 4,
                       chains = 4,
                       seed = 123,
-                      control = list(adapt_delta = 0.99,
+                      control = list(adapt_delta = 0.999,
                                      max_treedepth = 20))
 save(rw.fit, file = here("output/models/dyn", speciesFlag, "dyn_new_2025.RData"))
 
@@ -82,8 +86,7 @@ df.dyn.st.2c <- data.frame(Stock = rep(info_master$Stock, times=stan.dat.rw$L*2)
                            var = case_when(str_extract(rownames(summ), "[a-z]+") == "g" ~ "gamma",
                                         str_extract(rownames(summ), "[a-z]+") == "k" ~ "kappa"),
                            varnam = case_when(grepl("^g", rownames(summ)) ~ "SST",
-                                              grepl("^k", rownames(summ)) ~ "Competitors")
-)
+                                              grepl("^k", rownames(summ)) ~ "Competitors"))
 df.dyn.st.2c <- ocean_region_lab(df.dyn.st.2c)
 
 
@@ -121,7 +124,7 @@ df.dyn.reg.2c <- ocean_region_lab(df.dyn.reg.2c)
 # Plot
 ggplot(df.dyn.st.2c) +
   geom_line(aes(x=BY, y=mu, group=Stock), col="grey50") +
-  geom_line(data=df.dyn.reg.2c, aes(x=BY, y=mu, col=Ocean.Region2, group=even_odd), linewidth=1) +
+  geom_line(data=df.dyn.reg.2c, aes(x=BY, y=mu, col=Ocean.Region2), linewidth=1) +
   facet_grid(rows=vars(Ocean.Region2), cols=vars(varnam)) +
   ylim(-1,1)
 
