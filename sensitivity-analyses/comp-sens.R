@@ -218,10 +218,7 @@ comp_tbl_list_era <- lapply(era_summary_list, function(x){
                    Era = case_when(str_sub(rownames(summ), start=-4, end=-4) == "1" ~ "Early",
                                    str_sub(rownames(summ), start=-4, end=-4) == "2" ~ "Middle",
                                    str_sub(rownames(summ), start=-4, end=-4) == "3" ~ "Late"),
-                   Region = case_when(str_sub(rownames(summ), start=-2,end=-2) == "1" ~ "West Coast",
-                                      str_sub(rownames(summ), start=-2,end=-2) == "2" ~ "Southeast Alaska",
-                                      str_sub(rownames(summ), start=-2,end=-2) == "3" ~ "Gulf of Alaska",
-                                      str_sub(rownames(summ), start=-2,end=-2) == "4" ~ "Bering Sea",),
+                   Region = rep(unique(info_master$ocean_region_lab), 6),
                    Posterior_Mean = summ[,"mean"],
                    Lower_2.5_CI = summ[,"2.5%"],
                    Lower_10_CI = summ[,"10%"],
@@ -241,10 +238,7 @@ comp_tbl_list_stat <- lapply(stat_summary_list, function(x){
                           grepl("^mu_kappa", rownames(summ)) ~ "Competitor effect",
                           grepl("^mu_chi", rownames(summ)) ~ "SST x Competitor effect"),
     Era = "All",
-    Region = case_when(str_sub(rownames(summ), start=-2,end=-2) == "1" ~ "West Coast",
-                       str_sub(rownames(summ), start=-2,end=-2) == "2" ~ "Southeast Alaska",
-                       str_sub(rownames(summ), start=-2,end=-2) == "3" ~ "Gulf of Alaska",
-                       str_sub(rownames(summ), start=-2,end=-2) == "4" ~ "Bering Sea",),
+    Region = rep(unique(info_master$ocean_region_lab), 3),
     Posterior_Mean = summ[,"mean"],
     Lower_2.5_CI = summ[,"2.5%"],
     Lower_10_CI = summ[,"10%"],
@@ -263,4 +257,62 @@ comp_tbl_stat <- bind_rows(comp_tbl_list_stat, .id="Competitor index")
 comp_tbl <- bind_rows(comp_tbl_era, comp_tbl_stat, .id="Model")
 
 write.csv(comp_tbl, file=here('sensitivity-analyses', 'alt-comp', paste0(speciesFlag, '-comp-index-fit-compare.csv')))
+
+
+
+# Generate figures
+
+#Reload results
+comp_tbl <- read.csv(here('sensitivity-analyses', 'alt-comp', paste0(speciesFlag, '-comp-index-fit-compare.csv'))) # load saved results from comp sensitivity analyses
+comp_tbl <- comp_tbl |> mutate(varnam = gsub("Competitor", "Competitors", stringr::str_remove(Parameter, " effect")))
+load(here('output', 'models', 'dyn', speciesFlag, 'hbm_era_2c.RData'), verbose=T)# load era'base model'
+df.era <- era_hb_param_df(era.2c, par=c("gamma", "kappa"), mu=T, lower_CI=2.5, upper_CI=97.5, info=info_master)
+# Load stationary base model
+load(here('output', 'models', 'stat', speciesFlag, 'stat_inter.RData'), verbose=T)
+summ <- rstan::summary(stat_inter, pars=c("mu_gamma", "mu_kappa", "mu_chi"), probs=c(0.025, 0.5, 0.975))$summary
+stat.df <- data.frame(Ocean.Region2 = unique(data_master$Ocean.Region2),
+                       varnam = rep(c("SST", "Competitors", "SST x Competitors"),
+                                 each=n_distinct(data_master$Ocean.Region2)),
+                       lower = summ[,"2.5%"],
+                       reg_mean = summ[,"mean"],
+                       upper = summ[,"97.5%"],
+                       era= "All")
+# Bind base model era + stat fits
+base_tbl <- bind_rows(df.era, stat.df, .id="Model")
+base_tbl$Region <- ocean_region_lab(base_tbl)$ocean_region_lab
+
+comp_tbl$varnam <- gsub("SST x Competitors", "SST x \nComp.", comp_tbl$varnam) # Have to change this label to fit on plot
+base_tbl$varnam <- gsub("SST x Competitors", "SST x \nComp.", base_tbl$varnam) # Have to change this label to fit on plot
+
+
+
+# Plot
+g <- comp_tbl |>
+  mutate(Competitor.index =
+        stringr::str_to_title(stringr::str_remove(gsub("_"," ", Competitor.index), "np"))) |>
+  ggplot() +
+  geom_hline(yintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
+  geom_point(aes(x=factor(Era, levels=c("Early", "Middle", "Late", "All")),
+                 y=Posterior_Median, shape=Competitor.index, col=Region),
+              position=position_dodge(0.4)) +
+  geom_segment(aes(x=factor(Era, levels=c("Early", "Middle", "Late", "All")),
+                   y=Lower_2.5_CI, yend=Upper_97.5_CI, group=Competitor.index, col=Region),
+               position=position_dodge(0.4)) +
+  geom_point(data=base_tbl, aes(x=factor(era, levels=c("Early", "Middle", "Late", "All")),
+                                y=reg_mean, col=Region), shape=18,
+             position=position_nudge(0.3)) +
+  geom_segment(data=base_tbl, aes(x=factor(era, levels=c("Early", "Middle", "Late", "All")),
+                                  y=lower, yend=upper, col=Region),
+               position=position_nudge(0.3)) +
+  facet_grid(rows=vars(Region), cols=vars(factor(varnam, levels=c("SST", "Competitors", "SST x \nComp."))), scales="free", space="free_x") +
+  scale_y_continuous(n.breaks=4) +
+  scale_colour_manual(values=col.region, guide="none") +
+  labs(x="Time Period", y="Covariate effect", shape="Alternative \nCompetitor Index") +
+  theme_sleek()
+
+png(filename=here("sensitivity-analyses/alt-comp", paste0(speciesFlag, "_alt_comp_fig.png")),
+    width=950*2, height=550*2, res=72*4)
+print(g)
+dev.off()
+
 
