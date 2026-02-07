@@ -27,7 +27,7 @@ source("pink_chum_covariates.R")
 # Toggle one species 'ON' for #3-n
 speciesFlag = "pink" # one of "sockeye", "chum", "pink", "pinkeven", "pinkodd'
 
-# Pick colour scheme for all plots
+# Colour scheme for all plots
 col.region <- rev(chroma::qpal(7, luminance = 40)[c(1, 3, 5, 7)])
 names(col.region) <- c("West Coast", "Southeast Alaska", "Gulf of Alaska", "Bering Sea")
 
@@ -39,11 +39,14 @@ source("stat_single_stock_fit.R")
 # 4. Stationary Hierarchical Bayesian Models & figures
 source("stat_hbm_fit.R")
 source("stat_hbm_inf.R")
-source("interaction-sens.R") # Optionally run models with interaction term
+source("interaction-fits.R") # Optionally run models with interaction term
+source("interaction-plots.R") # Make sst x comp interaction figures
 
 # 5. Dynamic (time-varying) Hierarchical Bayesian Models & figures
 source("dyn_hbm_fit.R")
 source("dyn_hbm_inf.R")
+source("rw_model_fit.R") # run NEW random walk models
+source("era_rw_fig.R") # Make main era + RW results figures
 
 # 6. Hidden Markov Models (optional)
 #source("hmm_single_stock_fit.R")
