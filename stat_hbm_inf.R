@@ -44,7 +44,6 @@ names(shp.reg) <-  c("West Coast", "Southeast Alaska", "Gulf of Alaska", "Bering
 
 # Coefficient table
 fitnam <- strsplit(list.files(path = fit.dir, pattern = "*.RData$"), ".RData")
-fit.list <- list(stat_a, stat_tr)
 
 ## Table: coefficients ----
 
