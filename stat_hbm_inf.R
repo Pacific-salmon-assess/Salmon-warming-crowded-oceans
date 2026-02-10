@@ -46,35 +46,32 @@ names(shp.reg) <-  c("West Coast", "Southeast Alaska", "Gulf of Alaska", "Bering
 fitnam <- strsplit(list.files(path = fit.dir, pattern = "*.RData$"), ".RData")
 fit.list <- list(stat_a, stat_tr)
 
-for (n in 1:length(fit.list)){
+## Table: coefficients ----
 
-  ## Table: coefficients ----
+gamma <- rstan::summary(stat_a, pars = "mu_gamma")$summary
+kappa <- rstan::summary(stat_a, pars = "mu_kappa")$summary
+reg   <- ifelse(speciesFlag=="chum", c("West Coast", "Gulf of Alaska", "Bering Sea"),
+                c("West Coast", "Southeast Alaska", "Gulf of Alaska", "Bering Sea"))
 
-  gamma <- rstan::summary(fit.list[[n]], pars = "mu_gamma")$summary
-  kappa <- rstan::summary(fit.list[[n]], pars = "mu_kappa")$summary
-  reg   <- ifelse(speciesFlag=="chum", c("West Coast", "Gulf of Alaska", "Bering Sea"),
-                  c("West Coast", "Southeast Alaska", "Gulf of Alaska", "Bering Sea"))
+tab.g <- data.frame(reg = reg,
+                    coef = "SST",
+                    lower = gamma[ , "2.5%"],
+                    mean = gamma[ , "mean"],
+                    upper = gamma[ , "97.5%"])
+tab.k <- data.frame(reg = reg,
+                    coef = "Comp",
+                    lower = kappa[ , "2.5%"],
+                    mean = kappa[ , "mean"],
+                    upper = kappa[ , "97.5%"])
 
-  tab.g <- data.frame(reg = reg,
-                      coef = "SST",
-                      lower = gamma[ , "2.5%"],
-                      mean = gamma[ , "mean"],
-                      upper = gamma[ , "97.5%"])
-  tab.k <- data.frame(reg = reg,
-                      coef = "Comp",
-                      lower = kappa[ , "2.5%"],
-                      mean = kappa[ , "mean"],
-                      upper = kappa[ , "97.5%"])
+tab.coef <- rbind(tab.g, tab.k)
+tab.coef$perc <- (exp(tab.coef$mean) - 1) * 100
+row.names(tab.coef) <- NULL
+names(tab.coef) <- c("Ecosystem", "Coefficient", "Lower 95% CI", "Mean",
+                     "Upper 95% CI", "Mean % change in R/S")
 
-  tab.coef <- rbind(tab.g, tab.k) # add tab.c if exists
-  tab.coef$perc <- (exp(tab.coef$mean) - 1) * 100
-  row.names(tab.coef) <- NULL
-  names(tab.coef) <- c("Ecosystem", "Coefficient", "Lower 95% CI", "Mean",
-                       "Upper 95% CI", "Mean % change in R/S")
+write.csv(tab.coef, file = here(fig.dir, paste0("model_coefficients_stat_a.csv")))
 
-  write.csv(tab.coef, file = here(fig.dir, paste0("model_coefficients_", fitnam[[n]], ".csv")))
-
-}
 
 ## Plot timeseries length (R/S)
 prod_dat <- fill.time.series(data_master)
@@ -251,113 +248,6 @@ if(exists("ss.all.yrs")) {
 
 }
 
-## stat_tr -----------------------------------------------------
-
-## Fig: Posterior percent change density -------------------
-lst <- hb05_density_df(stat_tr, ocean.regions = ifelse(speciesFlag=="chum", 3, 4))
-s.df <- lst$stock
-m.df <- lst$region
-m.df$region <- factor(m.df$region, levels = c("West Coast", "Gulf of Alaska", "Southeast Alaska", "Bering Sea"))
-
-## Covariate labels
-vars <- data.frame(var = levels(m.df$var))
-vars$lab <- paste0("(", letters[1:nrow(vars)], ") ", vars$var)
-vars$var <- factor(vars$var, levels = c("SST", "Comp", "SST + Comp"))
-
-g <- ggplot(m.df) +
-  geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
-  geom_path(data = s.df[s.df$region == "West Coast", ],
-            aes(x = x, y = y, group = stock), color = col.region["West Coast"], alpha=0.3,
-            na.rm = TRUE) +
-  geom_path(data = s.df[s.df$region == "Gulf of Alaska", ],
-            aes(x = x, y = y, group = stock), color = col.region["Gulf of Alaska"], alpha=0.3,
-
-          na.rm = TRUE) +
-  geom_path(data = s.df[s.df$region == "Southeast Alaska", ],
-            aes(x = x, y = y, group = stock), color = col.region["Southeast Alaska"], alpha=0.3,
-            na.rm = TRUE) +
-  geom_path(data = s.df[s.df$region == "Bering Sea", ],
-            aes(x = x, y = y, group = stock), color = col.region["Bering Sea"], alpha=0.3,
-            na.rm = TRUE) +
-  geom_path(aes(x = x, y = y, color = region), linewidth = 1, alpha=1,
-            na.rm = TRUE) +
-  col.scale.reg +
-  labs(x = "Percent change in R/S",
-       y = "Posterior density",
-       color = "") +
-  scale_x_continuous(limits = c(-50, 50), expand = c(0, 0)) +
-  scale_y_continuous(breaks=NULL) +
-  geom_text(data = vars,
-            aes(x = -48.1,
-                y = max(m.df$y) - 0.008,
-                label = lab),
-            hjust = 0,
-            size = 2.7,
-            color = "grey30") +
-  facet_wrap( ~ var, ncol = 1) +
-  theme_sleek(base_size = 9) +
-  theme(legend.justification = c(0, 0),
-        legend.position = c(0.7, 0.91),
-        legend.key.size = unit(10, "pt"),
-        legend.background = element_blank(),
-        legend.text = element_text(size = 8),
-        panel.spacing.y = unit(-0.5, "pt"),
-        strip.background = element_blank(),
-        strip.text.x = element_blank())
-
-pdf(here(fig.dir, "dens_stat_tr.pdf"), width = 4, height = 6)
-print(g)
-dev.off()
-
-
-
-## Fig: dot + density main ---------------------------------
-gamma.stock <- hb_param_df(stat_tr, "gamma", "Ocean.Region2", "SST")
-kappa.stock <- hb_param_df(stat_tr, "kappa", "Ocean.Region2", "Comp")
-df.dot <- rbind(gamma.stock, kappa.stock ) # , chi.stock)
-df.dot <- ocean_region_lab(df.dot, "region", FALSE)
-df.dot$Stock <- factor(df.dot$Stock, levels = levels(data_master$Stock))
-df.dot$var <- factor(df.dot$var, levels = c("SST", "Comp" )) # ,"SST x Comp"))
-df.mu <- plyr::ddply(df.dot, .(region, var), summarize,
-                     mu_mean = unique(mu_mean),
-                     mu_2.5 = unique(`mu_2.5%`),
-                     mu_97.5 = unique(`mu_97.5%`),
-                     ocean_region_lab = unique(ocean_region_lab),
-                     ystart = Stock[1],
-                     yend = Stock[length(Stock)])
-
-g <- ggplot(df.dot) +
-  geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
-  geom_point(aes(x = mean, y = Stock, color = ocean_region_lab, shape = ocean_region_lab)) +
-  geom_segment(aes(y = Stock, yend = Stock, x = `2.5%`, xend = `97.5%`,
-                   color = ocean_region_lab), linewidth = 0.25) +
-  geom_segment(data = df.mu, aes(y = ystart, yend = yend, x = mu_mean, xend = mu_mean,
-                                 color = ocean_region_lab), linewidth = 0.25) +
-  geom_rect(data = df.mu, aes(xmin = mu_2.5, xmax = mu_97.5, ymin = ystart,
-                              ymax = yend, fill = ocean_region_lab),
-            alpha = 0.2) +
-  col.scale.reg +
-  scale_shape_manual(values = shp.reg) +
-  scale_fill_manual(values = col.region, guide="none") +
-  labs(x = "Coefficient",
-       y = "",
-       color = "",
-       shape = "") +
-  facet_wrap( ~ var) +
-  scale_x_continuous(breaks=c(-0.25,0,0.25))+
-  theme_sleek(base_size = 10) +
-  theme(legend.justification = c(0, 0),
-        legend.position = c(0.01, 0.87),
-        legend.key.size = unit(10, "pt"),
-        legend.background = element_blank(),
-        legend.text = element_text(size = 8),
-        panel.spacing.x = unit(-0.5, "pt"))
-
-pdf(here(fig.dir, "coef_dot_stat_tr.pdf"), width = 6.5, height = 6.0)
-print(g)
-dev.off()
-
-
 
 ## Fig: Map + covars (Hannah's version) --------------------
 
@@ -432,4 +322,4 @@ dev.off()
 
 
 ## --- Remove large model fits (saved in stat_hbm_fit)
-rm(list = c("stat_a", "stat_tr"))
+rm(list = c("stat_a"))
