@@ -1,7 +1,5 @@
 ## Script that investigates including an interaction term in the model ##
 
-plot_diagnostics = FALSE
-
 
 # Species
 if(speciesFlag=="pink") {
@@ -50,7 +48,7 @@ stat_inter <- rstan::stan(file = "./stan/hbm_stat_inter.stan",
                       data = stan.dat.inter,
                       pars = c(pars.stat, pars.gen.quant),
                       warmup = 1000,
-                      iter = 2000,
+                      iter = 3000,
                       cores = 4,
                       chains = 4,
                       seed = 123,
@@ -58,31 +56,32 @@ stat_inter <- rstan::stan(file = "./stan/hbm_stat_inter.stan",
                                      max_treedepth = 20)) # increased treedepth
 save(stat_inter, file = here(fit.dir, "stat_inter.RData"))
 
-## Diagnostic plots - optional
-if(plot_diagnostics) {
-  pdf(here(fig.dir, "stat_inter_diag.pdf"), width = 7, height = 5)
-  coda_neff(get_neff(stat_inter, pars = pars.stat), total_draws(stat_inter))
-  coda_rhat(get_rhat(stat_inter, pars = pars.stat))
-  coda_diag(As.mcmc.list(stat_inter, pars = pars.stat))
-  dev.off()
 
-  plot_post_pc(stat_inter, stan.dat.all$y, pdf.path = here(fig.dir, "stat_inter_yrep.pdf")) # Working again?
+## Diagnostic plots
 
-  loo.stat_inter <- rstan::loo(stat_inter, cores = 4)
-  save(loo.stat_inter, file = here(diag.dir, "loo_stat_inter.RData"))
-  waic.stat_inter <- loo::waic(loo::extract_log_lik(stat_inter, "log_lik"))
-  save(waic.stat_inter, file = here(diag.dir, "waic_stat_inter.RData"))
-  pdf(here(fig.dir, "stat_inter_loo.pdf"), width = 7, height = 5)
-  plot(loo.stat_inter, label_points = TRUE)
-  dev.off()
+pdf(here(fig.dir, "stat_inter_diag.pdf"), width = 7, height = 5)
+coda_neff(get_neff(stat_inter, pars = pars.stat), total_draws(stat_inter))
+coda_rhat(get_rhat(stat_inter, pars = pars.stat))
+coda_diag(As.mcmc.list(stat_inter, pars = pars.stat))
+dev.off()
 
-  r2.stat_inter <- bayes_R2(data_master$lnRS, as.matrix(stat_inter, pars = "yhat"))
-  save(r2.stat_inter, file = here(diag.dir, "r2_stat_inter.Rdata"))
+plot_post_pc(stat_inter, stan.dat.all$y, pdf.path = here(fig.dir, "stat_inter_yrep.pdf")) # Working again?
 
-  pdf( here(fig.dir, "stat_inter_resid.pdf"), width = 8, height = 8)
-  plot_hbm_resids(stat_inter, data_master)
-  dev.off()
-}
+loo.stat_inter <- rstan::loo(stat_inter, cores = 4)
+save(loo.stat_inter, file = here(diag.dir, "loo_stat_inter.RData"))
+waic.stat_inter <- loo::waic(loo::extract_log_lik(stat_inter, "log_lik"))
+save(waic.stat_inter, file = here(diag.dir, "waic_stat_inter.RData"))
+pdf(here(fig.dir, "stat_inter_loo.pdf"), width = 7, height = 5)
+plot(loo.stat_inter, label_points = TRUE)
+dev.off()
+
+r2.stat_inter <- bayes_R2(data_master$lnRS, as.matrix(stat_inter, pars = "yhat"))
+save(r2.stat_inter, file = here(diag.dir, "r2_stat_inter.Rdata"))
+
+pdf( here(fig.dir, "stat_inter_resid.pdf"), width = 8, height = 8)
+plot_hbm_resids(stat_inter, data_master)
+dev.off()
+
 
 
 
@@ -123,7 +122,7 @@ tab.c <- data.frame(reg = reg,
                     mean = chi[ , "mean"],
                     upper = chi[ , "97.5%"])
 
-tab.coef <- rbind(tab.g, tab.k, tab.c) # add tab.c if exists
+tab.coef <- rbind(tab.g, tab.k, tab.c)
 tab.coef$perc <- (exp(tab.coef$mean) - 1) * 100
 row.names(tab.coef) <- NULL
 names(tab.coef) <- c("Ecosystem", "Coefficient", "Lower 95% CI", "Mean",
@@ -188,75 +187,3 @@ pdf(here(fig.dir, "dens_stat_inter.pdf"), width = 4, height = 6)
 print(g)
 dev.off()
 
-
-# All spp. interaction density plot
-s.df <- m.df <- NULL
-for(sp in c("sockeye", "pink", "chum")){
-  print(sp)
-  # Species
-  if(sp=="pink") {
-    data_tmp <- pink
-    info_tmp <- pink.info} else if (sp=="chum") {
-      data_tmp <- chum
-      info_tmp <- chum.info } else if(sp=="sockeye"){
-        data_tmp <- sock
-        info_tmp <- sock.info }
-  load(here("output", "models", "stat", sp, "stat_inter.RData"), verbose=T)
-  lst <- hb07_density_df(stat_inter, data=data_tmp, info = info_tmp,
-                         ocean.regions = ifelse(sp=="chum", 3, 4))
-  lst$stock$species <- sp
-  lst$region$species <- sp
-  s.df <- rbind(s.df, lst$stock)
-  m.df <- rbind(m.df, lst$region)
-  m.df$region <- factor(m.df$region, levels = c("West Coast", "Gulf of Alaska", "Southeast Alaska", "Bering Sea"))
-}
-
-## Covariate and species labels
-m.df <- filter(m.df, var != "SST + Comp")
-s.df <- filter(s.df, var != "SST + Comp")
-vars <- data.frame(var = unique(m.df$var))
-vars$lab <- paste0("(", letters[1:nrow(vars)], ") ", vars$var)
-vars$var <- factor(vars$var, levels = c("SST", "Comp", "SST x Comp"))
-m.df$species <- factor(str_to_sentence(m.df$species), levels=c("Sockeye","Chum","Pink"))
-s.df$species <- factor(str_to_sentence(s.df$species), levels=c("Sockeye","Chum","Pink"))
-
-m.df.plot <- m.df
-s.df.plot <- s.df
-# sneaky trim data to display with different x-axis ranges without huge tails
-
-# m.df.plot <- filter(m.df[m.df$species == "Pink",], x<=100, x>=-50) # trim pinks to -50,100
-# m.df.plot <- rbind(m.df.plot, filter(m.df[m.df$species == "Chum",], x<=25, x>=-25)) # trim chum to -25,25
-# m.df.plot <- rbind(m.df.plot, filter(m.df[m.df$species == "Sockeye",], x<=50, x>=-50)) # trim sockeye to -50,50
-#
-# s.df.plot <- filter(s.df[s.df$species == "Pink",], x<=100, x>=-50) # trim pinks to 100
-# s.df.plot <- rbind(s.df.plot, filter(s.df[s.df$species == "Chum",], x<=25, x>=-25)) # trim chum to -25,25
-# s.df.plot <- rbind(s.df.plot, filter(s.df[s.df$species == "Sockeye",], x<=50, x>=-50)) # trim sockeye to -50,50
-
-
-g<-ggplot(m.df.plot) +
-  geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
-  geom_path(data=s.df.plot, aes(x=x, y=y, group=stock, color = region), alpha=0.3, na.rm=T) +
-  geom_path(aes(x = x, y = y, color = region), linewidth = 1, alpha=1,
-            na.rm = TRUE) +
-  scale_colour_manual(values=col.region) +
-  labs(x = "Percent change in R/S",
-       y = "Posterior density",
-       color = "") +
-  scale_y_continuous(breaks=NULL) +
-  facet_grid(rows=vars(var), cols=vars(species)) +
-  xlim(-50,50) +
-  theme_sleek(base_size = 9) +
-  theme(legend.justification = c(0, 0),
-        legend.position = c(0.82, 0.1),
-        legend.key.size = unit(10, "pt"),
-        legend.background = element_blank(),
-        legend.text = element_text(size = 6),
-        panel.spacing.y = unit(-0.5, "pt"),
-        strip.background = element_blank(),
-        strip.text.x.top = element_text(size=9),
-        legend.key.spacing = unit(-0.5, "pt"))
-
-
-png(here('figures', 'spp-explore', "dens_stat_inter_allsp.png"), width = 800*2, height = 500*2, res = 72*4)
-print(g)
-dev.off()
