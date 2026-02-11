@@ -24,17 +24,16 @@ source("sst_explore.R")
 source("sock_covariates.R")
 source("pink_chum_covariates.R")
 
+# Colour scheme for all plots
+col.region <- rev(chroma::qpal(7, luminance = 40)[c(1, 3, 5, 7)])
+names(col.region) <- c("West Coast", "Southeast Alaska", "Gulf of Alaska", "Bering Sea")
+
 # Steps 3-6 run one species at a time
 species = c("sockeye", "pink", "chum")
 
 for(sp in species) {
 
   speciesFlag = sp # set species
-
-  # Colour scheme for all plots
-  col.region <- rev(chroma::qpal(7, luminance = 40)[c(1, 3, 5, 7)])
-  names(col.region) <- c("West Coast", "Southeast Alaska", "Gulf of Alaska", "Bering Sea")
-
 
   # 3. Exploratory plots and models
   source("data_explore.R")
