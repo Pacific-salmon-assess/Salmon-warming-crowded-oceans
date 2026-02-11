@@ -33,7 +33,6 @@ shp.reg <- c(18, 16, 17, 15)
 names(shp.reg) <-  c("West Coast", "Southeast Alaska", "Gulf of Alaska", "Bering Sea")
 
 
-
 ## Table: Regional coefficients (hyperparameters) ----
 
 gamma <- rstan::summary(stat_a, pars = "mu_gamma")$summary
