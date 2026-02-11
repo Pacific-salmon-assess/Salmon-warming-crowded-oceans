@@ -23,57 +23,81 @@ fig.dir <- here("figures", "stat", speciesFlag, "hbm_inf") # place to store figu
 if(!dir.exists(fig.dir)) dir.create(fig.dir, recursive = T)
 
 
-# Load model fits if not just run
-if(!exists("stat_a")){
-  for(i in list.files(path = fit.dir, pattern = "*.RData$")) {
-    load(here(fit.dir, i), verbose=T)
-        }
-}
+# Load model fits
+load(here(fit.dir, "stat_a.Rdata"))
 
 load(here(fit.dir, "single-stock", "single_stock_lms.Rdata"), verbose=T) # load single stock fits for comparison if we have them
 
-## Define colors
-col.region <- rev(chroma::qpal(7, luminance = 40)[c(1, 3, 5, 7)])
-names(col.region) <- c("West Coast", "Southeast Alaska", "Gulf of Alaska", "Bering Sea")
-col.scale.reg <- scale_colour_manual(name = "Ocean Region", values=col.region)
-col.region.3 <- chroma::qpal(7, luminance = 40)[c(1, 4, 6)]
-# Define shape
+# Define shape for figs
 shp.reg <- c(18, 16, 17, 15)
 names(shp.reg) <-  c("West Coast", "Southeast Alaska", "Gulf of Alaska", "Bering Sea")
 
 
-# Coefficient table
-fitnam <- strsplit(list.files(path = fit.dir, pattern = "*.RData$"), ".RData")
-fit.list <- list(stat_a, stat_tr)
 
-## Table: coefficients ----
+## Table: Regional coefficients (hyperparameters) ----
 
 gamma <- rstan::summary(stat_a, pars = "mu_gamma")$summary
 kappa <- rstan::summary(stat_a, pars = "mu_kappa")$summary
-reg   <- ifelse(speciesFlag=="chum", c("West Coast", "Gulf of Alaska", "Bering Sea"),
-                c("West Coast", "Southeast Alaska", "Gulf of Alaska", "Bering Sea"))
+reg <- c("West Coast", "Southeast Alaska", "Gulf of Alaska", "Bering Sea")
+if(speciesFlag=="chum") reg <- reg[-2]
 
-tab.g <- data.frame(reg = reg,
+tab.g <- data.frame(species = speciesFlag,
+                    reg = reg,
                     coef = "SST",
                     lower = gamma[ , "2.5%"],
                     mean = gamma[ , "mean"],
+                    median = gamma[ , "50%"],
                     upper = gamma[ , "97.5%"])
-tab.k <- data.frame(reg = reg,
+tab.k <- data.frame(species = speciesFlag,
+                    reg = reg,
                     coef = "Comp",
                     lower = kappa[ , "2.5%"],
                     mean = kappa[ , "mean"],
+                    median = kappa[ , "50%"],
                     upper = kappa[ , "97.5%"])
 
 tab.coef <- rbind(tab.g, tab.k)
 tab.coef$perc <- (exp(tab.coef$mean) - 1) * 100
 row.names(tab.coef) <- NULL
-names(tab.coef) <- c("Ecosystem", "Coefficient", "Lower 95% CI", "Mean",
+names(tab.coef) <- c("Species", "Ecosystem", "Coefficient", "Lower 95% CI", "Mean", "Median",
                      "Upper 95% CI", "Mean % change in R/S")
 
-write.csv(tab.coef, file = here(fig.dir, paste0("model_coefficients_stat_a.csv")))
+write.csv(tab.coef, file = here(fig.dir, paste0("reg_coefficients_stat_a_", speciesFlag, ".csv")))
 
 
-## Plot timeseries length (R/S)
+# Coefficient table -- Population lvl
+gamma <- rstan::summary(stat_a, pars = "gamma")$summary
+kappa <- rstan::summary(stat_a, pars = "kappa")$summary
+
+tab.g <- data.frame(species = speciesFlag,
+                    stock = info_master$Stock,
+                    reg = info_master$ocean_region_lab,
+                    coef = "SST",
+                    lower = gamma[ , "2.5%"],
+                    mean = gamma[ , "mean"],
+                    median = gamma[ , "50%"],
+                    upper = gamma[ , "97.5%"])
+tab.k <- data.frame(species = speciesFlag,
+                    stock = info_master$Stock,
+                    reg = info_master$ocean_region_lab,
+                    coef = "Comp",
+                    lower = kappa[ , "2.5%"],
+                    mean = kappa[ , "mean"],
+                    median = kappa[ , "50%"],
+                    upper = kappa[ , "97.5%"])
+
+tab.coef <- rbind(tab.g, tab.k)
+tab.coef$perc <- (exp(tab.coef$mean) - 1) * 100
+row.names(tab.coef) <- NULL
+names(tab.coef) <- c("Species", "Stock", "Region", "Coefficient", "Lower 95% CI", "Mean", "Median",
+                     "Upper 95% CI", "Mean % change in R/S")
+
+write.csv(tab.coef, file = here(fig.dir, paste0("stk_coefficients_", "stat_a_", speciesFlag, ".csv")))
+
+
+
+## --  Plot timeseries length (R/S)
+
 prod_dat <- fill.time.series(data_master)
 prod_dat <- ocean_region_lab(prod_dat)
 
@@ -97,7 +121,6 @@ pdf(here(fig.dir, "ts_length.pdf"), width=4, height=6)
 print(g)
 dev.off()
 
-## stat_a -----------------------------------------------------
 
 ## Fig: Posterior percent change density -------------------
 lst <- hb05_density_df(stat_a, ocean.regions = ifelse(speciesFlag=="chum", 3, 4))
@@ -123,7 +146,7 @@ g <- ggplot(m.df) +
             na.rm = TRUE) +
   geom_path(aes(x = x, y = y, color = region), linewidth = 1, alpha=1,
             na.rm = TRUE) +
-  col.scale.reg +
+  scale_colour_manual(name = "Ocean Region", values=col.region) +
   labs(x = "Percent change in R/S",
        y = "Posterior density",
        color = "") +
