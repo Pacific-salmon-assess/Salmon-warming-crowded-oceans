@@ -45,8 +45,8 @@ for(sp in species) {
   source("interaction-fits.R") # Run stationary models with interaction term
 
   # 5. Dynamic (time-varying) Hierarchical Bayesian Models & figures
-  source("dyn_hbm_fit.R")
-  source("dyn_hbm_inf.R")
+  source("era_hbm_fit.R")
+  source("era_hbm_inf.R")
   source("rw_model_fit.R") # run NEW random walk models
 
   # 6. Sensitivity analyses
