@@ -85,38 +85,32 @@ dev.off()
 
 
 
-# Inference and plots
-
-## Define colors
-col.region <- rev(chroma::qpal(7, luminance = 40)[c(1, 3, 5, 7)])
-names(col.region) <- c("West Coast", "Southeast Alaska", "Gulf of Alaska", "Bering Sea")
-col.scale.reg <- scale_colour_manual(name = "Ocean Region", values=col.region)
-col.region.3 <- chroma::qpal(7, luminance = 40)[c(1, 4, 6)]
-# Define shape
-shp.reg <- c(18, 16, 17, 15)
-names(shp.reg) <-  c("West Coast", "Southeast Alaska", "Gulf of Alaska", "Bering Sea")
+## ----------------------------- Inference and plots
 
 
-# Coefficient table
+# Coefficient table -- Regional (hyperparameters)
 
 gamma <- rstan::summary(stat_inter, pars = "mu_gamma")$summary
 kappa <- rstan::summary(stat_inter, pars = "mu_kappa")$summary
 chi <- rstan::summary(stat_inter, pars = "mu_chi")$summary
 
-reg   <- ifelse(speciesFlag=="chum", c("West Coast", "Gulf of Alaska", "Bering Sea"),
-                c("West Coast", "Southeast Alaska", "Gulf of Alaska", "Bering Sea"))
+reg <- c("West Coast", "Southeast Alaska", "Gulf of Alaska", "Bering Sea")
+if(speciesFlag=="chum") reg <- reg[-2]
 
-tab.g <- data.frame(reg = reg,
+tab.g <- data.frame(species = speciesFlag,
+                    reg = reg,
                     coef = "SST",
                     lower = gamma[ , "2.5%"],
                     mean = gamma[ , "mean"],
                     upper = gamma[ , "97.5%"])
-tab.k <- data.frame(reg = reg,
+tab.k <- data.frame(species = speciesFlag,
+                    reg = reg,
                     coef = "Comp",
                     lower = kappa[ , "2.5%"],
                     mean = kappa[ , "mean"],
                     upper = kappa[ , "97.5%"])
-tab.c <- data.frame(reg = reg,
+tab.c <- data.frame(species = speciesFlag,
+                    reg = reg,
                     coef = "SST x Comp",
                     lower = chi[ , "2.5%"],
                     mean = chi[ , "mean"],
@@ -125,10 +119,47 @@ tab.c <- data.frame(reg = reg,
 tab.coef <- rbind(tab.g, tab.k, tab.c)
 tab.coef$perc <- (exp(tab.coef$mean) - 1) * 100
 row.names(tab.coef) <- NULL
-names(tab.coef) <- c("Ecosystem", "Coefficient", "Lower 95% CI", "Mean",
+names(tab.coef) <- c("Species", "Ecosystem", "Coefficient", "Lower 95% CI", "Mean",
                      "Upper 95% CI", "Mean % change in R/S")
 
-write.csv(tab.coef, file = here(fig.dir, paste0("model_coefficients_", "stat_inter", ".csv")))
+write.csv(tab.coef, file = here(fig.dir, paste0("reg_coefficients_", "stat_inter_", speciesFlag, ".csv")))
+
+
+# Coefficient table -- Population lvl
+gamma <- rstan::summary(stat_inter, pars = "gamma")$summary
+kappa <- rstan::summary(stat_inter, pars = "kappa")$summary
+chi <- rstan::summary(stat_inter, pars = "chi")$summary
+
+tab.g <- data.frame(species = speciesFlag,
+                    stock = info_master$Stock,
+                    reg = info_master$ocean_region_lab,
+                    coef = "SST",
+                    lower = gamma[ , "2.5%"],
+                    mean = gamma[ , "mean"],
+                    upper = gamma[ , "97.5%"])
+tab.k <- data.frame(species = speciesFlag,
+                    stock = info_master$Stock,
+                    reg = info_master$ocean_region_lab,
+                    coef = "Comp",
+                    lower = kappa[ , "2.5%"],
+                    mean = kappa[ , "mean"],
+                    upper = kappa[ , "97.5%"])
+tab.c <- data.frame(species = speciesFlag,
+                    stock = info_master$Stock,
+                    reg = info_master$ocean_region_lab,
+                    coef = "SST x Comp",
+                    lower = chi[ , "2.5%"],
+                    mean = chi[ , "mean"],
+                    upper = chi[ , "97.5%"])
+
+tab.coef <- rbind(tab.g, tab.k, tab.c)
+tab.coef$perc <- (exp(tab.coef$mean) - 1) * 100
+row.names(tab.coef) <- NULL
+names(tab.coef) <- c("Species", "Stock", "Region", "Coefficient", "Lower 95% CI", "Mean",
+                     "Upper 95% CI", "Mean % change in R/S")
+
+write.csv(tab.coef, file = here(fig.dir, paste0("stk_coefficients_", "stat_inter_", speciesFlag, ".csv")))
+
 
 
 # Density plot
@@ -156,7 +187,7 @@ g <- ggplot(m.df) +
             na.rm = TRUE) +
   geom_path(aes(x = x, y = y, color = region), linewidth = 1, alpha=1,
             na.rm = TRUE) +
-  col.scale.reg +
+  scale_colour_manual(values=col.region) +
   labs(x = "Percent change in R/S",
        y = "Posterior density",
        color = "") +
