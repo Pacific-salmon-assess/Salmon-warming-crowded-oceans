@@ -14,7 +14,7 @@ head(bt.complete)
 tail(bt.complete)
 sapply(bt.complete, class)
 
-## 1st year climate var 
+## 1st year climate var
 raw.clim <- read.csv(file="data/sst_yr_1_stock_anomalies.csv",header=TRUE)
 raw.clim.sock <- dplyr::filter(raw.clim, Species=="Sockeye")
 head(raw.clim.sock)
@@ -27,12 +27,19 @@ head(raw.comp)
 
 ## Age weighted climate index: SST at ocean entry point in 1st yr marine life
 
-## SST during early marine life 
+## SST anomaly Index
 early.sst <- clim.wgt.avg(brood.table = bt.complete,
                           env.data = raw.clim.sock,
                           env.covar = "sst_anomaly",
                           type = "first_year",
                           out.covar = "early_sst")
+
+# Raw SST
+raw.sst.index <- clim.wgt.avg(brood.table = bt.complete,
+                              env.data = raw.clim.sock,
+                              env.covar = "sst_raw",
+                              type = "first_year",
+                              out.covar = "early_sst_raw")
 
 
 ## Age weighted competitor index: Pinks in 2nd yr marine life
@@ -45,8 +52,9 @@ np.pink.sec <- pink.wgt.avg(brood.table = bt.complete,
                             out.covar = "np_pinks_sec")
 
 
-## Merge datasets 
+## Merge datasets
 master <- dplyr::left_join(bt.complete, early.sst, by=c("BY","Stock.ID"))
+master <- dplyr::left_join(master, raw.sst.index, by=c("BY","Stock.ID"))
 master <- dplyr::left_join(master, np.pink.sec, by=c("BY","Stock.ID"))
 master.bt_w_cov1 <- geographic.order(master) # Ordered factor
 head(master.bt_w_cov1)
@@ -62,7 +70,7 @@ master.bt_w_cov2 <- ddply(master.bt_w_cov1, .(Stock), transform,
                                 RS_stnd = scale(R/S)[ , 1],
                                 lnRS = log(R/S),
                                 S_stnd = scale(S)[ , 1],
-                                early_sst_stnd = scale(early_sst)[ , 1], 
+                                early_sst_stnd = scale(early_sst)[ , 1],
                                 np_pinks_sec_stnd = scale(np_pinks_sec)[ , 1])
 
 
