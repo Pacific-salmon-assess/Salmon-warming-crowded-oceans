@@ -87,7 +87,7 @@ g <- levelplot(cor.covars[comp.cols, comp.cols], xlab = "", ylab = "",
                  panel.abline(v = seq(1.5, max(x) - 0.5), col = "grey50")
                  panel.abline(h = seq(1.5, max(y) - 0.5), col = "grey50")
                })
-pdf(here('sensitivity-analyses', 'corr-comp-covars.pdf'))
+pdf(here('sensitivity-analyses', 'alt-comp', 'corr-comp-covars.pdf'))
 print(g)
 dev.off()
 
@@ -100,7 +100,7 @@ g <- ggplot(data.frame(covar=comp.cols,
                         legend.position="none") +
   labs(x="", y="Average Correlation", fill="Covariate",
                        title="All Years")
-pdf(here('sensitivity-analyses', 'corr-comp-lnRS.pdf'))
+pdf(here('sensitivity-analyses', 'alt-comp', 'corr-comp-lnRS.pdf'))
 print(g)
 dev.off()
 

@@ -322,5 +322,5 @@ row.names(tab.coef) <- NULL
 names(tab.coef) <- c("Ecosystem", "Coefficient", "Lower 95% CI", "Mean",
                      "Upper 95% CI", "Mean % change in R/S")
 
-write.csv(tab.coef, file = here(sens.fig.dir, "model_coefficients_stat_pdo.csv"))
+write.csv(tab.coef, file = here(sens.fig.dir, paste0("model_coefficients_stat_pdo_", speciesFlag, ".csv")))
 
