@@ -54,14 +54,14 @@ stan.dat.rw <- list(N = nrow(data_master),
 
 
 # Fit
-rw.fit <- rstan::stan(file = "./stan/ind_tvalpha_ricker.stan", # test running "-Copy"
+rw.fit <- rstan::stan(file = "./stan/ind_tvalpha_ricker.stan", # test running "-Copy" for hierarchical alpha
                       data = stan.dat.rw,
-                      warmup = 1000,
-                      iter = 3000,
+                      warmup = 100,
+                      iter = 300,
                       cores = 4,
                       chains = 4,
                       seed = 123,
-                      control = list(adapt_delta = 0.999,
+                      control = list(adapt_delta = 0.9,
                                      max_treedepth = 20))
 save(rw.fit, file = here("output/models/dyn", speciesFlag, "dyn_new_2025.RData"))
 
@@ -81,8 +81,11 @@ df.dyn.st.2c <- data.frame(Stock = rep(info_master$Stock, times=stan.dat.rw$L*2)
                                         each=nrow(info_master)), times=2),
                            mu = summ[, "mean"],
                            se = summ[, "se_mean"],
+                           lower_2.5 = summ[,"2.5%"],
                            lower_10 = summ[, "10%"],
+                           med = summ[,"50%"],
                            upper_90 = summ[ , "90%"],
+                           upper_97.5 = summ[, "97.5%"],
                            var = case_when(str_extract(rownames(summ), "[a-z]+") == "g" ~ "gamma",
                                         str_extract(rownames(summ), "[a-z]+") == "k" ~ "kappa"),
                            varnam = case_when(grepl("^g", rownames(summ)) ~ "SST",
@@ -99,8 +102,11 @@ df.dyn.reg.2c <- data.frame(Ocean.Region2 = rep(unique(info_master$Ocean.Region2
                                            each=stan.dat.rw$R), times=2),
                               mu = summ.r[, "mean"],
                               se = summ.r[, "se_mean"],
+                              lower_2.5 = summ.r[,"2.5%"],
                               lower_10 = summ.r[, "10%"],
+                              med = summ.r[,"50%"],
                               upper_90 = summ.r[ , "90%"],
+                              upper_97.5 = summ.r[, "97.5%"],
                               var = case_when(grepl("^mu_g", rownames(summ.r)) ~ "gamma",
                                               grepl("^mu_k", rownames(summ.r)) ~ "kappa"),
                               varnam = case_when(grepl("^mu_g", rownames(summ.r)) ~ "SST",
@@ -114,8 +120,7 @@ if(speciesFlag == "pink"){
 write.csv(df.dyn.reg.2c, here('output', paste0('rw_2025_mod_outputs_', speciesFlag, '.csv')), row.names=F)
 
 
-
-# Trim early year estimates that are not based on data - by average start year of region (NOT an ideal way, more nuance needed...)
+# Trim early year estimates that are not based on data - by average start year of region
 reg_start_yr <- info_master %>% group_by(Ocean.Region2) %>% summarize(avg_start=round(mean(yr_start), 0))
 df.dyn.reg.2c <- df.dyn.reg.2c %>% left_join(reg_start_yr,  by="Ocean.Region2") %>% filter(BY >= avg_start)
 df.dyn.reg.2c <- ocean_region_lab(df.dyn.reg.2c)
@@ -126,80 +131,8 @@ ggplot(df.dyn.st.2c) +
   geom_line(aes(x=BY, y=mu, group=Stock), col="grey50") +
   geom_line(data=df.dyn.reg.2c, aes(x=BY, y=mu, col=Ocean.Region2), linewidth=1) +
   facet_grid(rows=vars(Ocean.Region2), cols=vars(varnam)) +
-  ylim(-1,1)
-
-
-# Compare to "old" RW fits
-
-# load and process old fits
-load(here("output/models/dyn", speciesFlag, "hbm_dyn_2c.RData"), verbose=T)
-
-# Stock-specific dataframe
-probs <- c(0.025, 0.05, 0.10, 0.50, 0.90, 0.95, 0.975)
-summ <- rstan::summary(dyn.2c, pars = c("gamma", "kappa"), probs = probs)[[1]]
-df.dyn.st.2c.old <- data.frame(Stock = data_master$Stock,
-                           Ocean.Region2 = data_master$Ocean.Region2,
-                           BY = data_master$BY,
-                           mu = summ[, "mean"],
-                           se = summ[, "se_mean"],
-                           lower_10 = summ[, "10%"],
-                           upper_90 = summ[ , "90%"],
-                           var = str_extract(rownames(summ), "[a-z]+"),
-                           varnam = case_when(grepl("^gamma", rownames(summ)) ~ "SST",
-                                              grepl("^kappa", rownames(summ)) ~ "Competitors")
-)
-df.dyn.st.2c.old <- ocean_region_lab(df.dyn.st.2c.old)
-
-# Summarized dataframe (regional-level)
-# gamma/kappa are series-specific; no mu output. Summarize stocks instead
-if(speciesFlag=="pink"){
-  df.dyn.reg.2c.old <- df.dyn.st.2c.old %>%
-    mutate(even_odd = ifelse(grepl("Even$", Stock), "Even", "Odd")) %>%
-    dplyr::summarize(reg_mean=mean(mu, na.rm=T),
-                     n_stk=n_distinct(Stock),
-                     lower_10=quantile(mu, 0.1),
-                     upper_90=quantile(mu, 0.9),
-                     .by=c(Ocean.Region2, BY, varnam, even_odd))
-} else {
-  df.dyn.reg.2c.old <- dplyr::summarize(df.dyn.st.2c.old,
-                                    reg_mean=mean(mu, na.rm=T),
-                                    n_stk=n_distinct(Stock),
-                                    lower_10=quantile(mu, 0.1),
-                                    upper_90=quantile(mu, 0.9),
-                                    .by=c(Ocean.Region2, BY, varnam))
-}
-df.dyn.reg.2c.old <- ddply(df.dyn.reg.2c.old, .(Ocean.Region2), dplyr::filter, n_stk >= max(n_stk)*0.1) # remove years with less than 10% of stocks observed
-df.dyn.reg.2c.old <- ocean_region_lab(df.dyn.reg.2c.old)
-
-
-#Compare new vs old fits on one plot
-
-g <- ggplot(df.dyn.st.2c) + # plot stock trajectories
-  geom_line(aes(x=BY, y=mu, group=Stock), col="darkred") +
-  geom_line(data=df.dyn.st.2c.old, aes(x=BY, y=mu, group=Stock), col="grey50") +
-  facet_grid(rows=vars(Ocean.Region2), cols=vars(varnam)) +
-  theme_sleek() +
-  ylim(-1,1)
-png(filename=here('figures/dyn', paste0('dyn-stk-compare-2026-', speciesFlag, '.png')))
-print(g)
-dev.off()
-
-g <- ggplot() + # plot region trajectories
-  geom_line(data=df.dyn.reg.2c, aes(x=BY, y=mu, col=Ocean.Region2), linewidth=1, linetype="solid") +
-  geom_ribbon(data=df.dyn.reg.2c, aes(x=BY, ymin=lower_10, ymax=upper_90, fill=Ocean.Region2), alpha=0.2) +
-  facet_grid(rows=vars(Ocean.Region2), cols=vars(varnam)) +
-  theme_sleek() +
-  ylim(-1,1)
-if(speciesFlag=="pink"){
-  g <- g + geom_line(data=df.dyn.reg.2c.old, aes(x=BY, y=reg_mean, linetype=even_odd), col="grey25", linewidth=1, alpha=0.5) +
-    geom_ribbon(data=df.dyn.reg.2c.old, aes(x=BY, ymin=lower_10, ymax=upper_90, group=even_odd), fill="grey25", alpha=0.2)
-} else {
-  g <- g + geom_line(data=df.dyn.reg.2c.old, aes(x=BY, y=reg_mean), col="grey25", linewidth=1, alpha=0.5) +
-    geom_ribbon(data=df.dyn.reg.2c.old, aes(x=BY, ymin=lower_10, ymax=upper_90), fill="grey25", alpha=0.2)
-}
-png(filename=here('figures/dyn', paste0('dyn-reg-compare-2026-', speciesFlag, '.png')))
-print(g)
-dev.off()
+  ylim(-1,1) +
+  theme_sleek()
 
 
 
