@@ -20,8 +20,6 @@ parameters{
   vector<lower = 0>[J] Smax; // spawners where recruitment is maximized
  //variance components
   vector<lower = 1e-6, upper=10>[J] sigma_t; //total variance
-  //vector<lower=0,upper=1>[J] p_rw_g; //proportion of variance that is gamma process variance
-  //vector<lower=0,upper=1>[J] p_rw_k; //proportion of variance that is kappa process variance
   array[J] simplex[3] p_sig; //proportions of sigma_t that are obs error, gamma rw, kappa rw
 //MVN parameters
   matrix[L-1,J] z_dev_g;  // deviations in gamma from year-to-year
