@@ -13,6 +13,10 @@ if(speciesFlag=="pink") {
           info_master <- sock.info }
 
 
+# Set paths to output locations - dependent on species
+fit.dir <- here("output", "models", "dyn", speciesFlag)
+fig.dir <- here("figures", "dyn", speciesFlag, "hbm_inf")
+
 #funcs
 make_design_matrix <- function(x,grp) {
   x2 <- matrix(nrow = length(x), ncol = length(unique(grp)))
@@ -56,17 +60,17 @@ stan.dat.rw <- list(N = nrow(data_master),
 # Fit
 rw.fit <- rstan::stan(file = "./stan/ind_tvalpha_ricker.stan", # test running "-Copy" for hierarchical alpha
                       data = stan.dat.rw,
-                      warmup = 100,
-                      iter = 300,
+                      warmup = 1000,
+                      iter = 3000,
                       cores = 4,
                       chains = 4,
                       seed = 123,
-                      control = list(adapt_delta = 0.9,
+                      control = list(adapt_delta = 0.99,
                                      max_treedepth = 20))
 save(rw.fit, file = here("output/models/dyn", speciesFlag, "dyn_new_2025.RData"))
 
 # Load fit
-load(here("output/models/dyn", speciesFlag, "dyn_new_2025.RData"), verbose=T)
+load(here(fit.dir, "dyn_new_2025.RData"), verbose=T)
 
 # Extract
 
@@ -90,7 +94,12 @@ df.dyn.st.2c <- data.frame(Stock = rep(info_master$Stock, times=stan.dat.rw$L*2)
                                         str_extract(rownames(summ), "[a-z]+") == "k" ~ "kappa"),
                            varnam = case_when(grepl("^g", rownames(summ)) ~ "SST",
                                               grepl("^k", rownames(summ)) ~ "Competitors"))
-df.dyn.st.2c <- ocean_region_lab(df.dyn.st.2c)
+if(speciesFlag == "pink"){
+  df.dyn.st.2c$even_odd <- ifelse(gtools::odd(df.dyn.st.2c$BY), "odd", "even")
+}
+
+# Save outputs
+write.csv(df.dyn.st.2c, here(fig.dir, paste0('stk_coefficients_rw_', speciesFlag, '.csv')), row.names=F)
 
 
 # Summarized dataframe (regional-level)
@@ -117,7 +126,7 @@ if(speciesFlag == "pink"){
 }
 
 # Save outputs
-write.csv(df.dyn.reg.2c, here('output', paste0('rw_2025_mod_outputs_', speciesFlag, '.csv')), row.names=F)
+write.csv(df.dyn.reg.2c, here(fig.dir, paste0('reg_coefficients_rw_', speciesFlag, '.csv')), row.names=F)
 
 
 # Trim early year estimates that are not based on data - by average start year of region
@@ -127,13 +136,19 @@ df.dyn.reg.2c <- ocean_region_lab(df.dyn.reg.2c)
 
 
 # Plot
-ggplot(df.dyn.st.2c) +
-  geom_line(aes(x=BY, y=mu, group=Stock), col="grey50") +
-  geom_line(data=df.dyn.reg.2c, aes(x=BY, y=mu, col=Ocean.Region2), linewidth=1) +
+g <- ggplot(df.dyn.st.2c) +
+  geom_hline(aes(yintercept=0), linetype="dashed", col="grey70") +
+  geom_line(aes(x=BY, y=mu, group=Stock, col=ocean_region_lab), alpha=0.3) +
+  geom_line(data=df.dyn.reg.2c, aes(x=BY, y=mu, col=ocean_region_lab), linewidth=1) +
+  geom_ribbon(data=df.dyn.reg.2c, aes(x=BY, ymin=lower_10, ymax=upper_90, fill=ocean_region_lab),
+              alpha=0.3) +
+  scale_colour_manual(values=col.region, aesthetics = c("colour", "fill"), guide="none") +
   facet_grid(rows=vars(Ocean.Region2), cols=vars(varnam)) +
-  ylim(-1,1) +
+  ylim(-1,1) + labs(x="Brood Year", y="Covariate effect") +
   theme_sleek()
 
-
+png(file=here(fig.dir, paste0("rw_2025", speciesFlag, ".png")))
+print(g)
+dev.off()
 
 
