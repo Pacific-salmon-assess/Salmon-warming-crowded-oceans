@@ -52,12 +52,12 @@ for(sp in species) {
   # 6. Sensitivity analyses
   source("sensitivity-analyses/comp-sens.R") # Alternative competitor indices; long run time
   source("sensitivity-analyses/pdo-npgo-sens.R") # NPGO as additional covariate
-  source("sensitivity-analyses/pdo-npgo-sens.R")
 }
 
 # 7. All species figures
 source("interaction-plots.R") # Make sst x comp interaction figures
 source("era_rw_fig.R") # Make main era + RW results figures
+source("sensitivity-analyses/pdo-npgo-figs.R")
 
 
 time.run <- proc.time() - time.start
