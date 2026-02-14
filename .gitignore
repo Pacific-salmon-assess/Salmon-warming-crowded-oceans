@@ -9,7 +9,6 @@ data-downloaded/sst_raw
 figures
 output
 pub
-sensitivity-analyses/pdo-npgo
 sensitivity-analyses/fits
 sensitivity-analyses/*/*/*.pdf
 #folder for messing around
