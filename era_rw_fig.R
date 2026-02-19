@@ -102,7 +102,7 @@ sock.rw <- sock.rw |> mutate(mu_pc = (exp(mu)-1)*100,
                       filter(BY >= med_start)
 
 # Chum
-chum.rw <- read.csv(here('figures/dyn/sockeye/hbm_inf/reg_coefficients_rw_chum.csv'))
+chum.rw <- read.csv(here('figures/dyn/chum/hbm_inf/reg_coefficients_rw_chum.csv'))
 obs_yr <-  chum |> summarize(n_obs=n_distinct(Stock), .by=c(Ocean.Region2, BY)) |> # prop stks observed in each year, region
   left_join(summarize(chum, n_tot = n_distinct(Stock), .by=c(Ocean.Region2))) |>
   mutate(pr_obs = n_obs/n_tot)
@@ -118,7 +118,7 @@ chum.rw <- chum.rw |> mutate(mu_pc = (exp(mu)-1)*100,
                       filter(BY >= med_start)
 
 # Pink
-pink.rw <- read.csv(here('figures/dyn/sockeye/hbm_inf/reg_coefficients_rw_pink.csv'))
+pink.rw <- read.csv(here('figures/dyn/pink/hbm_inf/reg_coefficients_rw_pink.csv'))
 obs_yr <-  pink |> summarize(n_obs=n_distinct(Stock), .by=c(Ocean.Region2, BY)) |> # prop stks observed in each year, region
   left_join(summarize(pink, n_tot = n_distinct(Stock), .by=c(Ocean.Region2))) |>
   mutate(pr_obs = n_obs/n_tot)
