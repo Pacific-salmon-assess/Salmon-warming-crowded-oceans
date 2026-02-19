@@ -882,7 +882,7 @@ full.interaction <- cowplot::plot_grid(s, c + theme(axis.title.y.left = element_
       x = 0.5, y = 0.40, width = 0.3, height = 0.225,
       gp = grid::gpar(fill = "white", col = NA)))
 
-png(here('figures/spp-explore/interaction_full.png'), width=850*3, height=700*3, res=72*5)
+
+png(here('figures/spp-explore/interaction_full.png'), width=900*3, height=600*3, res=72*5)
 print(full.interaction)
 dev.off()
-
