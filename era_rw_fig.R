@@ -160,11 +160,13 @@ sock.box.rw <- sock.df.avg |>
       facet_grid(rows=vars(ocean_region_lab)) +
       scale_fill_manual(values=col.region, guide=NULL) +
       scale_colour_manual(values=col.dk) +
+      geom_hline(yintercept = 0, lty="dashed", col="gray65", alpha=0.5) +
       labs(x = "", y = "% Change in R/S (per \u00B0C)", title="Sockeye") +
       theme_sleek() +
       theme(legend.position="none",
             strip.text.y.right = element_blank(),
             plot.title = element_text(hjust=0.5))
+
 png(here('figures/spp-explore', paste0("violin_rw_sockeye.png")))
 print(sock.box.rw)
 dev.off()
@@ -183,12 +185,13 @@ chum.box.rw <- chum.df.avg |>
               alpha=0.2) +
   geom_line(data=filter(chum.rw, varnam=="SST"), aes(x=BY, y=mu_pc, col=ocean_region_lab)) +
   #geom_boxplot(aes(x=BY, y=pc, group=era, fill=ocean_region_lab), outliers=F) +
-  geom_violin(aes(x=BY, y=pc, group=era, fill=ocean_region_lab, col=ocean_region_lab), alpha=0.75) +
-  scale_y_continuous(breaks=c(-25,0,25)) +
+  geom_violin(aes(x=BY, y=pc, group=era, fill=ocean_region_lab, col=ocean_region_lab), alpha=0.75, width = 10) +
+  scale_y_continuous(n.breaks=5) +
   scale_x_continuous(limits=c(1960,2022), breaks=c(1970,1990,2010)) +
-  facet_grid(rows=vars(ocean_region_lab)) +
+  facet_grid(rows=vars(ocean_region_lab), scales="free_y") +
   scale_fill_manual(values=col.region, guide=NULL) +
   scale_colour_manual(values=col.dk) +
+  geom_hline(yintercept = 0, lty="dashed", col="gray65", alpha=0.5) +
   labs(x = "Brood Year", y = "", title="Chum") +
   theme_sleek() +
   theme(legend.position="none",
@@ -219,6 +222,7 @@ pink.box.rw <- pink.df.avg |>
   facet_grid(rows=vars(ocean_region_lab), scales="free_y") +
   scale_fill_manual(values=col.region, guide=NULL) +
   scale_colour_manual(values=col.dk) +
+  geom_hline(yintercept = 0, lty="dashed", col="gray65", alpha=0.5) +
   labs(x = "", y = "", col="Region", title="Pink") +
   theme_sleek() +
   theme(legend.position="none",
