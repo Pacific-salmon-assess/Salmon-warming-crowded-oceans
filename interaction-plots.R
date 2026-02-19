@@ -501,3 +501,388 @@ g <- ggplot(data = summ.pred.all.df, aes(x = comp, y = exp(med.pred), col=sst)) 
 png(here('figures', 'spp-explore', "pink-sst-inter.png"), units = "in", width = 6, height = 5, res = 500)
 print(g)
 dev.off()
+
+# all spp interaction plot ----
+# sockeye ----
+load(here("output", "models", "stat", "sockeye", "stat_inter.RData"), verbose=T)
+sockeye_post <- as.data.frame(stat_inter)
+
+sst_index <- c(-2,2)
+comp_index <- seq(0,3,length.out=100)
+
+pred.all.df <- data.frame(
+  prod = numeric(0),
+  comp = numeric(0),
+  sst = numeric(0),
+  region = character(0))
+
+
+for (i in 1:1000){ # west coast
+  samp <- sample(4000,1)
+  alpha <- sockeye_post$`mu_alpha[1]`[samp]
+  sst <- sockeye_post$`mu_gamma[1]`[samp] # SST effect
+  comp <- sockeye_post$`mu_kappa[1]`[samp] # comp effect
+  sstXcomp <- sockeye_post$`mu_chi[1]`[samp] # interaction
+
+  pred.cool <- alpha +(sst*sst_index[1]) + (comp*comp_index) + (sstXcomp*(comp_index*sst_index[1])) # cool years
+  pred.warm <- alpha +(sst*sst_index[2]) + (comp*comp_index) + (sstXcomp*(comp_index*sst_index[2])) # cool years
+
+  pred.df <- cbind(c(pred.cool,pred.warm),
+                   c(comp_index,comp_index),
+                   c(rep("cool",100),rep("warm",100)),
+                   c(rep("West Coast",200)))
+
+  pred.df <- as.data.frame(pred.df)
+  pred.all.df <- rbind(pred.all.df,pred.df)
+}
+
+
+
+for (i in 1:1000){ # SEAK
+  samp <- sample(4000,1)
+  alpha <- sockeye_post$`mu_alpha[2]`[samp]
+  sst <- sockeye_post$`mu_gamma[2]`[samp] # SST effect
+  comp <- sockeye_post$`mu_kappa[2]`[samp] # comp effect
+  sstXcomp <- sockeye_post$`mu_chi[2]`[samp] # interaction
+
+  pred.cool <- alpha +(sst*sst_index[1]) + (comp*comp_index) + (sstXcomp*(comp_index*sst_index[1])) # cool years
+  pred.warm <- alpha +(sst*sst_index[2]) + (comp*comp_index) + (sstXcomp*(comp_index*sst_index[2])) # cool years
+
+  pred.df <- cbind(c(pred.cool,pred.warm),
+                   c(comp_index,comp_index),
+                   c(rep("cool",100),rep("warm",100)),
+                   c(rep("SEAK",200)))
+
+  pred.df <- as.data.frame(pred.df)
+  pred.all.df <- rbind(pred.all.df,pred.df)
+}
+
+for (i in 1:1000){ # GoA
+  samp <- sample(4000,1)
+  alpha <- sockeye_post$`mu_alpha[2]`[samp]
+  sst <- sockeye_post$`mu_gamma[3]`[samp] # SST effect
+  comp <- sockeye_post$`mu_kappa[3]`[samp] # comp effect
+  sstXcomp <- sockeye_post$`mu_chi[3]`[samp] # interaction
+
+  pred.cool <- alpha +(sst*sst_index[1]) + (comp*comp_index) + (sstXcomp*(comp_index*sst_index[1])) # cool years
+  pred.warm <- alpha +(sst*sst_index[2]) + (comp*comp_index) + (sstXcomp*(comp_index*sst_index[2])) # cool years
+
+  pred.df <- cbind(c(pred.cool,pred.warm),
+                   c(comp_index,comp_index),
+                   c(rep("cool",100),rep("warm",100)),
+                   c(rep("GoA",200)))
+
+  pred.df <- as.data.frame(pred.df)
+  pred.all.df <- rbind(pred.all.df,pred.df)
+}
+
+for (i in 1:1000){ # Bering Sea
+  samp <- sample(4000,1)
+  alpha <- sockeye_post$`mu_alpha[2]`[samp]
+  sst <- sockeye_post$`mu_gamma[4]`[samp] # SST effect
+  comp <- sockeye_post$`mu_kappa[4]`[samp] # comp effect
+  sstXcomp <- sockeye_post$`mu_chi[4]`[samp] # interaction
+
+  pred.cool <- alpha +(sst*sst_index[1]) + (comp*comp_index) + (sstXcomp*(comp_index*sst_index[1])) # cool years
+  pred.warm <- alpha +(sst*sst_index[2]) + (comp*comp_index) + (sstXcomp*(comp_index*sst_index[2])) # cool years
+
+  pred.df <- cbind(c(pred.cool,pred.warm),
+                   c(comp_index,comp_index),
+                   c(rep("cool",100),rep("warm",100)),
+                   c(rep("Bering Sea",200)))
+
+  pred.df <- as.data.frame(pred.df)
+  pred.all.df <- rbind(pred.all.df,pred.df)
+}
+
+colnames(pred.all.df) <- c("prod","comp","sst","region")
+
+summ.pred.all.sockeye.df <- pred.all.df |>
+  mutate(prod = as.numeric(prod),
+         comp = as.numeric(comp),
+         spp = "Sockeye") |>
+  group_by(comp, sst, region, spp) |>
+  summarise(med.pred = median(prod),
+            lwr.pred = quantile(prod, probs = 0.2, na.rm = TRUE),
+            upr.pred = quantile(prod, probs = 0.8, na.rm = TRUE))
+
+# chum ----
+load(here("output", "models", "stat", "chum", "stat_inter.RData"), verbose=T)
+chum_post <- as.data.frame(stat_inter)
+
+sst_index <- c(-2,2)
+comp_index <- seq(0,3,length.out=100)
+
+pred.all.df <- data.frame(
+  prod = numeric(0),
+  comp = numeric(0),
+  sst = numeric(0),
+  region = character(0))
+
+
+for (i in 1:1000){ # west coast
+  samp <- sample(4000,1)
+  alpha <- chum_post$`mu_alpha[1]`[samp]
+  sst <- chum_post$`mu_gamma[1]`[samp] # SST effect
+  comp <- chum_post$`mu_kappa[1]`[samp] # comp effect
+  sstXcomp <- chum_post$`mu_chi[1]`[samp] # interaction
+
+  pred.cool <- alpha +(sst*sst_index[1]) + (comp*comp_index) + (sstXcomp*(comp_index*sst_index[1])) # cool years
+  pred.warm <- alpha +(sst*sst_index[2]) + (comp*comp_index) + (sstXcomp*(comp_index*sst_index[2])) # cool years
+
+  pred.df <- cbind(c(pred.cool,pred.warm),
+                   c(comp_index,comp_index),
+                   c(rep("cool",100),rep("warm",100)),
+                   c(rep("West Coast",200)))
+
+  pred.df <- as.data.frame(pred.df)
+  pred.all.df <- rbind(pred.all.df,pred.df)
+}
+
+
+
+for (i in 1:1000){ # GoA
+  samp <- sample(4000,1)
+  alpha <- chum_post$`mu_alpha[1]`[samp]
+  sst <- chum_post$`mu_gamma[2]`[samp] # SST effect
+  comp <- chum_post$`mu_kappa[2]`[samp] # comp effect
+  sstXcomp <- chum_post$`mu_chi[2]`[samp] # interaction
+
+  pred.cool <- alpha +(sst*sst_index[1]) + (comp*comp_index) + (sstXcomp*(comp_index*sst_index[1])) # cool years
+  pred.warm <- alpha +(sst*sst_index[2]) + (comp*comp_index) + (sstXcomp*(comp_index*sst_index[2])) # cool years
+
+  pred.df <- cbind(c(pred.cool,pred.warm),
+                   c(comp_index,comp_index),
+                   c(rep("cool",100),rep("warm",100)),
+                   c(rep("GoA",200)))
+
+  pred.df <- as.data.frame(pred.df)
+  pred.all.df <- rbind(pred.all.df,pred.df)
+}
+
+for (i in 1:1000){ # Bering Sea
+  samp <- sample(4000,1)
+  alpha <- chum_post$`mu_alpha[1]`[samp]
+  sst <- chum_post$`mu_gamma[3]`[samp] # SST effect
+  comp <- chum_post$`mu_kappa[3]`[samp] # comp effect
+  sstXcomp <- chum_post$`mu_chi[3]`[samp] # interaction
+
+  pred.cool <- alpha +(sst*sst_index[1]) + (comp*comp_index) + (sstXcomp*(comp_index*sst_index[1])) # cool years
+  pred.warm <- alpha +(sst*sst_index[2]) + (comp*comp_index) + (sstXcomp*(comp_index*sst_index[2])) # cool years
+
+  pred.df <- cbind(c(pred.cool,pred.warm),
+                   c(comp_index,comp_index),
+                   c(rep("cool",100),rep("warm",100)),
+                   c(rep("Bering Sea",200)))
+
+  pred.df <- as.data.frame(pred.df)
+  pred.all.df <- rbind(pred.all.df,pred.df)
+}
+
+
+colnames(pred.all.df) <- c("prod","comp","sst","region")
+
+summ.pred.all.chum.df <- pred.all.df |>
+  mutate(prod = as.numeric(prod),
+         comp = as.numeric(comp),
+         spp = "Chum") |>
+  group_by(comp, sst, region, spp) |>
+  summarise(med.pred = median(prod),
+            lwr.pred = quantile(prod, probs = 0.2, na.rm = TRUE),
+            upr.pred = quantile(prod, probs = 0.8, na.rm = TRUE))
+
+# pink ----
+load(here("output", "models", "stat", "pink", "stat_inter.RData"), verbose=T)
+pink_post <- as.data.frame(stat_inter)
+
+sst_index <- c(-2,2)
+comp_index <- seq(0,3,length.out=100)
+
+pred.all.df <- data.frame(
+  prod = numeric(0),
+  comp = numeric(0),
+  sst = numeric(0),
+  region = character(0))
+
+
+for (i in 1:1000){ # west coast
+  samp <- sample(4000,1)
+  alpha <- pink_post$`mu_alpha[1]`[samp]
+  sst <- pink_post$`mu_gamma[1]`[samp] # SST effect
+  comp <- pink_post$`mu_kappa[1]`[samp] # comp effect
+  sstXcomp <- pink_post$`mu_chi[1]`[samp] # interaction
+
+  pred.cool <- alpha +(sst*sst_index[1]) + (comp*comp_index) + (sstXcomp*(comp_index*sst_index[1])) # cool years
+  pred.warm <- alpha +(sst*sst_index[2]) + (comp*comp_index) + (sstXcomp*(comp_index*sst_index[2])) # cool years
+
+  pred.df <- cbind(c(pred.cool,pred.warm),
+                   c(comp_index,comp_index),
+                   c(rep("cool",100),rep("warm",100)),
+                   c(rep("West Coast",200)))
+
+  pred.df <- as.data.frame(pred.df)
+  pred.all.df <- rbind(pred.all.df,pred.df)
+}
+
+
+
+for (i in 1:1000){ # SEAK
+  samp <- sample(4000,1)
+  alpha <- pink_post$`mu_alpha[1]`[samp]
+  sst <- pink_post$`mu_gamma[2]`[samp] # SST effect
+  comp <- pink_post$`mu_kappa[2]`[samp] # comp effect
+  sstXcomp <- pink_post$`mu_chi[2]`[samp] # interaction
+
+  pred.cool <- alpha +(sst*sst_index[1]) + (comp*comp_index) + (sstXcomp*(comp_index*sst_index[1])) # cool years
+  pred.warm <- alpha +(sst*sst_index[2]) + (comp*comp_index) + (sstXcomp*(comp_index*sst_index[2])) # cool years
+
+  pred.df <- cbind(c(pred.cool,pred.warm),
+                   c(comp_index,comp_index),
+                   c(rep("cool",100),rep("warm",100)),
+                   c(rep("SEAK",200)))
+
+  pred.df <- as.data.frame(pred.df)
+  pred.all.df <- rbind(pred.all.df,pred.df)
+}
+
+for (i in 1:1000){ # GoA
+  samp <- sample(4000,1)
+  alpha <- pink_post$`mu_alpha[1]`[samp]
+  sst <- pink_post$`mu_gamma[3]`[samp] # SST effect
+  comp <- pink_post$`mu_kappa[3]`[samp] # comp effect
+  sstXcomp <- pink_post$`mu_chi[3]`[samp] # interaction
+
+  pred.cool <- alpha +(sst*sst_index[1]) + (comp*comp_index) + (sstXcomp*(comp_index*sst_index[1])) # cool years
+  pred.warm <- alpha +(sst*sst_index[2]) + (comp*comp_index) + (sstXcomp*(comp_index*sst_index[2])) # cool years
+
+  pred.df <- cbind(c(pred.cool,pred.warm),
+                   c(comp_index,comp_index),
+                   c(rep("cool",100),rep("warm",100)),
+                   c(rep("GoA",200)))
+
+  pred.df <- as.data.frame(pred.df)
+  pred.all.df <- rbind(pred.all.df,pred.df)
+}
+
+for (i in 1:1000){ # Bering Sea
+  samp <- sample(4000,1)
+  alpha <- pink_post$`mu_alpha[1]`[samp]
+  sst <- pink_post$`mu_gamma[4]`[samp] # SST effect
+  comp <- pink_post$`mu_kappa[4]`[samp] # comp effect
+  sstXcomp <- pink_post$`mu_chi[4]`[samp] # interaction
+
+  pred.cool <- alpha +(sst*sst_index[1]) + (comp*comp_index) + (sstXcomp*(comp_index*sst_index[1])) # cool years
+  pred.warm <- alpha +(sst*sst_index[2]) + (comp*comp_index) + (sstXcomp*(comp_index*sst_index[2])) # cool years
+
+  pred.df <- cbind(c(pred.cool,pred.warm),
+                   c(comp_index,comp_index),
+                   c(rep("cool",100),rep("warm",100)),
+                   c(rep("Bering Sea",200)))
+
+  pred.df <- as.data.frame(pred.df)
+  pred.all.df <- rbind(pred.all.df,pred.df)
+}
+
+colnames(pred.all.df) <- c("prod","comp","sst","region")
+
+summ.pred.all.pink.df <- pred.all.df |>
+  mutate(prod = as.numeric(prod),
+         comp = as.numeric(comp),
+         spp = "Pink") |>
+  group_by(comp, sst, region, spp) |>
+  summarise(med.pred = median(prod),
+            lwr.pred = quantile(prod, probs = 0.2, na.rm = TRUE),
+            upr.pred = quantile(prod, probs = 0.8, na.rm = TRUE))
+
+
+
+summ.pred.all.spp.df <- rbind(summ.pred.all.pink.df,summ.pred.all.chum.df,summ.pred.all.sockeye.df)
+
+custom_colors <- c("cool" = "blue", "warm" = "red")
+comp_label <- c(400,500,600,700)
+
+
+# Sockeye
+sox.box<-summ.pred.all.spp.df|>
+  filter(spp=="Sockeye")
+
+
+s <- ggplot(data=sox.box, aes(x = comp, y = exp(med.pred), col=sst)) +
+  geom_ribbon(aes(ymin=exp(lwr.pred), ymax=exp(upr.pred), col=sst, fill=sst), alpha=0.125) +
+  geom_line(aes(col=sst),lwd=1) +
+  theme_sleek() +
+  xlab("") +
+  ylab("Recruits-per-spawner") +
+  scale_color_manual(values = custom_colors)+
+  scale_fill_manual(values = custom_colors) +
+  facet_grid(rows=vars(region), scales = "free") +
+  labs(fill = "SST", title="Sockeye") +
+  scale_x_continuous(breaks=c(0,1,2,3),labels=comp_label)+
+  scale_y_continuous(n.breaks=4) +
+  guides(color="none")+
+  theme(legend.position="none",
+        strip.text.y.right = element_blank(),
+        plot.title = element_text(hjust=0.5),
+        axis.title.y = element_text(size = 10))
+
+
+# Chum
+chum.box<-summ.pred.all.spp.df|>
+  filter(spp=="Chum") |>
+  ungroup() |>
+  add_row(region = "SEAK")  # add empty row for SEAK
+
+c <- ggplot(data=chum.box, aes(x = comp, y = exp(med.pred), col=sst)) +
+  geom_ribbon(aes(ymin=exp(lwr.pred), ymax=exp(upr.pred), col=sst, fill=sst), alpha=0.125) +
+  geom_line(aes(col=sst),lwd=1) +
+  theme_sleek() +
+  xlab("North Pacific pink abundance (m)") +
+  ylab("Recruits-per-spawner") +
+  scale_color_manual(values = custom_colors)+
+  scale_fill_manual(values = custom_colors) +
+  facet_grid(rows=vars(region), scales = "free") +
+  labs(fill = "SST", title="Chum") +
+  scale_x_continuous(breaks=c(0,1,2,3),labels=comp_label)+
+  scale_y_continuous(n.breaks=4) +
+  guides(color="none")+
+  theme(legend.position="none",
+        strip.text.y.right = element_blank(),
+        plot.title = element_text(hjust=0.5),
+        axis.title.x = element_text(size = 10))
+
+
+# Pink
+pink.box<-summ.pred.all.spp.df|>
+  filter(spp=="Pink")
+
+
+p<- ggplot(data=pink.box, aes(x = comp, y = exp(med.pred), col=sst)) +
+  geom_ribbon(aes(ymin=exp(lwr.pred), ymax=exp(upr.pred), col=sst, fill=sst), alpha=0.125) +
+  geom_line(aes(col=sst),lwd=1) +
+  theme_sleek() +
+  xlab("") +
+  ylab("Recruits-per-spawner") +
+  scale_color_manual(values = custom_colors)+
+  scale_fill_manual(values = custom_colors) +
+  facet_grid(rows=vars(region), scales = "free") +
+  labs(fill = "SST",  title="Pink") +
+  scale_x_continuous(breaks=c(0,1,2,3),labels=comp_label)+
+  scale_y_continuous(n.breaks=4) +
+  guides(color="none")+
+  theme(legend.justification = c(0, 0),
+        legend.position = c(0.05, 0.35),
+        legend.key.size = unit(11, "pt"),
+        legend.background = element_blank(),
+        legend.title = element_text( size = 8),
+        plot.title = element_text(hjust=0.5))
+
+full.interaction <- cowplot::plot_grid(s, c + theme(axis.title.y.left = element_blank()), p + theme(axis.title.y.left = element_blank()), ncol=3, rel_widths=c(1.1,1,1.1))+
+  cowplot::draw_grob(
+    grid::rectGrob(
+      x = 0.5, y = 0.40, width = 0.3, height = 0.225,
+      gp = grid::gpar(fill = "white", col = NA)))
+
+png(here('figures/spp-explore/interaction_full.png'), width=850*3, height=700*3, res=72*5)
+print(full.interaction)
+dev.off()
+

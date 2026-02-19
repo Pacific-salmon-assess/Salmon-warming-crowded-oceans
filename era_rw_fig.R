@@ -186,7 +186,7 @@ chum.box.rw <- chum.df.avg |>
   geom_line(data=filter(chum.rw, varnam=="SST"), aes(x=BY, y=mu_pc, col=ocean_region_lab)) +
   #geom_boxplot(aes(x=BY, y=pc, group=era, fill=ocean_region_lab), outliers=F) +
   geom_violin(aes(x=BY, y=pc, group=era, fill=ocean_region_lab, col=ocean_region_lab), alpha=0.75, width = 10) +
-  scale_y_continuous(n.breaks=5) +
+  scale_y_continuous(n.breaks=4) +
   scale_x_continuous(limits=c(1960,2022), breaks=c(1970,1990,2010)) +
   facet_grid(rows=vars(ocean_region_lab), scales="free_y") +
   scale_fill_manual(values=col.region, guide=NULL) +
@@ -232,7 +232,13 @@ png(here('figures/spp-explore', paste0("violin_rw_pink.png")))
 print(pink.box.rw)
 dev.off()
 
-full.violin <- cowplot::plot_grid(sock.box.rw, chum.box.rw + theme(axis.title.y.left = element_blank()), pink.box.rw + theme(axis.title.y.left = element_blank()), ncol=3, rel_widths=c(1,1,1.1))
+full.violin <- cowplot::plot_grid(sock.box.rw, chum.box.rw + theme(axis.title.y.left = element_blank()),
+                                  pink.box.rw + theme(axis.title.y.left = element_blank()), ncol=3, rel_widths=c(1,1,1.1)) +
+  cowplot::draw_grob(
+    grid::rectGrob(
+      x = 0.48, y = 0.405, width = 0.32, height = 0.22,
+      gp = grid::gpar(fill = "white", col = NA)))
+
 png(here('figures/spp-explore/violin_full.png'), width=900*3, height=600*3, res=72*5)
 print(full.violin)
 dev.off()
@@ -282,7 +288,7 @@ chum.box.rw <- chum.df.avg |>
               alpha=0.2) +
   geom_line(data=filter(chum.rw, varnam=="Competitors"), aes(x=BY, y=mu_pc, col=ocean_region_lab)) +
   #geom_boxplot(aes(x=BY, y=pc, group=era, fill=ocean_region_lab), outliers=F) +
-  geom_violin(aes(x=BY, y=pc, group=era, fill=ocean_region_lab, col=ocean_region_lab), alpha=0.75) +
+  geom_violin(aes(x=BY, y=pc, group=era, fill=ocean_region_lab, col=ocean_region_lab), alpha=0.75, width = 10) +
   scale_y_continuous(n.breaks=4) +
   scale_x_continuous(limits=c(1960,2022), breaks=c(1970,1990,2010)) +
   facet_grid(rows=vars(ocean_region_lab)) +
@@ -327,7 +333,13 @@ png(here('figures/spp-explore', paste0("violin_rw_pink_comp.png")))
 print(pink.box.rw)
 dev.off()
 
-full.violin.comp <- cowplot::plot_grid(sock.box.rw, chum.box.rw + theme(axis.title.y.left = element_blank()), pink.box.rw + theme(axis.title.y.left = element_blank()), ncol=3, rel_widths=c(1,1,1.1))
+full.violin.comp <- cowplot::plot_grid(sock.box.rw, chum.box.rw + theme(axis.title.y.left = element_blank()), pink.box.rw + theme(axis.title.y.left = element_blank()), ncol=3, rel_widths=c(1,1,1.1)) +
+  cowplot::draw_grob(
+    grid::rectGrob(
+      x = 0.48, y = 0.405, width = 0.32, height = 0.22,
+      gp = grid::gpar(fill = "white", col = NA)))
+
+
 png(here('figures/spp-explore/violin_full_comp.png'), width=900*3, height=600*3, res=72*5)
 print(full.violin.comp)
 dev.off()
