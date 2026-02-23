@@ -19,14 +19,15 @@ suppressWarnings(source("load.R"))
 # 2. Data cleaning & processing
 source("sock_data_clean.R")
 source("pink_chum_data_clean.R")
-source("sst_import_process.R")
-source("sst_explore.R")
+#source("sst_import_process.R")
+#source("sst_explore.R")
 source("sock_covariates.R")
 source("pink_chum_covariates.R")
 
 # Colour scheme for all plots
 col.region <- rev(chroma::qpal(7, luminance = 40)[c(1, 3, 5, 7)])
 names(col.region) <- c("West Coast", "Southeast Alaska", "Gulf of Alaska", "Bering Sea")
+col.scale.reg <- scale_colour_manual(name = "Ocean Region", values=col.region)
 
 # Steps 3-6 run one species at a time
 species = c("sockeye", "pink", "chum")
@@ -47,7 +48,7 @@ for(sp in species) {
   # 5. Dynamic (time-varying) Hierarchical Bayesian Models & figures
   source("era_hbm_fit.R")
   source("era_hbm_inf.R")
-  source("rw_model_fit.R") # run NEW random walk models
+  source("rw_model_fit.R") # run NEW random walk models (have done for all spp, but not below)
 
   # 6. Sensitivity analyses
   source("sensitivity-analyses/comp-sens.R") # Alternative competitor indices; long run time

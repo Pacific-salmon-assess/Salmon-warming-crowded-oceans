@@ -30,7 +30,7 @@ library(rstan)
 library(bayesplot)
 library(ggplot2)
 library(stringr)
-
+library(sf)
 
 ## Install packages from github
 #library(devtools)

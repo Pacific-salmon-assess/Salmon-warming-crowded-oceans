@@ -799,7 +799,7 @@ summ.pred.all.pink.df <- pred.all.df |>
 summ.pred.all.spp.df <- rbind(summ.pred.all.pink.df,summ.pred.all.chum.df,summ.pred.all.sockeye.df)
 
 custom_colors <- c("cool" = "blue", "warm" = "red")
-comp_label <- c(400,500,600,700)
+comp_label <- c(340, 470, 600, 720)
 
 
 # Sockeye
