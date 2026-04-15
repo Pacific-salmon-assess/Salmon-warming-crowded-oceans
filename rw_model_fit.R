@@ -61,7 +61,7 @@ stan.dat.rw <- list(N = nrow(data_master),
 rw.fit <- rstan::stan(file = "./stan/ind_tvalpha_ricker.stan", # test running "-Copy" for hierarchical alpha
                       data = stan.dat.rw,
                       warmup = 1000,
-                      iter = 3000,
+                      iter = 2000,
                       cores = 4,
                       chains = 4,
                       seed = 123,
@@ -133,7 +133,7 @@ write.csv(df.dyn.reg.2c, here(fig.dir, paste0('reg_coefficients_rw_', speciesFla
 reg_start_yr <- info_master %>% group_by(Ocean.Region2) %>% summarize(avg_start=round(mean(yr_start), 0))
 df.dyn.reg.2c <- df.dyn.reg.2c %>% left_join(reg_start_yr,  by="Ocean.Region2") %>% filter(BY >= avg_start)
 df.dyn.reg.2c <- ocean_region_lab(df.dyn.reg.2c)
-
+df.dyn.st.2c <- ocean_region_lab(df.dyn.st.2c)
 
 # Plot
 g <- ggplot(df.dyn.st.2c) +
@@ -142,7 +142,7 @@ g <- ggplot(df.dyn.st.2c) +
   geom_line(data=df.dyn.reg.2c, aes(x=BY, y=mu, col=ocean_region_lab), linewidth=1) +
   geom_ribbon(data=df.dyn.reg.2c, aes(x=BY, ymin=lower_10, ymax=upper_90, fill=ocean_region_lab),
               alpha=0.3) +
-  scale_colour_manual(values=col.region, aesthetics = c("colour", "fill"), guide="none") +
+  col.scale.reg +
   facet_grid(rows=vars(Ocean.Region2), cols=vars(varnam)) +
   ylim(-1,1) + labs(x="Brood Year", y="Covariate effect") +
   theme_sleek()

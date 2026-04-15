@@ -16,6 +16,7 @@ library(here)
 require(fields)
 require(plotrix)
 require(data.table)
+library(mgcv)
 library(ggsidekick)
 data(countriesLow)
 

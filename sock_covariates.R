@@ -24,6 +24,9 @@ head(raw.clim.sock)
 raw.comp <- read.csv(file="data-downloaded/competitor_indices_2024.csv", header = TRUE)
 head(raw.comp)
 
+## Add de-trended north pacific pinks
+pink_gam <- gam(pink_numbers_np ~ s(Year), data = raw.comp)
+raw.comp$pink_detrend_np <- residuals(pink_gam)
 
 ## Age weighted climate index: SST at ocean entry point in 1st yr marine life
 
@@ -51,11 +54,18 @@ np.pink.sec <- pink.wgt.avg(brood.table = bt.complete,
                             type = "second_year",
                             out.covar = "np_pinks_sec")
 
+## detrend competitors in second year of marine life
+det.np.pink.sec <- pink.wgt.avg(brood.table = bt.complete,
+                                pink.data = raw.comp,
+                                pink.covar = "pink_detrend_np",
+                                type = "second_year",
+                                out.covar = "det_np_pinks_sec")
 
 ## Merge datasets
 master <- dplyr::left_join(bt.complete, early.sst, by=c("BY","Stock.ID"))
 master <- dplyr::left_join(master, raw.sst.index, by=c("BY","Stock.ID"))
 master <- dplyr::left_join(master, np.pink.sec, by=c("BY","Stock.ID"))
+master <- dplyr::left_join(master, det.np.pink.sec, by=c("BY","Stock.ID"))
 master.bt_w_cov1 <- geographic.order(master) # Ordered factor
 head(master.bt_w_cov1)
 tail(master.bt_w_cov1)
@@ -71,7 +81,8 @@ master.bt_w_cov2 <- ddply(master.bt_w_cov1, .(Stock), transform,
                                 lnRS = log(R/S),
                                 S_stnd = scale(S)[ , 1],
                                 early_sst_stnd = scale(early_sst)[ , 1],
-                                np_pinks_sec_stnd = scale(np_pinks_sec)[ , 1])
+                                np_pinks_sec_stnd = scale(np_pinks_sec)[ , 1],
+                                det_np_pinks_sec_stnd = scale(det_np_pinks_sec)[ , 1])
 
 
 # Export to output
