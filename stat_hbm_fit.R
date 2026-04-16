@@ -38,7 +38,7 @@ pars.gen.quant <- c("log_lik", "yhat", "yrep", "yresid") ## Generated quantities
 
 ## stat_a - all yrs of data
 
-## Run MCMC
+## Run MCMC ----
 stan.dat.all <- stan_data_stat(data_master,
                             scale.x1 = TRUE,
                             var.x2 = "early_sst_stnd",
@@ -57,7 +57,7 @@ stat_a <- rstan::stan(file = "./stan/hbm_stat_2c.stan",
                                     max_treedepth = 20)) # increased treedepth
 save(stat_a, file = here(fit.dir, "stat_a.RData"))
 
- ## Diagnostic plots
+## Diagnostic plots ----
 pdf(here(fig.dir, "stat_a_diag.pdf"), width = 7, height = 5)
     coda_neff(get_neff(stat_a, pars = pars.stat), total_draws(stat_a))
     coda_rhat(get_rhat(stat_a, pars = pars.stat))
@@ -94,3 +94,23 @@ rhat_highest(stat_a, pars = pars.stat)
 
 pairs_lowest(stat_a, pars = pars.stat) # can ignore 'warning: not a graphical parameter'
 
+## Fit de-trended pink time series ----
+
+## Run MCMC ----
+stan.dat.all.detp <- stan_data_stat(data_master,
+                               scale.x1 = TRUE,
+                               var.x2 = "early_sst_stnd",
+                               var.x3 = "det_np_pinks_sec_stnd", # comp = pink abundance detrended
+                               var.region = "Ocean.Region2",
+                               alpha.group = ifelse(speciesFlag=="sockeye", TRUE, FALSE)) # set to TRUE for sockeye
+stat_a.detp <- rstan::stan(file = "./stan/hbm_stat_2c.stan",
+                      data = stan.dat.all.detp,
+                      pars = c(pars.stat, pars.gen.quant),
+                      warmup = 1000,
+                      iter = 2000,
+                      cores = 4,
+                      chains = 4,
+                      seed = 123,
+                      control = list(adapt_delta = 0.99,
+                                     max_treedepth = 20)) # increased treedepth
+save(stat_a.detp, file = here(fit.dir, "stat_a_detp.RData"))
