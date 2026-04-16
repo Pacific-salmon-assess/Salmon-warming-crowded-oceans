@@ -342,6 +342,62 @@ g <- cowplot::plot_grid(map, covar, nrow=2, rel_heights=c(3,2), rel_widths = c(2
 print(g)
 dev.off()
 
+## Fig: Posterior percent change density de-trended pink model -------------------
+load(here(fit.dir, "stat_a_detp.Rdata"))
+
+lst <- hb05_density_df(stat_a.detp, ocean.regions = ifelse(speciesFlag=="chum", 3, 4))
+s.df <- lst$stock
+m.df <- lst$region
+m.df$region <- factor(m.df$region, levels = c("West Coast", "Gulf of Alaska", "Southeast Alaska", "Bering Sea"))
+
+## Covariate labels
+vars <- data.frame(var = levels(m.df$var))
+vars$lab <- paste0("(", letters[1:nrow(vars)], ") ", vars$var)
+vars$var <- factor(vars$var, levels = c("SST", "Comp", "SST + Comp"))
+
+g <- ggplot(m.df) +
+  geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
+  geom_path(data = s.df[s.df$region == "West Coast", ],
+            aes(x = x, y = y, group = stock), color = col.region[["West Coast"]], alpha=0.3,
+            na.rm = TRUE) +
+  geom_path(data = s.df[s.df$region == "Gulf of Alaska", ],
+            aes(x = x, y = y, group = stock), color = col.region[["Gulf of Alaska"]], alpha=0.3,
+            na.rm = TRUE) +
+  geom_path(data = s.df[s.df$region == "Bering Sea", ],
+            aes(x = x, y = y, group = stock), color = col.region[["Bering Sea"]], alpha=0.3,
+            na.rm = TRUE) +
+  geom_path(aes(x = x, y = y, color = region), linewidth = 1, alpha=1,
+            na.rm = TRUE) +
+  scale_colour_manual(name = "Ocean Region", values=col.region) +
+  labs(x = "Percent change in R/S",
+       y = "Posterior density",
+       color = "") +
+  scale_x_continuous(limits = c(-50, 50), expand = c(0, 0)) +
+  scale_y_continuous(breaks=NULL) +
+  geom_text(data = vars,
+            aes(x = -48.1,
+                y = max(m.df$y) - 0.008,
+                label = lab),
+            hjust = 0,
+            size = 2.7,
+            color = "grey30") +
+  facet_wrap( ~ var, ncol = 1) +
+  theme_sleek(base_size = 9) +
+  theme(legend.justification = c(0, 0),
+        legend.position = c(0.7, 0.91),
+        legend.key.size = unit(10, "pt"),
+        legend.background = element_blank(),
+        legend.text = element_text(size = 8),
+        panel.spacing.y = unit(-0.5, "pt"),
+        strip.background = element_blank(),
+        strip.text.x = element_blank())
+if(speciesFlag != "chum"){
+  g <- g + geom_path(data = s.df[s.df$region == "Southeast Alaska", ],
+                     aes(x = x, y = y, group = stock), color = col.region[["Southeast Alaska"]], alpha=0.3, na.rm = TRUE) }
+
+pdf(here(fig.dir, "dens_stat_a_detp.pdf"), width = 4, height = 6)
+print(g)
+dev.off()
 
 ## --- Remove large model fits (saved in stat_hbm_fit)
 rm(list = c("stat_a"))
