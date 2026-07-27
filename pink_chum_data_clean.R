@@ -6,9 +6,9 @@
 
 ## Should R be sum of RX.X columns?!
 
-data_full <- read.csv("./data-downloaded/salmon_productivity_compilation2026-02-09.csv", row.names=1)
+data_full <- read.csv("./data-downloaded/salmon_productivity_compilation2026-06-23.csv", row.names=1)
 
-info_full <- read.csv("./data-downloaded/stock_info2026-02-09.csv", row.names=1)
+info_full <- read.csv("./data-downloaded/stock_info2026-06-23.csv", row.names=1)
 # Data source: https://github.com/Pacific-salmon-assess/dfo_salmon_compilation
 
 ## PINK ----------------------------------------------------------------------

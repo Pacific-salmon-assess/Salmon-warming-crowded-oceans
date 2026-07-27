@@ -6,8 +6,8 @@
 ## this script is a master brood table for the analysis and a summary info table
 
 ## Read in downloaded data
-data_full <- read.csv("./data-downloaded/salmon_productivity_compilation2026-02-09.csv", row.names=1)
-info_full <- read.csv("./data-downloaded/stock_info2026-02-09.csv", row.names=1)
+data_full <- read.csv("./data-downloaded/salmon_productivity_compilation2026-06-23.csv", row.names=1)
+info_full <- read.csv("./data-downloaded/stock_info2026-06-23.csv", row.names=1)
 # Data source: https://github.com/Pacific-salmon-assess/dfo_salmon_compilation
 
 ## Filter for Sockeye
