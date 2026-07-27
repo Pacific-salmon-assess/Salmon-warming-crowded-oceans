@@ -17,13 +17,13 @@ require(fields)
 require(plotrix)
 require(data.table)
 library(mgcv)
-library(ggsidekick)
+#library(ggsidekick)
 data(countriesLow)
 
 ## bayesian model packages
 library(parallel)
 library(coda)
-library(rjags)
+#library(rjags)
 #library(jagstools)
 library(codatools) # see: https://github.com/MichaelMalick/r-codatools/
 library(loo)
@@ -49,4 +49,4 @@ if(!dir.exists("./output/"))
 
 
 ## Set bayesplot theme
-bayesplot::bayesplot_theme_set(new = ggsidekick::theme_sleek())
+#bayesplot::bayesplot_theme_set(new = ggsidekick::theme_sleek()) # Now have theme_sleek() in functions.R to avoid trouble downloading ggsidekick
