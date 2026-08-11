@@ -17,12 +17,15 @@ if(speciesFlag=="pink") {
 
 # Set paths to output locations - dependent on species
 fig.dir <- here("figures", "stat", speciesFlag, "hbm_inf") # place to store figures generated in this script
+diag.fig.dir <- here("figures", "stat", speciesFlag, "hbm_fit") # place to store figures generated in this script
 fit.dir <- here("output", "models", "stat", speciesFlag) # place to store model fits
 diag.dir <- here("output", "diagnostics", "stat", speciesFlag) # place to store diagnostics
 
 # Make them if they don't exist
 if(!dir.exists(fig.dir))
   dir.create(fig.dir, recursive = TRUE)
+if(!dir.exists(diag.fig.dir))
+  dir.create(diag.fig.dir, recursive = TRUE)
 if(!dir.exists(fit.dir))
   dir.create(fit.dir, recursive = TRUE)
 if(!dir.exists(diag.dir))
@@ -59,26 +62,26 @@ save(stat_inter, file = here(fit.dir, "stat_inter.RData"))
 
 ## Diagnostic plots
 
-pdf(here(fig.dir, "stat_inter_diag.pdf"), width = 7, height = 5)
+pdf(here(diag.fig.dir, "stat_inter_diag.pdf"), width = 7, height = 5)
 coda_neff(get_neff(stat_inter, pars = pars.stat), total_draws(stat_inter))
 coda_rhat(get_rhat(stat_inter, pars = pars.stat))
 coda_diag(As.mcmc.list(stat_inter, pars = pars.stat))
 dev.off()
 
-plot_post_pc(stat_inter, stan.dat.all$y, pdf.path = here(fig.dir, "stat_inter_yrep.pdf")) # Working again?
+plot_post_pc(stat_inter, stan.dat.all$y, pdf.path = here(diag.fig.dir, "stat_inter_yrep.pdf")) # Working again?
 
 loo.stat_inter <- rstan::loo(stat_inter, cores = 4)
 save(loo.stat_inter, file = here(diag.dir, "loo_stat_inter.RData"))
 waic.stat_inter <- loo::waic(loo::extract_log_lik(stat_inter, "log_lik"))
 save(waic.stat_inter, file = here(diag.dir, "waic_stat_inter.RData"))
-pdf(here(fig.dir, "stat_inter_loo.pdf"), width = 7, height = 5)
+pdf(here(diag.fig.dir, "stat_inter_loo.pdf"), width = 7, height = 5)
 plot(loo.stat_inter, label_points = TRUE)
 dev.off()
 
 r2.stat_inter <- bayes_R2(data_master$lnRS, as.matrix(stat_inter, pars = "yhat"))
 save(r2.stat_inter, file = here(diag.dir, "r2_stat_inter.Rdata"))
 
-pdf( here(fig.dir, "stat_inter_resid.pdf"), width = 8, height = 8)
+pdf( here(diag.fig.dir, "stat_inter_resid.pdf"), width = 8, height = 8)
 plot_hbm_resids(stat_inter, data_master)
 dev.off()
 
