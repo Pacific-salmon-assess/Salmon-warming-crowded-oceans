@@ -21,7 +21,7 @@ head(raw.clim.sock)
 
 
 ## Competition
-raw.comp <- read.csv(file="data-downloaded/competitor_indices_2024.csv", header = TRUE)
+raw.comp <- read.csv(here("data-downloaded", "competitor_indices_2026.csv"))
 head(raw.comp)
 
 ## Add de-trended north pacific pinks

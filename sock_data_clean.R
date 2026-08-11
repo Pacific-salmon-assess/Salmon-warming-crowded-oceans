@@ -6,8 +6,8 @@
 ## this script is a master brood table for the analysis and a summary info table
 
 ## Read in downloaded data
-data_full <- read.csv("./data-downloaded/salmon_productivity_compilation2026-06-23.csv", row.names=1)
-info_full <- read.csv("./data-downloaded/stock_info2026-06-23.csv", row.names=1)
+data_full <- read.csv("./data-downloaded/salmon_productivity_compilation2026-08-10.csv", row.names=1)
+info_full <- read.csv("./data-downloaded/stock_info2026-08-10.csv", row.names=1)
 # Data source: https://github.com/Pacific-salmon-assess/dfo_salmon_compilation
 
 ## Filter for Sockeye
@@ -95,10 +95,12 @@ bt.out.2 <- subset(bt.out.1, !(Stock %in% c("Mcdonell", #gappy
                                             "Asitka", # gappy
                                             "Kitlope", # large gap
                                             "Hartley Bay", # gappy
-                                            "Marian-Eden" # gappy
+                                            "Marian-Eden", # gappy
+                                            "Canoona", # short
+                                            "Sustut" # gappy
                                             )))
 bt.out.3 <- subset(bt.out.2,BY > 1949)        # do this because pre 1950 data is very sparse
-bt.out.4 <- subset(bt.out.3, BY<=2015) #- currently have pink-NP data up to 2021 (+6 yr)
+bt.out.4 <- subset(bt.out.3, BY<=2018) #- currently have pink-NP data up to 2024 (+6 yr)
 # Final filtering step: make sure all stks extend thru all time periods
 stk.sub <- bt.out.4 %>% dplyr::summarize(yr_start = min(BY), yr_end = max(BY), .by="Stock.ID") %>% filter(yr_start < 1985 & yr_end >= 2014)
 bt.out.5 <- subset(bt.out.4, Stock.ID %in% stk.sub$Stock.ID)

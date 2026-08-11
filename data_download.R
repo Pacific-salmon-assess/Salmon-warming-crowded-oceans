@@ -1,4 +1,4 @@
-## Download data for project ## 
+## Download data for project ##
 ## ONLY if data have changed) ##
 ## -------------------------- ##
 
@@ -10,12 +10,12 @@
 ## Climate indices download
 
 ## SST raw -------------------------------------------------
-ersst::sst_download(years = 1950:2022,
+ersst::sst_download(years = 1950:2025,
                     months = 1:12,
                     save.dir = "./data-downloaded/climate-data/sst_raw/",
                     version = 5)
 
-sst.raw.full <- ersst::sst_load(years = 1950:2022,
+sst.raw.full <- ersst::sst_load(years = 1950:2025,
                                 months = 1:12,
                                 read.dir = "./data-downloaded/climate-data/sst_raw/",
                                 version = 5)
@@ -33,21 +33,21 @@ write.csv(sst.raw.df, "./data-downloaded/climate-data/sst_raw.csv", row.names = 
 
 
 ## PDO + NPGO ----------------------------------------------
-years <- 1950:2022
-pdo <- rsoi::download_pdo(years) 
-npgo <- rsoi::download_npgo(years)
+years <- 1950:2025
+pdo <- rsoi::download_pdo()
+npgo <- rsoi::download_npgo()
 
 write.csv(pdo, "./data-downloaded/climate-data/pdo.csv", row.names = FALSE)
 write.csv(npgo, "./data-downloaded/climate-data/npgo.csv", row.names = FALSE)
 
 
 ## SST raw extended (1855-present) -------------------------------------------------
-ersst::sst_download(years = 1855:2022,
+ersst::sst_download(years = 1855:2025,
                     months = 1:12,
                     save.dir = "./data-downloaded/climate-data/sst_raw_extend/",
                     version = 5)
 
-sst.raw.full <- ersst::sst_load(years = 1855:2022,
+sst.raw.full <- ersst::sst_load(years = 1855:2025,
                                 months = 1:12,
                                 read.dir = "./data-downloaded/climate-data/sst_raw_extend/",
                                 version = 5)

@@ -6,9 +6,9 @@
 
 ## Should R be sum of RX.X columns?!
 
-data_full <- read.csv("./data-downloaded/salmon_productivity_compilation2026-06-23.csv", row.names=1)
+data_full <- read.csv("./data-downloaded/salmon_productivity_compilation2026-08-10.csv", row.names=1)
 
-info_full <- read.csv("./data-downloaded/stock_info2026-06-23.csv", row.names=1)
+info_full <- read.csv("./data-downloaded/stock_info2026-08-10.csv", row.names=1)
 # Data source: https://github.com/Pacific-salmon-assess/dfo_salmon_compilation
 
 ## PINK ----------------------------------------------------------------------
@@ -159,7 +159,7 @@ bt[,r.cols] <- lapply(bt[,r.cols], function(x) x/bt$R) # Make "R" columns propor
 summary(rowSums(bt[,r.cols])) # median should be 1, there are many 0s and some issues resulting in high #s for Skeena pops
 
 bt.out.1 <- bt[complete.cases(bt),]                # drop years with missing data
-bt.out.2 <- subset(bt.out.1, BY <= 2019) # currently have pink-NP data up to 2021 (+2 yr)
+bt.out.2 <- subset(bt.out.1, BY <= 2022) # currently have pink-NP data up to 2024 (+2 yr)
 
 head(bt.out.2)
 summary(bt.out.2)
@@ -184,7 +184,7 @@ bt.out.5 <- geographic.order(bt.out.4)
 bt.out.6 <- dplyr::arrange(bt.out.5, factor(Stock, levels=levels(bt.out.5$Stock)))
 
 # Filter out short/gappy time series
-c.info <- c.info %>% filter(end < 2015 | begin > 1984) # filter OUT those that don't span 1984-2016
+c.info <- c.info %>% filter(end < 2015 | begin > 1984) # filter OUT those that don't span at least 1984-2016
 bt.out.7 <- bt.out.6[!(bt.out.6$Stock.ID %in% c.info$stock.id),]
 # Simplify stock names
 bt.out.7$Stock <- stringr::str_remove(bt.out.7$Stock, "-Chum")
