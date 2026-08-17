@@ -49,8 +49,8 @@ stan.dat.2c <- stan_data_dyn(data_master,
 pars_era_2c <- c("alpha", "beta", "sigma", "phi", "mu_alpha", "sigma_alpha",
                  "gamma1", "gamma2", "gamma3",
                  "mu_gamma1", "mu_gamma2", "mu_gamma3", "sigma_gamma",
-                 "kappa1", "kappa2", "kappa3",
-                 "mu_kappa1", "mu_kappa2", "mu_kappa3", "sigma_kappa" )
+                 "kappa",                                # CHANGED: kappa is now stationary -> single parameter, no era suffix
+                 "mu_kappa", "sigma_kappa" )              # CHANGED: single mu_kappa, no era suffix
 
 
 pars.gen.quant <- c("log_lik", "yrep", "yhat") ## Generated quantities to monitor
@@ -63,7 +63,7 @@ save(pars.gen.quant, file = "./output/pars_gen_quant.RData")
 
 ## Run MCMC  -----------------------------------------
 
-era.2c <- rstan::stan(file = "./stan/hbm_era_2c.stan",
+era.2c <- rstan::stan(file = "./stan/hbm_era_gamma_stat_kappa_2c.stan",
                        data = stan.dat.2c,
                        pars = c(pars_era_2c, pars.gen.quant),
                        warmup = 1000,

@@ -45,7 +45,7 @@ chum.df.avg <- summ_avg |> tidyr::pivot_longer(cols=-c("par"), names_to="ocean_r
 load(here('output', 'models', 'dyn', 'sockeye', 'hbm_era_2c.RData'), verbose=T) # eras
 
 # Region-lvl dataframe
-summ_avg <- rstan::extract(era.2c, pars = c(paste0("mu_gamma", 1:3), paste0("mu_kappa", 1:3)))
+summ_avg <- rstan::extract(era.2c, pars = c(paste0("mu_gamma", 1:3), "mu_kappa"))
 summ_avg <- lapply(summ_avg, as.data.frame)
 summ_avg <- bind_rows(summ_avg, .id="par")
 names(summ_avg) <- c("par", "West Coast", "Southeast Alaska", "Gulf of Alaska", "Bering Sea")
@@ -55,7 +55,8 @@ sock.df.avg <- summ_avg |> tidyr::pivot_longer(cols=-c("par"), names_to="ocean_r
                             grepl("^mu_kappa", par) ~ "Competitors"),
          era = case_when(str_extract(par, "\\d")==1 ~ "Early",
                          str_extract(par, "\\d")==2 ~ "Middle",
-                         str_extract(par, "\\d")==3 ~ "Late"),
+                         str_extract(par, "\\d")==3 ~ "Late",
+                         .default = "Stationary"),
          species="sockeye",
          pc = (exp(value)-1)*100)
 

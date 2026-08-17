@@ -16,10 +16,15 @@ load(here(fit.dir, "hbm_era_2c.Rdata"))
 
 
 # Set colours for era plots
+# CHANGED: added a 4th ("Stationary") colour block, one per region, since
+# kappa is now stationary and its rows carry era = "Stationary" instead of
+# Early/Middle/Late. Without these, points/segments for kappa would have no
+# matching colour in the combined caterpillar plot below.
 col.eras <- c("#00b39e", "#b3a100", "#ff80d7", "#4db8ff",
               "#008070", "#6D6200FF", "#BC007FFF",  "#0070BDFF",
-              "#00332d", "#4d4500", "#4d0034", "#002e4d")
-names(col.eras) <- paste0(rep(names(col.region), 3), ".", rep(c("Early", "Middle", "Late"), each=4))
+              "#00332d", "#4d4500", "#4d0034", "#002e4d",
+              "#595959", "#8c8c8c", "#404040", "#bfbfbf")   # CHANGED: colours for the "Stationary" era
+names(col.eras) <- paste0(rep(names(col.region), 4), ".", rep(c("Early", "Middle", "Late", "Stationary"), each=4)) # CHANGED: 4 eras now, not 3
 
 
 ## Save coefficients in tables ------------------------------------------------

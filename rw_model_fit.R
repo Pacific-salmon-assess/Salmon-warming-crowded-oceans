@@ -58,7 +58,7 @@ stan.dat.rw <- list(N = nrow(data_master),
 
 
 # Fit
-rw.fit <- rstan::stan(file = "./stan/ind_tvalpha_ricker.stan", # test running "-Copy" for hierarchical alpha
+rw.fit <- rstan::stan(file = "./stan/ind_tvalpha_stat_kappa_ricker.stan", # CHANGED: point at the stationary-kappa Stan model
                       data = stan.dat.rw,
                       warmup = 1000,
                       iter = 2000,
@@ -67,33 +67,59 @@ rw.fit <- rstan::stan(file = "./stan/ind_tvalpha_ricker.stan", # test running "-
                       seed = 123,
                       control = list(adapt_delta = 0.99,
                                      max_treedepth = 20))
-save(rw.fit, file = here("output/models/dyn", speciesFlag, "dyn_new_2025.RData"))
+save(rw.fit, file = here("output/models/dyn", speciesFlag, "dyn_new_2025_stat_kappa.RData")) # CHANGED: renamed output so it doesn't overwrite the fully time-varying rw model fit
 
 # Load fit
-load(here(fit.dir, "dyn_new_2025.RData"), verbose=T)
+load(here(fit.dir, "dyn_new_2025_stat_kappa.RData"), verbose=T) # CHANGED: match renamed file above
 
 # Extract
 
 # Stock-specific dataframe
 probs <- c(0.025, 0.05, 0.10, 0.50, 0.90, 0.95, 0.975)
-summ <- rstan::summary(rw.fit, pars = c("g_t", "k_t"), probs = probs)[[1]]
 
-df.dyn.st.2c <- data.frame(Stock = rep(info_master$Stock, times=stan.dat.rw$L*2),
-                           Ocean.Region2 = rep(info_master$Ocean.Region2, times=stan.dat.rw$L*2),
-                           BY = rep(rep(min(info_master$yr_start):(min(info_master$yr_start) +
-                                                                   stan.dat.rw$L -1),
-                                        each=nrow(info_master)), times=2),
-                           mu = summ[, "mean"],
-                           se = summ[, "se_mean"],
-                           lower_2.5 = summ[,"2.5%"],
-                           lower_10 = summ[, "10%"],
-                           med = summ[,"50%"],
-                           upper_90 = summ[ , "90%"],
-                           upper_97.5 = summ[, "97.5%"],
-                           var = case_when(str_extract(rownames(summ), "[a-z]+") == "g" ~ "gamma",
-                                        str_extract(rownames(summ), "[a-z]+") == "k" ~ "kappa"),
-                           varnam = case_when(grepl("^g", rownames(summ)) ~ "SST",
-                                              grepl("^k", rownames(summ)) ~ "Competitors"))
+# CHANGED: gamma (g_t) is still time-varying [L,J], but kappa is now stationary [J] with no
+# year dimension, so it can no longer share one rstan::summary() call / one data.frame
+# construction with g_t (their row counts no longer match). Gamma and kappa are now summarized
+# and assembled separately, then combined with rbind. Kappa's single per-stock value is
+# repeated across all L years so it still plots as a (flat) line alongside gamma's time-varying
+# line, using the same Stock/BY layout as before.
+
+summ.g <- rstan::summary(rw.fit, pars = "g_t", probs = probs)[[1]] # CHANGED: gamma summarized on its own
+
+df.dyn.st.2c.g <- data.frame(Stock = rep(info_master$Stock, times=stan.dat.rw$L),
+                             Ocean.Region2 = rep(info_master$Ocean.Region2, times=stan.dat.rw$L),
+                             BY = rep(min(info_master$yr_start):(min(info_master$yr_start) +
+                                                                  stan.dat.rw$L -1),
+                                      each=nrow(info_master)),
+                             mu = summ.g[, "mean"],
+                             se = summ.g[, "se_mean"],
+                             lower_2.5 = summ.g[,"2.5%"],
+                             lower_10 = summ.g[, "10%"],
+                             med = summ.g[,"50%"],
+                             upper_90 = summ.g[ , "90%"],
+                             upper_97.5 = summ.g[, "97.5%"],
+                             var = "gamma",
+                             varnam = "SST")
+
+summ.k <- rstan::summary(rw.fit, pars = "kappa", probs = probs)[[1]] # CHANGED: kappa summarized on its own (stationary, no L dimension)
+
+df.dyn.st.2c.k <- data.frame(Stock = rep(info_master$Stock, times=stan.dat.rw$L),                          # CHANGED: kappa block built separately, its single value repeated across years
+                             Ocean.Region2 = rep(info_master$Ocean.Region2, times=stan.dat.rw$L),
+                             BY = rep(min(info_master$yr_start):(min(info_master$yr_start) +
+                                                                  stan.dat.rw$L -1),
+                                      each=nrow(info_master)),
+                             mu = rep(summ.k[, "mean"], times=stan.dat.rw$L),                                # CHANGED: replicate stationary kappa value across years
+                             se = rep(summ.k[, "se_mean"], times=stan.dat.rw$L),
+                             lower_2.5 = rep(summ.k[,"2.5%"], times=stan.dat.rw$L),
+                             lower_10 = rep(summ.k[, "10%"], times=stan.dat.rw$L),
+                             med = rep(summ.k[,"50%"], times=stan.dat.rw$L),
+                             upper_90 = rep(summ.k[ , "90%"], times=stan.dat.rw$L),
+                             upper_97.5 = rep(summ.k[, "97.5%"], times=stan.dat.rw$L),
+                             var = "kappa",
+                             varnam = "Competitors")
+
+df.dyn.st.2c <- rbind(df.dyn.st.2c.g, df.dyn.st.2c.k) # CHANGED: combine time-varying gamma rows with the (replicated) stationary kappa rows
+
 if(speciesFlag == "pink"){
   df.dyn.st.2c$even_odd <- ifelse(gtools::odd(df.dyn.st.2c$BY), "odd", "even")
 }
@@ -103,24 +129,43 @@ write.csv(df.dyn.st.2c, here(fig.dir, paste0('stk_coefficients_rw_', speciesFlag
 
 
 # Summarized dataframe (regional-level)
-summ.r <- rstan::summary(rw.fit, pars = c("mu_g_r", "mu_k_r"), probs = probs)[[1]]
-df.dyn.reg.2c <- data.frame(Ocean.Region2 = rep(unique(info_master$Ocean.Region2),
-                                                  times=stan.dat.rw$L*2),
-                              BY = rep(rep(min(info_master$yr_start):(min(info_master$yr_start) +
-                                                                      stan.dat.rw$L -1),
-                                           each=stan.dat.rw$R), times=2),
-                              mu = summ.r[, "mean"],
-                              se = summ.r[, "se_mean"],
-                              lower_2.5 = summ.r[,"2.5%"],
-                              lower_10 = summ.r[, "10%"],
-                              med = summ.r[,"50%"],
-                              upper_90 = summ.r[ , "90%"],
-                              upper_97.5 = summ.r[, "97.5%"],
-                              var = case_when(grepl("^mu_g", rownames(summ.r)) ~ "gamma",
-                                              grepl("^mu_k", rownames(summ.r)) ~ "kappa"),
-                              varnam = case_when(grepl("^mu_g", rownames(summ.r)) ~ "SST",
-                                                 grepl("^mu_k", rownames(summ.r)) ~ "Competitors")
-                              )
+# CHANGED: same split as the stock-level block above -- mu_g_r stays [L,R], but mu_k_r is now
+# a stationary vector[R], so gamma and kappa are summarized/assembled separately and combined.
+
+summ.r.g <- rstan::summary(rw.fit, pars = "mu_g_r", probs = probs)[[1]] # CHANGED: gamma summarized on its own
+
+df.dyn.reg.2c.g <- data.frame(Ocean.Region2 = rep(unique(info_master$Ocean.Region2), times=stan.dat.rw$L),
+                              BY = rep(min(info_master$yr_start):(min(info_master$yr_start) +
+                                                                    stan.dat.rw$L -1),
+                                       each=stan.dat.rw$R),
+                              mu = summ.r.g[, "mean"],
+                              se = summ.r.g[, "se_mean"],
+                              lower_2.5 = summ.r.g[,"2.5%"],
+                              lower_10 = summ.r.g[, "10%"],
+                              med = summ.r.g[,"50%"],
+                              upper_90 = summ.r.g[ , "90%"],
+                              upper_97.5 = summ.r.g[, "97.5%"],
+                              var = "gamma",
+                              varnam = "SST")
+
+summ.r.k <- rstan::summary(rw.fit, pars = "mu_k_r", probs = probs)[[1]] # CHANGED: mu_k_r is now vector[R] (stationary), no year dimension
+
+df.dyn.reg.2c.k <- data.frame(Ocean.Region2 = rep(unique(info_master$Ocean.Region2), times=stan.dat.rw$L), # CHANGED: replicate kappa's single regional value across years for plotting
+                              BY = rep(min(info_master$yr_start):(min(info_master$yr_start) +
+                                                                    stan.dat.rw$L -1),
+                                       each=stan.dat.rw$R),
+                              mu = rep(summ.r.k[, "mean"], times=stan.dat.rw$L),
+                              se = rep(summ.r.k[, "se_mean"], times=stan.dat.rw$L),
+                              lower_2.5 = rep(summ.r.k[,"2.5%"], times=stan.dat.rw$L),
+                              lower_10 = rep(summ.r.k[, "10%"], times=stan.dat.rw$L),
+                              med = rep(summ.r.k[,"50%"], times=stan.dat.rw$L),
+                              upper_90 = rep(summ.r.k[ , "90%"], times=stan.dat.rw$L),
+                              upper_97.5 = rep(summ.r.k[, "97.5%"], times=stan.dat.rw$L),
+                              var = "kappa",
+                              varnam = "Competitors")
+
+df.dyn.reg.2c <- rbind(df.dyn.reg.2c.g, df.dyn.reg.2c.k) # CHANGED: combine time-varying gamma with replicated stationary kappa
+
 if(speciesFlag == "pink"){
   df.dyn.reg.2c$even_odd <- ifelse(gtools::odd(df.dyn.reg.2c$BY), "odd", "even")
 }
@@ -133,6 +178,8 @@ write.csv(df.dyn.reg.2c, here(fig.dir, paste0('reg_coefficients_rw_', speciesFla
 reg_start_yr <- info_master %>% group_by(Ocean.Region2) %>% summarize(avg_start=round(mean(yr_start), 0))
 df.dyn.reg.2c <- df.dyn.reg.2c %>% left_join(reg_start_yr,  by="Ocean.Region2") %>% filter(BY >= avg_start)
 df.dyn.reg.2c <- ocean_region_lab(df.dyn.reg.2c)
+
+df.dyn.st.2c <- ocean_region_lab(df.dyn.st.2c)
 
 # Plot
 g <- ggplot(df.dyn.st.2c) +

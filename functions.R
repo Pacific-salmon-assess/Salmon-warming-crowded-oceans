@@ -720,7 +720,13 @@ hb07_density_df <- function(stanfit, ocean.regions = 4, info=info_master, data=d
 era_density_df <- function(stanfit, par, region.var="Ocean.Region2", mu = FALSE, percent.change=FALSE, neras=3, info=info_master){
 
   if(mu){ ## regional mean df
-    mu.parxera <- paste0(rep(paste0("mu_", par), each=neras), 1:neras)
+    # CHANGED: build the parameter name vector per-element of `par` so that a
+    # stationary parameter (e.g. "kappa", which has no mu_kappa1/2/3 in the
+    # stanfit) is requested as a single "mu_kappa", while an era-varying
+    # parameter (e.g. "gamma") still expands to mu_gamma1/2/3.
+    mu.parxera <- unlist(lapply(par, function(p) {
+      if(paste0("mu_", p, "1") %in% stanfit@model_pars) paste0("mu_", p, 1:neras) else paste0("mu_", p)
+    }))
 
     post <- rstan::extract(stanfit, pars=c(mu.parxera))
 
@@ -744,7 +750,8 @@ era_density_df <- function(stanfit, par, region.var="Ocean.Region2", mu = FALSE,
                                    str_extract(summ.dens$par, "\\d") == "1" ~ "Early",
                                    str_extract(summ.dens$par, "\\d") == "2" ~ "Middle",
                                    str_extract(summ.dens$par, "\\d") == "3" ~ "Late",
-                                   .ptype=factor( levels=c("Early", "Middle", "Late"))),
+                                   is.na(str_extract(summ.dens$par, "\\d")) ~ "Stationary", # CHANGED: label params with no era suffix (e.g. stationary kappa)
+                                   .ptype=factor( levels=c("Early", "Middle", "Late", "Stationary"))), # CHANGED: added "Stationary" level
                                  var = str_extract(summ.dens$par, "\\D+"),
                                  varnam = case_when(
                                    str_extract(summ.dens$par, "\\D+") == "mu_gamma" ~ "SST",
@@ -755,7 +762,10 @@ era_density_df <- function(stanfit, par, region.var="Ocean.Region2", mu = FALSE,
 
 
   } else { ## Stock specific df
-    parxera <- paste0(rep(par, each=neras), 1:neras)
+    # CHANGED: same per-parameter detection as above, applied to the stock-level (non-mu) names
+    parxera <- unlist(lapply(par, function(p) {
+      if(paste0(p, "1") %in% stanfit@model_pars) paste0(p, 1:neras) else p
+    }))
     post <- rstan::extract(stanfit, pars=parxera)
   dens.l <- lapply(post, function(x){
     if(percent.change) {
@@ -775,7 +785,8 @@ era_density_df <- function(stanfit, par, region.var="Ocean.Region2", mu = FALSE,
                                 str_extract(summ.dens$par, "\\d") == "1" ~ "Early",
                                 str_extract(summ.dens$par, "\\d") == "2" ~ "Middle",
                                 str_extract(summ.dens$par, "\\d") == "3" ~ "Late",
-                                .ptype=factor( levels=c("Early", "Middle", "Late"))),
+                                is.na(str_extract(summ.dens$par, "\\d")) ~ "Stationary", # CHANGED: label params with no era suffix (e.g. stationary kappa)
+                                .ptype=factor( levels=c("Early", "Middle", "Late", "Stationary"))), # CHANGED: added "Stationary" level
                               var = str_extract(summ.dens$par, "\\D+"),
                               varnam = case_when(
                                 str_extract(summ.dens$par, "\\D+") == "gamma" ~ "SST",
@@ -1274,54 +1285,79 @@ hb_param_df <- function(stanfit, par, region.var, var = NULL, info = info_master
 era_hb_param_df <- function(stanfit, par, mu = FALSE, region.var = "Ocean.Region2", neras = 3, info = info_master, lower_CI=10, upper_CI=90){
 
   ## Parameter posteriors from Eras models, wrangle into dataframe
+  ##
+  ## CHANGED: the original version assumed every parameter in `par` had the
+  ## same number of eras, and relied on data.frame() recycling to line the
+  ## rows up. That breaks once a parameter (e.g. stationary "kappa") only has
+  ## one value instead of `neras`. Below, each parameter in `par` is now
+  ## handled separately (era-varying vs stationary, detected from the names
+  ## available in the stanfit) and the resulting per-parameter data frames are
+  ## row-bound together, so mixed stationary/non-stationary `par` vectors work.
+
+  probs <- c(0.025, 0.05, 0.10, 0.50, 0.90, 0.95, 0.975)
 
   if(mu){
 
-    ## Regional summary dataframe (mu_gamma/ mu_kappa)
-    probs <- c(0.025, 0.05, 0.10, 0.50, 0.90, 0.95, 0.975)
+    ## Regional summary dataframe (mu_gamma / mu_kappa)
     reg_start <- info$Stock[match(unique(info[[region.var]]), info[[region.var]])]
     reg_end <- c(info$Stock[match(unique(info[[region.var]]), info[[region.var]])-1],
                  info$Stock[nrow(info)])
-    mu.parsxera <- paste0(rep(paste0("mu_", par), each=neras), 1:neras)
-    summ <- rstan::summary(stanfit, pars = mu.parsxera, probs = probs)[[1]]
-    df.era.reg.2c <- data.frame(Ocean.Region2 = rep(unique(info[[region.var]]), neras),
-                                ystart = rep(reg_start, neras),
-                                yend = rep(reg_end, neras),
-                                reg_mean = summ[, "mean"],
-                                reg_se = summ[ ,"se_mean"],
-                                med = summ[, "50%"],
-                                lower = summ[ , paste0(lower_CI,"%")],
-                                upper = summ[ , paste0(upper_CI, "%")],
-                                var = str_extract(rownames(summ), "\\D+"),
-                                varnam = case_when(grepl("^mu_gamma", rownames(summ)) ~ "SST",
-                                                   grepl("^mu_kappa", rownames(summ)) ~ "Competitors"),
-                                era = case_when(str_extract(rownames(summ), "\\d") == "1" ~ "Early",
-                                                str_extract(rownames(summ), "\\d") == "2" ~ "Middle",
-                                                str_extract(rownames(summ), "\\d") == "3" ~ "Late",
-                                                .ptype=factor( levels=c("Early", "Middle", "Late"))))
+
+    df.era.reg.2c <- do.call(rbind, lapply(par, function(p) {          # CHANGED: loop per parameter instead of one combined call
+      is.era <- paste0("mu_", p, "1") %in% stanfit@model_pars           # CHANGED: detect stationary vs era-varying
+      p.neras <- if(is.era) neras else 1
+      mu.parsxera <- if(is.era) paste0("mu_", p, 1:p.neras) else paste0("mu_", p)
+      summ <- rstan::summary(stanfit, pars = mu.parsxera, probs = probs)[[1]]
+      data.frame(Ocean.Region2 = rep(unique(info[[region.var]]), p.neras),
+                 ystart = rep(reg_start, p.neras),
+                 yend = rep(reg_end, p.neras),
+                 reg_mean = summ[, "mean"],
+                 reg_se = summ[ ,"se_mean"],
+                 med = summ[, "50%"],
+                 lower = summ[ , paste0(lower_CI,"%")],
+                 upper = summ[ , paste0(upper_CI, "%")],
+                 var = str_extract(rownames(summ), "\\D+"),
+                 varnam = case_when(grepl("^mu_gamma", rownames(summ)) ~ "SST",
+                                    grepl("^mu_kappa", rownames(summ)) ~ "Competitors"),
+                 era = if(is.era) {
+                   case_when(str_extract(rownames(summ), "\\d") == "1" ~ "Early",
+                             str_extract(rownames(summ), "\\d") == "2" ~ "Middle",
+                             str_extract(rownames(summ), "\\d") == "3" ~ "Late",
+                             .ptype=factor(levels=c("Early", "Middle", "Late", "Stationary"))) # CHANGED: added "Stationary" level
+                 } else {
+                   factor("Stationary", levels=c("Early", "Middle", "Late", "Stationary"))       # CHANGED: stationary covariate gets a single "Stationary" era label
+                 })
+    }))
     return(df.era.reg.2c)
 
 
   } else {
 
   ## Stock lvl dataframe
-  probs <- c(0.025, 0.05, 0.10, 0.50, 0.90, 0.95, 0.975)
-  parxera <- paste0(rep(par, each=neras), 1:neras)
-  summ <- rstan::summary(stanfit, pars = parxera, probs = probs)[[1]]
-  df.era.st.2c <- data.frame(Stock = rep(info$Stock, neras),
-                             Ocean.Region2 = rep(info[[region.var]], neras),
-                             mu = summ[, "mean"],
-                             se = summ[, "se_mean"],
-                             med = summ[, "50%"],
-                             lower = summ[,paste0(lower_CI,"%")],
-                             upper = summ[,paste0(upper_CI,"%")],
-                             var = str_extract(rownames(summ), "\\D+"),
-                             varnam = case_when(grepl("^gamma", rownames(summ)) ~ "SST",
-                                                grepl("^kappa", rownames(summ)) ~ "Competitors"),
-                             era = case_when(str_extract(rownames(summ), "\\d") == "1" ~ "Early",
-                                             str_extract(rownames(summ), "\\d") == "2" ~ "Middle",
-                                             str_extract(rownames(summ), "\\d") == "3" ~ "Late",
-                                             .ptype=factor( levels=c("Early", "Middle", "Late"))))
+  df.era.st.2c <- do.call(rbind, lapply(par, function(p) {             # CHANGED: loop per parameter instead of one combined call
+    is.era <- paste0(p, "1") %in% stanfit@model_pars                    # CHANGED: detect stationary vs era-varying
+    p.neras <- if(is.era) neras else 1
+    parxera <- if(is.era) paste0(p, 1:p.neras) else p
+    summ <- rstan::summary(stanfit, pars = parxera, probs = probs)[[1]]
+    data.frame(Stock = rep(info$Stock, p.neras),
+               Ocean.Region2 = rep(info[[region.var]], p.neras),
+               mu = summ[, "mean"],
+               se = summ[, "se_mean"],
+               med = summ[, "50%"],
+               lower = summ[,paste0(lower_CI,"%")],
+               upper = summ[,paste0(upper_CI,"%")],
+               var = str_extract(rownames(summ), "\\D+"),
+               varnam = case_when(grepl("^gamma", rownames(summ)) ~ "SST",
+                                  grepl("^kappa", rownames(summ)) ~ "Competitors"),
+               era = if(is.era) {
+                 case_when(str_extract(rownames(summ), "\\d") == "1" ~ "Early",
+                           str_extract(rownames(summ), "\\d") == "2" ~ "Middle",
+                           str_extract(rownames(summ), "\\d") == "3" ~ "Late",
+                           .ptype=factor(levels=c("Early", "Middle", "Late", "Stationary"))) # CHANGED: added "Stationary" level
+               } else {
+                 factor("Stationary", levels=c("Early", "Middle", "Late", "Stationary"))       # CHANGED: stationary covariate gets a single "Stationary" era label
+               })
+  }))
   return(df.era.st.2c)
 
   }
