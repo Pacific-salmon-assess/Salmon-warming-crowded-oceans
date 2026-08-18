@@ -36,7 +36,7 @@ if(!dir.exists(diag.dir))
 
 stan.dat.2c <- stan_data_dyn(data_master,
                              var.x2 = "early_sst_stnd",
-                             var.x3 = "np_pinks_sec_stnd",
+                             var.x3 = "np_all_spp_sec_stnd",
                              breakpoint1 = 1989,
                              breakpoint2 = 2011,
                              var.region="Ocean.Region2",

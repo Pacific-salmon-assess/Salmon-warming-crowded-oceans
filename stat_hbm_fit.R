@@ -42,7 +42,7 @@ pars.gen.quant <- c("log_lik", "yhat", "yrep", "yresid") ## Generated quantities
 stan.dat.all <- stan_data_stat(data_master,
                             scale.x1 = TRUE,
                             var.x2 = "early_sst_stnd",
-                            var.x3 = "np_pinks_sec_stnd", # comp = pink abundance
+                            var.x3 = "np_all_spps_sec_stnd", # comp = all_spp abundance
                             var.region = "Ocean.Region2",
                             alpha.group = ifelse(speciesFlag=="sockeye", TRUE, FALSE)) # set to TRUE for sockeye
 stat_a <- rstan::stan(file = "./stan/hbm_stat_2c.stan",
@@ -94,13 +94,13 @@ rhat_highest(stat_a, pars = pars.stat)
 
 pairs_lowest(stat_a, pars = pars.stat) # can ignore 'warning: not a graphical parameter'
 
-## Fit de-trended pink time series ----
+## Fit de-trended comp time series ----
 
 ## Run MCMC ----
 stan.dat.all.detp <- stan_data_stat(data_master,
                                scale.x1 = TRUE,
                                var.x2 = "early_sst_stnd",
-                               var.x3 = "det_np_pinks_sec_stnd", # comp = pink abundance detrended
+                               var.x3 = "det_np_all_spp_sec_stnd", # comp = all spp abundance detrended
                                var.region = "Ocean.Region2",
                                alpha.group = ifelse(speciesFlag=="sockeye", TRUE, FALSE)) # set to TRUE for sockeye
 stat_a.detp <- rstan::stan(file = "./stan/hbm_stat_2c.stan",

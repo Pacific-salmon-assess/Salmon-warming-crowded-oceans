@@ -52,7 +52,7 @@ stan.dat.rw <- list(N = nrow(data_master),
            R_S = data_master$lnRS,
            S = S.mat,
            X1 = data_master$early_sst_stnd,
-           X2 = data_master$np_pinks_sec_stnd,
+           X2 = data_master$np_all_spp_sec_stnd,
            pSmax_mean = 0.5*smax$max.S,
            pSmax_sig = 2*smax$max.S)
 

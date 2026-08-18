@@ -229,7 +229,7 @@ if(exists("ss.all.yrs")) {
 
   ## Fig: Dot + density main with single stock estimates overlaid
   ss.dat <- ss.all.yrs$coef$model4a %>%
-    dplyr::filter(variable %in% c("early_sst_stnd", "np_pinks_sec_stnd")) %>%
+    dplyr::filter(variable %in% c("early_sst_stnd", "np_all_spp_sec_stnd")) %>%
     dplyr::mutate(var = ifelse(variable == "early_sst_stnd", "SST", "Comp"))
   ss.dat$Stock <- factor(ss.dat$Stock, levels=levels(data_master$Stock))
   ss.dat$var <- factor(ss.dat$var, levels=c("SST", "Comp"))
@@ -323,7 +323,7 @@ map <- ggplot(map.info) +
   )
 
 ## Make dataframe of covariate info
-covar.dat.st <- data_master %>% select(Stock, BY, Ocean.Region2, early_sst, np_pinks_sec) %>% tidyr::pivot_longer(cols=c(early_sst, np_pinks_sec), names_to = "covar") %>% mutate(covar_nam = ifelse(covar=="early_sst", "SST Index", "Competitor Index"))
+covar.dat.st <- data_master %>% select(Stock, BY, Ocean.Region2, early_sst, np_all_spp_sec) %>% tidyr::pivot_longer(cols=c(early_sst, np_all_spp_sec), names_to = "covar") %>% mutate(covar_nam = ifelse(covar=="early_sst", "SST Index", "Competitor Index"))
 covar.dat.st <- ocean_region_lab(covar.dat.st)
 covar.dat.reg <- dplyr::summarize(.data=covar.dat.st, mean_covar = mean(value), .by = c("BY", "ocean_region_lab", "covar_nam"))
 

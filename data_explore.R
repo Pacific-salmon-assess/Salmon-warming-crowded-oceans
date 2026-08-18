@@ -52,7 +52,7 @@ stk.summary
 cor.stock <- plyr::ddply(data_master, .(Stock.ID), plyr::summarize,
                          Ocean.Region2 = unique(Ocean.Region2),
                          early_sst = cor(lnRS, early_sst, use = "pairwise.complete.obs"),
-                         np_pinks_sec = cor(lnRS, np_pinks_sec, use = "pairwise.complete.obs"))
+                         np_all_spp_sec = cor(lnRS, np_all_spp_sec, use = "pairwise.complete.obs"))
 
 cor.stock$Stock.ID <- NULL
 cor.stock <- reshape2::melt(cor.stock, id.vars = "Ocean.Region2")
@@ -75,7 +75,7 @@ dev.off()
 cor.stock.diff <- plyr::ddply(data_fill, .(Stock.ID), plyr::summarize,
                         Ocean.Region2 = unique(Ocean.Region2),
                         early_sst = cor(diff(lnRS), diff(early_sst), use = "pairwise.complete.obs"),
-                        np_pinks_sec = cor(diff(lnRS), diff(np_pinks_sec), use = "pairwise.complete.obs"))
+                        np_all_spp_sec = cor(diff(lnRS), diff(np_all_spp_sec), use = "pairwise.complete.obs"))
 
 cor.stock.diff$Stock.ID <- NULL
 cor.stock.diff <- reshape2::melt(cor.stock.diff, id.vars = "Ocean.Region2")
@@ -95,7 +95,7 @@ barchart(cor.avg ~ variable, data = cor.ocean.diff, groups = Ocean.Region2,
 
 ## specify covar names in data
 covars <- c("early_sst",
-            "np_pinks_sec")
+            "np_all_spp_sec")
 
 ## create empty 3D array
 array.cor <- array(NA, dim = c(length(covars),
@@ -257,14 +257,14 @@ dev.off()
 
 
 
-## Pink abundance indices ----------------------------------
+## Competitor abundance indices ----------------------------------
 
-pdf(here(fig.dir, "pink_index_second_year.pdf"), width = 19, height = 9)
-g <- xyplot(np_pinks_sec ~ BY | Stock, data = data_master,
+pdf(here(fig.dir, "comp_index_second_year.pdf"), width = 19, height = 9)
+g <- xyplot(np_all_spp_sec ~ BY | Stock, data = data_master,
             type = "l",
             xlab = "Brood year",
-            ylab = "Second year pink abundance index",
-            main = "Second year pink abundance index by stock",
+            ylab = "Second year competitor abundance index",
+            main = "Second year competitor abundance index by stock",
             par.settings = theme.mjm(),
             panel = function(x, y, ...) {
                 panel.xyplot(x, y, ...)
@@ -278,15 +278,15 @@ dev.off()
 ## Comparisons of covars -----------------------------------
 
 
-pdf(here(fig.dir, "comparison_pink_second_sst_early.pdf"), width = 19, height = 9)
-g <- xyplot(np_pinks_sec_stnd ~ early_sst_stnd | Stock, data = data_master,
+pdf(here(fig.dir, "comparison_comp_second_sst_early.pdf"), width = 19, height = 9)
+g <- xyplot(np_all_spp_sec_stnd ~ early_sst_stnd | Stock, data = data_master,
             type = "p", col = 1, cex = 0.5,
             xlim = c(-3.25, 3.25),
             ylim = c(-3.25, 3.25),
             par.settings = theme.mjm(),
             xlab = "Early SST index",
-            ylab = "Second year pink abundance index",
-            main = "Comparison of pink second year and early SST indices",
+            ylab = "Second year competitor abundance index",
+            main = "Comparison of competitor second year and early SST indices",
             panel = function(x, y, ...) {
                 panel.xyplot(x, y, ...)
                 panel.loess(x, y, col = "red2", lwd = 2)
@@ -343,14 +343,14 @@ bi.panel <- function(x, y, ...) {
     panel.xyplot(x, y, ...)
     panel.abline(lm(y ~ x), ...)
 }
-pdf(here(fig.dir, "productivity_pinks_conditional_sst.pdf"), width = 19, height = 14)
-g <- xyplot(lnRS ~ np_pinks_sec_stnd | Stock, data = data_master,
+pdf(here(fig.dir, "productivity_comp_conditional_sst.pdf"), width = 19, height = 14)
+g <- xyplot(lnRS ~ np_all_spp_sec_stnd | Stock, data = data_master,
             groups = sst.pos.neg,
             type = "p",
             par.settings = theme.mjm(),
-            xlab = "Second year pink index",
+            xlab = "Second year competitor index",
             ylab = "ln(R/S)",
-            main = "Productivity vs second year pinks conditional on early SST",
+            main = "Productivity vs second year competitors conditional on early SST",
             auto.key = list(space = "right"),
             panel = function(x, y, ...) {
                 panel.superpose(x, y, panel.groups = bi.panel, ...)
@@ -359,19 +359,19 @@ print(g)
 dev.off()
 
 ##  for SST -----------------------------------------------
-pink.pos.neg <- ifelse(data_master$np_pinks_sec_stnd >= 0, "pink_pos", "pink_neg")
+comp.pos.neg <- ifelse(data_master$np_all_spp_sec_stnd >= 0, "comp_pos", "comp_neg")
 bi.panel <- function(x, y, ...) {
   panel.xyplot(x, y, ...)
   panel.abline(lm(y ~ x), ...)
 }
-pdf(here(fig.dir, "productivity_sst_conditional_pink.pdf"), width = 19, height = 14)
+pdf(here(fig.dir, "productivity_sst_conditional_comp.pdf"), width = 19, height = 14)
 g <- xyplot(lnRS ~ early_sst_stnd | Stock, data = data_master,
-            groups = pink.pos.neg,
+            groups = comp.pos.neg,
             type = "p",
             par.settings = theme.mjm(),
             xlab = "early SST anomaly",
             ylab = "ln(R/S)",
-            main = "Productivity vs early sst conditional on second year pinks",
+            main = "Productivity vs early sst conditional on second year competitors",
             auto.key = list(space = "right"),
             panel = function(x, y, ...) {
               panel.superpose(x, y, panel.groups = bi.panel, ...)
@@ -500,9 +500,9 @@ ggplot(points.transformed) +
 # 1) Competitor time series with raw data
 
 comp.fig <- ggplot(raw.comp) +
-        geom_line(aes(x=Year, y=pink_numbers_np), col="darkred") +
+        geom_line(aes(x=Year, y=all_spp_numbers_np), col="darkred") +
         geom_vline(xintercept=c(1989,2011), color = "grey80", linetype = 2, linewidth = 0.25, alpha=0.8) +
-        labs(x="Year", y="Pink salmon \n (millions)") +
+        labs(x="Year", y="Pink, Chum, & Sockeye salmon \n (millions)") +
         scale_y_continuous(limits=c(0,800), breaks = seq(0,750,250)) +
         cowplot::theme_cowplot() +
         theme(aspect.ratio=0.35,

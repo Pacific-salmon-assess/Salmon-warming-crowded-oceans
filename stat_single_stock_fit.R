@@ -1,4 +1,4 @@
-## Fit single-stock generalized Ricker models 
+## Fit single-stock generalized Ricker models
 ## Non-hierarchical equivalents of HBM for comparison, testing model assumptions
 
 # Species
@@ -26,8 +26,8 @@ if(!dir.exists(fit.dir)) dir.create(fit.dir, recursive = T)
 
 m1a.formula <- lnRS ~ S | Stock
 m2a.formula <- lnRS ~ S + early_sst_stnd | Stock
-m3a.formula <- lnRS ~ S + np_pinks_sec_stnd | Stock
-m4a.formula <- lnRS ~ S + early_sst_stnd + np_pinks_sec_stnd | Stock
+m3a.formula <- lnRS ~ S + np_all_spp_sec_stnd | Stock
+m4a.formula <- lnRS ~ S + early_sst_stnd + np_all_spp_sec_stnd | Stock
 
 
 mod.list <- list(model1a = m1a.formula,
