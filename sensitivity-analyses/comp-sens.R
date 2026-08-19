@@ -17,7 +17,7 @@ if(speciesFlag=="pink") {
 raw.comp <- read.csv(file="data-downloaded/competitor_indices_2024.csv", header = TRUE)
 # Choose alt. competitor indices to run
 comp.sec <- data.frame(BY=NA, Stock.ID=NA)
-comp.cols <- names(raw.comp)[c(5,8,9)]#names(raw.comp)[-1]
+comp.cols <- names(raw.comp)[c(4,8,9)]#names(raw.comp)[-1]
 comp.cols.stnd <- paste0(comp.cols, "_stnd")
 
 # Load correct brood table

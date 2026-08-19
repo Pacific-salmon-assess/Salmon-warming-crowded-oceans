@@ -186,7 +186,7 @@ g <- ggplot(data = summ.pred.all.df, aes(x = comp, y = exp(med.pred), col=sst)) 
   geom_ribbon(aes(ymin=exp(lwr.pred), ymax=exp(upr.pred), col=sst, fill=sst), alpha=0.2) +
   geom_line(aes(col=sst),lwd=1.05) +
   theme_sleek() +
-  xlab("North Pacific pink abundance (millions)") +
+  xlab("North Pacific competitor abundance (millions)") +
   ylab("Recruits-per-spawner") +
   scale_color_manual(values = custom_colors)+
   scale_fill_manual(values = custom_colors) +
@@ -356,7 +356,7 @@ g <- ggplot(data = summ.pred.all.df, aes(x = comp, y = exp(med.pred), col=sst)) 
   geom_ribbon(aes(ymin=exp(lwr.pred), ymax=exp(upr.pred), col=sst, fill=sst), alpha=0.2) +
   geom_line(aes(col=sst),lwd=1.05) +
   theme_sleek() +
-  xlab("North Pacific pink abundance (millions)") +
+  xlab("North Pacific competitor abundance (millions)") +
   ylab("Recruits-per-spawner") +
   scale_color_manual(values = custom_colors)+
   scale_fill_manual(values = custom_colors) +
@@ -484,7 +484,7 @@ g <- ggplot(data = summ.pred.all.df, aes(x = comp, y = exp(med.pred), col=sst)) 
   geom_ribbon(aes(ymin=exp(lwr.pred), ymax=exp(upr.pred), col=sst, fill=sst), alpha=0.2) +
   geom_line(aes(col=sst),lwd=1.05) +
   theme_sleek() +
-  xlab("North Pacific pink abundance (millions)") +
+  xlab("North Pacific competitor abundance (millions)") +
   ylab("Recruits-per-spawner") +
   scale_color_manual(values = custom_colors)+
   scale_fill_manual(values = custom_colors) +
@@ -836,7 +836,7 @@ c <- ggplot(data=chum.box, aes(x = comp, y = exp(med.pred), col=sst)) +
   geom_ribbon(aes(ymin=exp(lwr.pred), ymax=exp(upr.pred), col=sst, fill=sst), alpha=0.125) +
   geom_line(aes(col=sst),lwd=1) +
   theme_sleek() +
-  xlab("North Pacific pink abundance (m)") +
+  xlab("North Pacific competitor abundance (m)") +
   ylab("Recruits-per-spawner") +
   scale_color_manual(values = custom_colors)+
   scale_fill_manual(values = custom_colors) +

@@ -44,7 +44,7 @@ pars.gen.quant <- c("log_lik", "yhat", "yrep", "yresid") ## Generated quantities
 stan.dat.inter <- stan_data_stat(data_master,
                                scale.x1 = TRUE,
                                var.x2 = "early_sst_stnd",
-                               var.x3 = "np_pinks_sec_stnd", # comp = pink abundance
+                               var.x3 = "np_all_spp_sec_stnd", # comp = all spp abundance
                                var.region = "Ocean.Region2",
                                alpha.group = ifelse(speciesFlag=="sockeye", TRUE, FALSE)) # set to TRUE for sockeye
 stat_inter <- rstan::stan(file = "./stan/hbm_stat_inter.stan",

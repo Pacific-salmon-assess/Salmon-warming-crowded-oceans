@@ -266,7 +266,7 @@ sock.box.rw <- sock.df.avg |>
   facet_grid(rows=vars(ocean_region_lab)) +
   scale_fill_manual(values=col.region, guide=NULL) +
   scale_colour_manual(values=col.dk) +
-  labs(x = "", y = "% Change in R/S (per 155 million pinks)", title="Sockeye") +
+  labs(x = "", y = "% Change in R/S (per 155 million competitors)", title="Sockeye") +
   theme_sleek() +
   theme(legend.position="none",
         strip.text.y.right = element_blank(),

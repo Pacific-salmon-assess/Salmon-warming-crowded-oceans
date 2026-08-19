@@ -342,7 +342,8 @@ g <- cowplot::plot_grid(map, covar, nrow=2, rel_heights=c(3,2), rel_widths = c(2
 print(g)
 dev.off()
 
-## Fig: Posterior percent change density de-trended pink model -------------------
+
+## Fig: Posterior percent change density de-trended competitors model -------------------
 load(here(fit.dir, "stat_a_detp.Rdata"))
 
 lst <- hb05_density_df(stat_a.detp, ocean.regions = ifelse(speciesFlag=="chum", 3, 4))
@@ -400,4 +401,4 @@ print(g)
 dev.off()
 
 ## --- Remove large model fits (saved in stat_hbm_fit)
-rm(list = c("stat_a"))
+rm(list = c("stat_a", "stat_a_detp"))

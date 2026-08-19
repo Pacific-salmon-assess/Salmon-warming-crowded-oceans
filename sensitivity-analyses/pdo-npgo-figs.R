@@ -25,15 +25,15 @@ array.cor <- array(NA, dim = c(4,4,nrow(all_spp_info)))
 ## calculate stock specific covar correlations
 for(i in seq_along(all_spp_info$Stock.ID)) {
   stk.i <- all.br.pdo.npgo[all.br.pdo.npgo$Stock.ID == all_spp_info$Stock.ID[i], ]
-  covar.i <- subset(stk.i, select = c("early_sst", "np_pinks_sec", "pdo_index", "npgo_index"))
+  covar.i <- subset(stk.i, select = c("early_sst", "np_all_spp_sec", "pdo_index", "npgo_index"))
   cor.i <- cor(covar.i, use = "pairwise.complete.obs")
   array.cor[ , , i] <- cor.i
 }
 
 ## Average across stocks
 cor.covars <- apply(array.cor, c(1, 2), mean)
-row.names(cor.covars) <- c("early_sst", "np_pinks_sec", "pdo_index", "npgo_index")
-colnames(cor.covars) <- c("early_sst", "np_pinks_sec", "pdo_index", "npgo_index")
+row.names(cor.covars) <- c("early_sst", "np_all_spp_sec", "pdo_index", "npgo_index")
+colnames(cor.covars) <- c("early_sst", "np_all_spp_sec", "pdo_index", "npgo_index")
 
 corrplot::corrplot(cor.covars, method="color", type="upper",
                    addCoef.col = "black", tl.col="black",
@@ -53,15 +53,15 @@ for(e in 1:3){
   for(i in seq_along(all_spp_info$Stock.ID)) {
     stk.i <- filter(all.br.pdo.npgo, Stock.ID==all_spp_info$Stock.ID[i], BY %in% era.yrs$start[e]:era.yrs$end[e])
     if(empty(stk.i)) next
-    covar.i <- subset(stk.i, select = c("early_sst", "np_pinks_sec", "pdo_index", "npgo_index"))
+    covar.i <- subset(stk.i, select = c("early_sst", "np_all_spp_sec", "pdo_index", "npgo_index"))
     cor.i <- cor(covar.i, use = "pairwise.complete.obs")
     array.cor[ , , i] <- cor.i
   }
 
   ## Average across stocks
   cor.covars <- apply(array.cor, c(1, 2), mean, na.rm=T)
-  row.names(cor.covars) <- c("early_sst", "np_pinks_sec", "pdo_index", "npgo_index")
-  colnames(cor.covars) <- c("early_sst", "np_pinks_sec", "pdo_index", "npgo_index")
+  row.names(cor.covars) <- c("early_sst", "np_all_spp_sec", "pdo_index", "npgo_index")
+  colnames(cor.covars) <- c("early_sst", "np_all_spp_sec", "pdo_index", "npgo_index")
 
   g <- corrplot::corrplot(cor.covars, method="color", type="upper",
                           addCoef.col = "black", tl.col="black",
@@ -85,7 +85,7 @@ pdf(file= here(sens.fig.dir, "pdo-npgo-prod-corr.pdf"))
 cor.stock <- plyr::ddply(all.br.pdo.npgo, .(Stock.ID), plyr::summarize,
                          Ocean.Region2 = unique(Ocean.Region2),
                          early_sst = cor(lnRS, early_sst, use = "pairwise.complete.obs"),
-                         np_pinks_sec = cor(lnRS, np_pinks_sec, use = "pairwise.complete.obs"),
+                         np_all_spp_sec = cor(lnRS, np_all_spp_sec, use = "pairwise.complete.obs"),
                          npgo = cor(lnRS, npgo_index, use="pairwise.complete.obs"),
                          pdo = cor(lnRS, pdo_index, use="pairwise.complete.obs"))
 
@@ -107,7 +107,7 @@ for(e in 1:3) { # loop over eras
   cor.stock <- plyr::ddply(dat, .(Stock.ID), plyr::summarize,
                            Ocean.Region2 = unique(Ocean.Region2),
                            early_sst = cor(lnRS, early_sst, use = "pairwise.complete.obs"),
-                           np_pinks_sec = cor(lnRS, np_pinks_sec, use = "pairwise.complete.obs"),
+                           np_all_spp_sec = cor(lnRS, np_all_spp_sec, use = "pairwise.complete.obs"),
                            npgo = cor(lnRS, npgo_index, use="pairwise.complete.obs"),
                            pdo = cor(lnRS, pdo_index, use="pairwise.complete.obs"))
 

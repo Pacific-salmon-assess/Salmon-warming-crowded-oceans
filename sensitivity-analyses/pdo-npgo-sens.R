@@ -103,7 +103,7 @@ write.csv(br.pdo.npgo, here(sens.fit.dir, 'data_covar_pdo_npgo.csv'), row.names 
 stan.dat.npgo <- stan_data_stat(data_master,
                                scale.x1 = TRUE,
                                var.x2 = "early_sst_stnd",
-                               var.x3 = "np_pinks_sec_stnd",
+                               var.x3 = "np_all_spp_sec_stnd",
                                var.region = "Ocean.Region2",
                                alpha.group = ifelse(speciesFlag=="sockeye", TRUE, FALSE))
 stan.dat.npgo$x4 <- br.npgo$npgo_stnd
@@ -124,7 +124,7 @@ save(stat_npgo, file = here(sens.fit.dir, "stat_npgo.RData"))
 ## Run MCMC, Eras model
 stan.dat.era.npgo <- stan_data_dyn(data_master,
                                    var.x2 = "early_sst_stnd",
-                                   var.x3 = "np_pinks_sec_stnd",
+                                   var.x3 = "np_all_spp_sec_stnd",
                                    breakpoint1 = 1989,
                                    breakpoint2 = 2011,
                                    var.region="Ocean.Region2",
@@ -220,7 +220,7 @@ write.csv(tab.coef, file = here(sens.fig.dir, paste0("model_coefficients_stat_np
 stan.dat.pdo <- stan_data_stat(data_master,
                                 scale.x1 = TRUE,
                                 var.x2 = "early_sst_stnd",
-                                var.x3 = "np_pinks_sec_stnd",
+                                var.x3 = "np_all_spp_sec_stnd",
                                 var.region = "Ocean.Region2",
                                 alpha.group = ifelse(speciesFlag=="sockeye", TRUE, FALSE))
 stan.dat.pdo$x4 <- br.pdo$pdo_stnd
@@ -242,7 +242,7 @@ save(stat_pdo, file = here(sens.fit.dir, "stat_pdo.RData"))
 
 stan.dat.era.pdo <- stan_data_dyn(data_master,
                                    var.x2 = "early_sst_stnd",
-                                   var.x3 = "np_pinks_sec_stnd",
+                                   var.x3 = "np_all_spp_sec_stnd",
                                    breakpoint1 = 1989,
                                    breakpoint2 = 2011,
                                    var.region="Ocean.Region2",

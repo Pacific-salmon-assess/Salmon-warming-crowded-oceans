@@ -19,7 +19,7 @@ suppressWarnings(source("load.R"))
 # 2. Data cleaning & processing
 source("sock_data_clean.R")
 source("pink_chum_data_clean.R")
-#source("sst_import_process.R") ## ONLY if climate data have changed - long run time
+#source("sst_import_process.R") ## ONLY if climate data have changed - long run time # Need internet connection
 #source("sst_explore.R") ## ONLY if climate data have changed - long run time
 source("sock_covariates.R")
 source("pink_chum_covariates.R")
