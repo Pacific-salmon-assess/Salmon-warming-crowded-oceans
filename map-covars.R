@@ -85,7 +85,7 @@ sst.fig <-
   geom_line(aes(x=year, y=sst.anom, col=ocean_region_lab, group=stock.id), alpha=0.2) +
   #geom_point(aes(x=year, y=lims), col="transparent") +
   geom_hline(aes(yintercept=0), linetype=1, col="gray50") +
-  geom_vline(xintercept=c(1989,2011), color = "grey80", linetype = 2, linewidth = 0.25, alpha=0.8) +
+  geom_vline(xintercept=c(1989,2011), color = "grey60", linetype = 2, linewidth = 0.25, alpha=0.8) +
   facet_grid(rows=vars(as.character(ocean_region_lab)),
              scales="free_y", labeller =
                as_labeller(c("West Coast" = "WC",
@@ -102,12 +102,12 @@ sst.fig <-
         plot.margin = margin(r=-2, l=10),
         axis.text.y.left = element_text(margin=margin(l=-2)))
 
-# Pink salmon timeseries
+# total salmon timeseries
 comp.fig <- ggplot(raw.comp) +
-  geom_line(aes(x=Year, y=pink_numbers_np), col="grey20") +
-  geom_vline(xintercept=c(1989,2011), color = "grey80", linetype = 2, linewidth = 0.25, alpha=0.8) +
-  labs(x="Year", y="Pink salmon\n(millions)") +
-  scale_y_continuous(limits=c(0,800), breaks = seq(0,750,250),
+  geom_line(aes(x=Year, y=all_spp_numbers_np), col="grey20") +
+  geom_vline(xintercept=c(1989,2011), color = "grey60", linetype = 2, linewidth = 0.25, alpha=0.8) +
+  labs(x="Year", y="Salmon (M)") +
+  scale_y_continuous(limits=c(0,1000), breaks = seq(0,900,300),
                      position="left") +
   scale_x_continuous(breaks=seq(1960,2020,20)) +
   theme_sleek() +
@@ -195,32 +195,10 @@ lgnd2 <- lgnd.dat |> ggplot() +
 blank <- ggplot() + theme(panel.background = element_rect(fill="white")) # blank grob to put legend on
 legend <- cowplot::ggdraw(blank) + cowplot::draw_plot(lgnd2)
 
-
-
-# arrangement 1
 right <- cowplot::plot_grid(sst.fig, sst_raw_dot, rel_heights=c(2.5,1), nrow=2, labels=c("c", "d"), hjust=-1.5) # horizonal justification doesn't work either as
 left <- cowplot::plot_grid(map_albers, (comp.fig + theme_sleek()), ncol=1, rel_heights = c(2.5, 1), labels="auto", hjust=-1.7, vjust=c(1.5, .7))
 intro.plot.2025 <- cowplot::plot_grid(left, right, ncol=2, rel_widths = c(1.7, 1))
-png(here("figures", "spp-explore", "multi-intro-2025-al.png"), height=721*1.5, width=1000*1.5, res=72*3)
+png(here("figures", "manuscript/main-text", "map-covariates.png"), height=721*1.5, width=1000*1.5, res=72*3)
 print(intro.plot.2025)
 dev.off()
 
-
-# Alternative arrangement 2
-right <- cowplot::plot_grid(sst.fig, comp.fig, rel_heights=c(2.5,1), nrow=2, labels=c("c", "d"))
-
-test <- cowplot::plot_grid(left, right, ncol=2, rel_widths = c(1.8, 1))
-
-png(here("figures", "spp-explore", "multi-intro-2025-al2.png"), height=721*1.5, width=1000*1.5, res=72*3)
-print(test)
-dev.off()
-
-# Arrangement 3
-top <- plot_grid(map_albers, sst.fig, ncol=2, labels="auto", rel_widths = c(1.8, 1))
-bottom <- plot_grid(comp.fig, (sst_raw_inset_hor + theme(axis.text = element_blank())), legend, nrow=1, labels = c("c", "d", ""), rel_widths=c(1.5,1.5,1))
-
-test3 <- plot_grid(top, bottom, nrow=2, rel_heights=c(1,0.4))
-
-png(here("figures", "spp-explore", "multi-intro-2025-al3.png"), height=721*1.5, width=1000*1.5, res=72*3)
-print(test3)
-dev.off()
