@@ -40,7 +40,7 @@ save(pars.stat, file = "./output/pars_inter_stat.RData")
 pars.gen.quant <- c("log_lik", "yhat", "yrep", "yresid") ## Generated quantities to monitor
 
 
-## Run MCMC
+## Run MCMC for trended competitor covariate
 stan.dat.inter <- stan_data_stat(data_master,
                                scale.x1 = TRUE,
                                var.x2 = "early_sst_stnd",
@@ -68,7 +68,7 @@ coda_rhat(get_rhat(stat_inter, pars = pars.stat))
 coda_diag(As.mcmc.list(stat_inter, pars = pars.stat))
 dev.off()
 
-plot_post_pc(stat_inter, stan.dat.all$y, pdf.path = here(diag.fig.dir, "stat_inter_yrep.pdf")) # Working again?
+plot_post_pc(stat_inter, stan.dat.inter$y, pdf.path = here(diag.fig.dir, "stat_inter_yrep.pdf")) # Working again?
 
 loo.stat_inter <- rstan::loo(stat_inter, cores = 4)
 save(loo.stat_inter, file = here(diag.dir, "loo_stat_inter.RData"))
@@ -221,3 +221,21 @@ pdf(here(fig.dir, "dens_stat_inter.pdf"), width = 4, height = 6)
 print(g)
 dev.off()
 
+## Run MCMC for trended competitor covariate
+stan.dat.inter.detp <- stan_data_stat(data_master,
+                                      scale.x1 = TRUE,
+                                      var.x2 = "early_sst_stnd",
+                                      var.x3 = "det_np_all_spp_sec_stnd", # comp = all spp abundance detrended
+                                      var.region = "Ocean.Region2",
+                                      alpha.group = ifelse(speciesFlag=="sockeye", TRUE, FALSE)) # set to TRUE for sockeye
+stat_inter.detp <- rstan::stan(file = "./stan/hbm_stat_inter.stan",
+                               data = stan.dat.inter.detp,
+                               pars = c(pars.stat, pars.gen.quant),
+                               warmup = 1000,
+                               iter = 3000,
+                               cores = 4,
+                               chains = 4,
+                               seed = 123,
+                               control = list(adapt_delta = 0.99,
+                                              max_treedepth = 20)) # increased treedepth
+save(stat_inter.detp, file = here(fit.dir, "stat_inter_detr.RData"))

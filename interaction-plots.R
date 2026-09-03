@@ -59,7 +59,7 @@ g<-ggplot(m.df.plot) +
   xlim(-50,50) +
   theme_sleek(base_size = 9) +
   theme(legend.justification = c(0, 0),
-        legend.position = c(0.82, 0.1),
+        legend.position = c(0.83, 0.76),
         legend.key.size = unit(10, "pt"),
         legend.background = element_blank(),
         legend.text = element_text(size = 6),
