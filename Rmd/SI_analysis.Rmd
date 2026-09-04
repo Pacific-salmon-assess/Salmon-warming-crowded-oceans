@@ -1,0 +1,208 @@
+---
+title: "Supporting Information for"
+subtitle: "Geography and life history mediate Pacific salmon responses to ocean warming and competition at sea"
+author: "Hannah Hunter, Brendan Connors, ..."
+output:
+  word_document:
+    fig_caption: false
+    toc: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+library(knitr)
+```
+
+
+**Supporting Information Text**
+
+**Salmon data**
+
+We compiled data for pink, chum and sockeye salmon from a large public database of Pacific salmon spawner and recruitment time series (Greenberg et al. 2026). These populations spanned 46.37 to 66.46 degrees in latitude and from 1948 to 2024. We discarded observations prior to 1950 due to concerns about data quality, and did not include time series that did not span at least brood years 1984-2014 and with minimal missing observation (i.e., > 80% of all years) (Figures S1-S3). We further excluded time series with known substantial hatchery influence to restrict our analysis to wild salmon populations. The resulting dataset included 66 sockeye populations, 28 chum salmon populations, and 33 pink salmon populations, grouped into three (chum) or four (sockeye and pink) large marine ecosystems/regions (Table S1). The most populations in a single region were West Coast sockeye (n=26) and the fewest were in the Bering Sea for pink salmon (n=4).
+
+Unlike for other systems and species, estimates of spawner abundance for Fraser River were "effective female spawners" instead of total spawners, which accounts for the at times substantial pre-spawn mortality (i.e., mortality after arrival on the spawning grounds, but before spawning) and variable egg retention in this system. Additionally, return abundance estimates for Fraser River sockeye salmon account for en route mortality (i.e., mortality after freshwater entry, but before arrival on the spawning grounds), which can be considerable in certain years. While there is likely pre-spawn and en route mortality in other systems and species it is only systematically accounted for in the Fraser. Because of this, for modeling sockeye dynamics only, we allowed regional intrinsic productivity to arise from a common normal distribution that was allowed to differ from populations in other regions. In addition, for Fraser sockeye any confounding of freshwater temperature effects on return migration on estimates of marine temperature effects (e.g., in instances where they are correlated) in our analyses are accounted for by having adult recruitment explicitly account for freshwater migration mortality.
+
+Sockeye can rear in freshwater for a variable length of time before migrating to sea, and both sockeye and chum can mature and return to spawn at variable ages. Where possible we used brood year specific estimates of age at ocean entry and return; when this data was not available we used estimates from adjacent years, or the mean across all years if only a few years had brood year specific estimates. In some instances for chum, there were no age data available, and so we assumed a fixed four-year life cycle, following Malick et al. 2016 who found that assuming a fixed four year life cycle for chum introduced minimal bias into reconstructions of their population dynamics.
+
+**Sensitivity Analyses**
+
+Our analyses made a number of simplifying assumptions about processes that are hypothesized to influence Pacific salmon dynamics. Our intent was to quantify the statistical evidence for a relatively narrow set of hypotheses with strong a-priori justification (i.e., the model/hypotheses in the main text), and to then conduct sensitivity analyses to understand the extent to which our findings are sensitive to assumptions made during the analysis.
+
+**Alternative climate indices**
+
+Our analyses focused on coastal SST during early marine life as an index of ecological conditions during early marine life for each salmon population. This index has been repeatedly shown to correlate with pink, chum, and sockeye productivity across our study area (Mueter et al. 2002, Malick 2020, Connors et al. 2020). However, previous analyses have also shown that the NPGO, that indexes sea surface height and is associated with primary production (e.g., nutrients, salinity, and chlorophyll-a.), can be associated with salmon productivity (Malick et al. 2017). To quantify the degree to which our inference about SST and pink salmon effects were confounded by other ocean basin scale processes (e.g., like those indexed by the NPGO) we repeated our analysis with the addition of the NPGO index. Specifically, we derived population-specific indices of the NPGO by averaging monthly values over the December-March period immediately prior to ocean entry, as in and Mueter et al. (2002) and Malick et al. (2017) and then included it as an additional covariate in either the stationary or "era" models. There was no strong positive correlation between the NPGO index and the SST or competitor covariates when all years were considered (-0.25 and 0.04 respectively). In contrast, our SST indices were moderately strongly correlated with another commonly considered ocean basin scale index, the PDO (0.4 across all years; 0.77 in the most recent time period), and so we did not consider it in our analyses.
+
+Stationary models that included the additional covariate indicated that the NPGO had a relatively small effect on productivity (Figure S8, S9, S10), with the exception of West Coast chum salmon (Figure S9), and adding the covariate had little effect on estimates of the effects of others covariates. In the era models, there were larger magnitudes of positive NPGO effects in the most recent time period for sockeye (Figure S8), chum from more northern latitudes (Figure S9), and a negative effect for West Coast pink salmon (Figure S10). Overall, the spatial and temporal patterns we describe in the main text were minimally sensitive to the addition of this additional covariate.
+
+**Alternative salmon competitor indices.**
+
+We considered alternative formulations of the index of salmon competitors in late marine life, including (1) the combined biomass of all sockeye, chum, and pink salmon in the North Pacific, (2) the combined total North Pacific abundance of these three species, and (3) total North Pacific pink salmon biomass. Each represents a slightly different assumption about the nature of competition among salmon at sea, for example, whether competition occurs among all pink, chum, and sockeye salmon, or primarily with pink salmon, or whether biomass better indexes potential competitors than abundance. We include pink salmon abundance as a covariate in the main analysis because of evidence that pink salmon are highly efficient foragers, despite their small size, and are known to affect survival of other salmon via direct effects and trophic cascades when present in large numbers. However, it could be argued that biomass is a better measure of their total resource consumption, or that including the three most abundant species would better reflect resource constraints.
+
+We quantified the sensitivity of our results to these alternative assumptions by substituting each alternative index into the stationary and era models in the place of pink salmon abundance. The indices were calculated in the same way as the original competitor index, on an annual basis. The alternative indices of competition had little effect on any results (Figures S11 to S13), unsurprisingly due to the high correlation among all the indices. In some cases, the alternative indices produced stronger competitor effect sizes, e.g. for sockeye in the late time period, but the trend was not consistent.
+
+**Detrended salmon competitor index.**
+
+The pink, chum, and sockeye salmon abundance time series we considered as an index of competition among salmon at sea exhibits an increasing time trend, in addition to high frequency year-to-year variation (Figure 1b in main text; Figure S14a). As a result it is possible that other unaccounted for processes that exhibit strong positive trends over the same period (e.g., marine mammal populations, ocean heat content) may confound our interpretation of a pink salmon competition "effect". While the weight of evidence for the effect of competition with especially pink salmon on other salmon species is much stronger (Ruggerone et al. 2023) than for these other potential ecosystem changes, as a sensitivity analysis we also conducted an analysis with the temporal signal in the salmon time series removed. To do this we fit a General Additive Model to the North Pacific pink, chum, and sockeye salmon time series (Figure S14a) and used the resulting residuals of the model fit as an alternative, time trend removed, competitor index (Figure S14b). We then refit the stationary model (equation 1 in Main Text) with this alternative index to each of the sockeye, chum, and pink salmon spawner-recruitment dataset.
+
+Consistent with previous analyses that have fit models of salmon productivity to detrended pink salmon competitor indices (Ruggerone and Connors 2015; Connors et al. 2020) statistical evidence of an inverse relationship between sockeye productivity and pink salmon abundance remained, though as expected since long term low frequency variation in the pink time series was removed, the magnitude of predicted percentage change in recruits-per-spawner was smaller (Figure S14d).
+
+\newpage
+
+# Figures
+
+```{r fig-s1, out.width="80%", fig.align="center"}
+knitr::include_graphics("figures/FigureS1.png")
+```
+
+**Figure S1.** Sockeye salmon recruits-per-spawner timeseries used in the analysis. Missing brood years are in grey, regions are color coded (Table S1), and the temporal break point denoting the three "eras" considered are illustrated with vertical dashed lines.
+
+```{r fig-s2, out.width="80%", fig.align="center"}
+knitr::include_graphics("figures/FigureS2.png")
+```
+
+**Figure S2.** Chum salmon recruits-per-spawner timeseries used in the analysis. Missing brood years are in grey, regions are color coded (Table S1), and the temporal break point denoting the three "eras" considered are illustrated with vertical dashed lines.
+
+```{r fig-s3, out.width="80%", fig.align="center"}
+knitr::include_graphics("figures/FigureS3.png")
+```
+
+**Figure S3.** Pink salmon recruits-per-spawner timeseries used in the analysis. Missing brood years are in grey, regions are color coded (Table S1), and the temporal break point denoting the three "eras" considered are illustrated with vertical dashed lines.
+
+```{r fig-s4, out.width="80%", fig.align="center"}
+knitr::include_graphics("figures/FigureS4.png")
+```
+
+**Figure S4.** Sockeye posterior distribution summaries for SST and competition coefficients from the model described in the main text (equation 1). Filled points are posterior medians (points) and 95% credible intervals (horizontal lines) for the stock-specific effects of SST, and pink salmon competition, and open points are estimates from a simplified model that is fit individually and independently for each stock. Solid vertical lines give the posterior median for the ocean ecosystem level effects, which represent the mean effect across all stocks in an ocean ecosystem. Shaded box give the 95% credibility interval for the ecosystem-level effect with dashed lines indicating zero effect.
+
+```{r fig-s5, out.width="80%", fig.align="center"}
+knitr::include_graphics("figures/FigureS5.png")
+```
+
+**Figure S5.** Same as Figure S4 but for chum salmon stocks.
+
+```{r fig-s6, out.width="80%", fig.align="center"}
+knitr::include_graphics("figures/FigureS6.png")
+```
+
+**Figure S6.** Same as Figure S4 but for pink salmon stocks.
+
+```{r fig-s8, out.width="80%", fig.align="center"}
+knitr::include_graphics("figures/FigureS8.png")
+```
+
+**Figure S8.** Posterior distribution summaries for covariate effects on sockeye salmon productivity when including the NPGO as an additional covariate in models (coloured points and lines) compared to original models with only SST, pink salmon competitors, and their interaction (grey points and lines). Points are medians of posterior distributions, lines are 95% credible intervals. Effect sizes estimated from time-varying models (pre-defined break points) are indicated with diamond-shaped points and labeled by time period: "Early" (1960-1988), "Middle" (1989-2010), or "Late" (2011-2016). Estimates from stationary models considering all years are indicated with square points and labeled "All".
+
+```{r fig-s9, out.width="80%", fig.align="center"}
+knitr::include_graphics("figures/FigureS9.png")
+```
+
+**Figure S9.** Same as Figure S8 but for chum salmon stocks.
+
+```{r fig-s10, out.width="80%", fig.align="center"}
+knitr::include_graphics("figures/FigureS10.png")
+```
+
+**Figure S10.** Same as Figure S8 but for pink salmon stocks.
+
+```{r fig-s11, out.width="80%", fig.align="center"}
+knitr::include_graphics("figures/FigureS11.png")
+```
+
+**Figure S11.** Posterior distribution summaries for covariate effects on sockeye salmon productivity across alternative indices of potential salmon competitors including: combined biomass of all sockeye, chum, and pink salmon in the North Pacific (circles), combined abundance of all three species (triangles), and pink salmon biomass (squares), in addition to the pink salmon abundance index used in the base case analyses (diamonds). Points are posterior means and vertical lines are 95% credible intervals. Effect sizes estimated from time-varying models (pre-defined break points or "eras") are labeled by time period: "Early" (1960-1988), "Middle" (1989-2010), or "Late" (2011-2016). Estimates from stationary models that consider all years are labeled "All".
+
+```{r fig-s12, out.width="80%", fig.align="center"}
+knitr::include_graphics("figures/FigureS12.png")
+```
+
+**Figure S12.** Same as Figure S11 but for chum salmon stocks.
+
+```{r fig-s13, out.width="80%", fig.align="center"}
+knitr::include_graphics("figures/FigureS13.png")
+```
+
+**Figure S13.** Same as Figure S11 but for pink salmon stocks.
+
+```{r fig-s14, out.width="80%", fig.align="center"}
+knitr::include_graphics("figures/FigureS14.png")
+```
+
+**Figure S14.** (a) North Pacific pink salmon abundance over time (light grey) and GAM model fit to time series (blue) with resulting residuals of GAM model fit show in (b).
+
+```{r fig-s15, out.width="80%", fig.align="center"}
+knitr::include_graphics("figures/FigureS15.png")
+```
+
+**Figure S15.** Effect of detrending salmon competitor index on estimates of impact of ocean warming and competition at sea. Posterior probability distributions of the predicted effect of SST and detrended competitors (Figure S14b) on sockeye, chum and pink salmon productivity (percentage change in adult recruits per spawner) by ocean ecosystem (same as Figure 2 in Main Text).
+
+\newpage
+
+# Tables
+
+**Table S1.** Populations included in analysis, with region assigned in analysis, years of data covered, and coordinates of ocean entry point.
+
+*See: [Data/all_species_info_pub.csv](https://github.com/Pacific-salmon-assess/Salmon-warming-crowded-oceans/blob/update-branch/data/all_species_info_pub.csv)*
+
+**Table S2.** Estimated mean effect sizes by region for SST and Competitor covariates, and interaction term, from stationary models.
+
+```{r table-s2}
+table_s2 <- read.csv("tables/TableS2_data.csv", check.names = FALSE)
+knitr::kable(
+  table_s2,
+  col.names = c("Species", "Ecosystem", "Coefficient", "Lower 95% CI", "Mean", "Upper 95% CI", "Mean % change in R/S"),
+  align = "llrrrrr"
+)
+```
+
+**Table S3.** Estimated stock-specific mean effect sizes for SST and Competitor covariates, and interaction term, from stationary models.
+
+*Combine the following:*
+
+- Figures/stat/sockeye/hbm_inf/stk_coefficients_stat_inter_sockeye.csv
+- Figures/stat/chum/hbm_inf/stk_coefficients_stat_inter_chum.csv
+- Figures/stat/pink/hbm_inf/stk_coefficients_stat_inter_pink.csv
+
+**Table S4.** Estimated regional mean effect sizes for SST and Competitor covariates, from time-varying 'era' models.
+
+*Combine the following:*
+
+- Figures/dyn/sockeye/hbm_inf/reg_coefficients_era_sockeye.csv
+- Figures/dyn/sockeye/hbm_inf/reg_coefficients_era_chum.csv
+- Figures/dyn/sockeye/hbm_inf/reg_coefficients_era_pink.csv
+
+**Table S5.** Estimated stock-specific mean effect sizes for SST and Competitor covariates, from time-varying 'era' models.
+
+*Combine the following:*
+
+- Figures/dyn/sockeye/hbm_inf/stk_coefficients_era_sockeye.csv
+- Figures/dyn/sockeye/hbm_inf/stk_coefficients_era_chum.csv
+- Figures/dyn/sockeye/hbm_inf/stk_coefficients_era_pink.csv
+
+**Table S6.** Estimated regional mean effect sizes for SST and Competitor covariates, from annually time-varying (random walk) models.
+
+*Combine the following:*
+
+- Figures/dyn/sockeye/hbm_inf/reg_coefficients_rw_sockeye.csv
+- Figures/dyn/sockeye/hbm_inf/reg_coefficients_rw_chum.csv
+- Figures/dyn/sockeye/hbm_inf/reg_coefficients_rw_pink.csv
+
+**Table S7.** Estimated stock-specific mean effect sizes for SST and Competitor covariates, from annually time-varying (random walk) models.
+
+*Combine the following:*
+
+- Figures/dyn/sockeye/hbm_inf/stk_coefficients_rw_sockeye.csv
+- Figures/dyn/sockeye/hbm_inf/stk_coefficients_rw_chum.csv
+- Figures/dyn/sockeye/hbm_inf/stk_coefficients_rw_pink.csv
+
+**Table S8.** Priors on all directly estimated parameters for each model type.
+
+*See: Output/Model_priors.xlsx*
+
+\newpage
+
+# SI References
+
+Connors, B., Malick, M. J., Ruggerone, G. T., Rand, P., Adkison, M., Irvine, J. R., Campbell, R., & Gorman, K. (2020). Climate and competition influence sockeye salmon population dynamics across the Northeast Pacific Ocean. Canadian Journal of Fisheries and Aquatic Sciences, 77(6), 943-949. https://doi.org/10.1139/cjfas-2019-0422
+
+Malick, M. J., Cox, S. P., Mueter, F. J., Dorner, B., & Peterman, R. M. (2017). Effects of the North Pacific Current on the productivity of 163 Pacific salmon stocks. Fisheries Oceanography, 26(3), 268-281. https://doi.org/10.1111/fog.12190
+
+Mueter, F. J., Peterman, R. M., & Pyper, B. J. (2002). Opposite effects of ocean temperature on survival rates of 120 stocks of Pacific salmon (Oncorhynchus spp.) in northern and southern areas. Canadian Journal of Fisheries and Aquatic Sciences, 59(3), 456-463. https://doi.org/10.1139/f02-020
