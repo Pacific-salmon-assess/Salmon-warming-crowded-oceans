@@ -56,9 +56,11 @@ for(sp in species) {
 }
 
 # 7. All species figures
+source("map-covar.R") # Make map and covariate figure
 source("interaction-plots.R") # Make sst x comp interaction figures
 source("era_rw_fig.R") # Make main era + RW results figures
 source("sensitivity-analyses/pdo-npgo-figs.R")
+source("sensitivity-analyses/detrend-figs.R")
 
 
 time.run <- proc.time() - time.start

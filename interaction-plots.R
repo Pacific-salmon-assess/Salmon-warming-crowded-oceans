@@ -59,7 +59,7 @@ g<-ggplot(m.df.plot) +
   xlim(-50,50) +
   theme_sleek(base_size = 9) +
   theme(legend.justification = c(0, 0),
-        legend.position = c(0.82, 0.1),
+        legend.position = c(0.83, 0.76),
         legend.key.size = unit(10, "pt"),
         legend.background = element_blank(),
         legend.text = element_text(size = 6),
@@ -69,7 +69,7 @@ g<-ggplot(m.df.plot) +
         legend.key.spacing = unit(-0.5, "pt"))
 
 
-png(here('figures', 'spp-explore', "dens_stat_inter_allsp.png"), width = 800*2, height = 500*2, res = 72*4)
+png(here('figures', 'manuscript/main-text', "posterior-percent-change.png"), width = 800*2, height = 500*2, res = 72*4)
 print(g)
 dev.off()
 
@@ -84,6 +84,16 @@ sockeye_post <- as.data.frame(stat_inter)
 sst_index <- c(-2,2)
 comp_index <- seq(0,3,length.out=100)
 
+# calculate what raw all species abundance is at 0-3 SDUs
+raw.comp$all_spp_anomaly <- scale(raw.comp$all_spp_numbers_np)
+comp_index_0 <- which.min(abs(raw.comp$all_spp_anomaly - 0))
+comp_index_1 <- which.min(abs(raw.comp$all_spp_anomaly - 1))
+comp_index_2 <- which.min(abs(raw.comp$all_spp_anomaly - 2))
+comp_index_3 <- which.min(abs(raw.comp$all_spp_anomaly - 3))
+comp_label <- round(c(raw.comp$all_spp_numbers_np[comp_index_0], raw.comp$all_spp_numbers_np[comp_index_1], raw.comp$all_spp_numbers_np[comp_index_2],
+                raw.comp$all_spp_numbers_np[comp_index_3]))
+
+
 pred.all.df <- data.frame(
   prod = numeric(0),
   comp = numeric(0),
@@ -93,7 +103,7 @@ pred.all.df <- data.frame(
 
   for (i in 1:1000){ # west coast
     samp <- sample(4000,1)
-    alpha <- sockeye_post$`mu_alpha[1]`[samp]
+    alpha <- sockeye_post$`mu_alpha[2]`[samp]
     sst <- sockeye_post$`mu_gamma[1]`[samp] # SST effect
     comp <- sockeye_post$`mu_kappa[1]`[samp] # comp effect
     sstXcomp <- sockeye_post$`mu_chi[1]`[samp] # interaction
@@ -180,7 +190,6 @@ summ.pred.all.df <- pred.all.df |>
             upr.pred = quantile(prod, probs = 0.8, na.rm = TRUE))
 
 custom_colors <- c("cool" = "blue", "warm" = "red")
-comp_label <- c(400,500,600,700)
 
 g <- ggplot(data = summ.pred.all.df, aes(x = comp, y = exp(med.pred), col=sst)) +
   geom_ribbon(aes(ymin=exp(lwr.pred), ymax=exp(upr.pred), col=sst, fill=sst), alpha=0.2) +
@@ -190,7 +199,7 @@ g <- ggplot(data = summ.pred.all.df, aes(x = comp, y = exp(med.pred), col=sst)) 
   ylab("Recruits-per-spawner") +
   scale_color_manual(values = custom_colors)+
   scale_fill_manual(values = custom_colors) +
-  facet_wrap(~region, ncol=2, scales="free_y") +
+  facet_wrap(~region, ncol=2) +
   labs(fill = "SST") +
   scale_x_continuous(breaks=c(0,1,2,3),labels=comp_label)+
   guides(color="none") +
@@ -350,7 +359,6 @@ summ.pred.all.df <- pred.all.df |>
             upr.pred = quantile(prod, probs = 0.8, na.rm = TRUE))
 
 custom_colors <- c("cool" = "blue", "warm" = "red")
-comp_label <- c(400,500,600,700)
 
 g <- ggplot(data = summ.pred.all.df, aes(x = comp, y = exp(med.pred), col=sst)) +
   geom_ribbon(aes(ymin=exp(lwr.pred), ymax=exp(upr.pred), col=sst, fill=sst), alpha=0.2) +
@@ -360,7 +368,7 @@ g <- ggplot(data = summ.pred.all.df, aes(x = comp, y = exp(med.pred), col=sst)) 
   ylab("Recruits-per-spawner") +
   scale_color_manual(values = custom_colors)+
   scale_fill_manual(values = custom_colors) +
-  facet_wrap(~region, scales = "free_y",ncol=2) +
+  facet_wrap(~region,ncol=2) +
   labs(fill = "SST") +
   scale_x_continuous(breaks=c(0,1,2,3),labels=comp_label)+
   guides(color="none")+
@@ -478,7 +486,6 @@ summ.pred.all.df <- pred.all.df |>
             upr.pred = quantile(prod, probs = 0.8, na.rm = TRUE))
 
 custom_colors <- c("cool" = "blue", "warm" = "red")
-comp_label <- c(400,500,600,700)
 
 g <- ggplot(data = summ.pred.all.df, aes(x = comp, y = exp(med.pred), col=sst)) +
   geom_ribbon(aes(ymin=exp(lwr.pred), ymax=exp(upr.pred), col=sst, fill=sst), alpha=0.2) +
@@ -488,7 +495,7 @@ g <- ggplot(data = summ.pred.all.df, aes(x = comp, y = exp(med.pred), col=sst)) 
   ylab("Recruits-per-spawner") +
   scale_color_manual(values = custom_colors)+
   scale_fill_manual(values = custom_colors) +
-  facet_wrap(~region, scales = "free_y", ncol=2) +
+  facet_wrap(~region, ncol=2) +
   labs(fill = "SST") +
   scale_x_continuous(breaks=c(0,1,2,3),labels=comp_label)+
   guides(color="none")+
@@ -799,7 +806,6 @@ summ.pred.all.pink.df <- pred.all.df |>
 summ.pred.all.spp.df <- rbind(summ.pred.all.pink.df,summ.pred.all.chum.df,summ.pred.all.sockeye.df)
 
 custom_colors <- c("cool" = "blue", "warm" = "red")
-comp_label <- c(340, 470, 600, 720)
 
 
 # Sockeye
@@ -883,6 +889,6 @@ full.interaction <- cowplot::plot_grid(s, c + theme(axis.title.y.left = element_
       gp = grid::gpar(fill = "white", col = NA)))
 
 
-png(here('figures/spp-explore/interaction_full.png'), width=900*3, height=600*3, res=72*5)
+png(here('figures/manuscript/main-text/sst-comp-interaction.png'), width=900*3, height=600*3, res=72*5)
 print(full.interaction)
 dev.off()

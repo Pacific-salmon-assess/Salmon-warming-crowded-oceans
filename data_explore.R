@@ -503,7 +503,7 @@ comp.fig <- ggplot(raw.comp) +
         geom_line(aes(x=Year, y=all_spp_numbers_np), col="darkred") +
         geom_vline(xintercept=c(1989,2011), color = "grey80", linetype = 2, linewidth = 0.25, alpha=0.8) +
         labs(x="Year", y="Pink, Chum, & Sockeye salmon \n (millions)") +
-        scale_y_continuous(limits=c(0,800), breaks = seq(0,750,250)) +
+        scale_y_continuous(limits=c(0,1000), breaks = seq(0,750,250)) +
         cowplot::theme_cowplot() +
         theme(aspect.ratio=0.35,
               axis.text=element_text(size=7),

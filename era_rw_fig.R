@@ -240,107 +240,107 @@ full.violin <- cowplot::plot_grid(sock.box.rw, chum.box.rw + theme(axis.title.y.
       x = 0.48, y = 0.405, width = 0.32, height = 0.22,
       gp = grid::gpar(fill = "white", col = NA)))
 
-png(here('figures/spp-explore/violin_full.png'), width=900*3, height=600*3, res=72*5)
+png(here('figures/manuscript/main-text/era_violin_full.png'), width=900*3, height=600*3, res=72*5)
 print(full.violin)
 dev.off()
 
 
 
-## Make Era + RW plots -- Competitors
+## Make Era + RW plots -- Competitors # Commented out because of no longer fitting RW competitor models
 
-# Sockeye
-sock.box.rw <- sock.df.avg |>
-  filter(varnam == "Competitors") |>
-  mutate(BY = case_when(era=="Early" ~ 1975,
-                        era=="Middle" ~ 2000,
-                        era=="Late" ~ 2015)) |>
-  ggplot() +
-  geom_vline(xintercept = c(1989,2010), lty="dashed", col="gray65", alpha=0.5) +
-  geom_ribbon(data=filter(sock.rw, varnam=="Competitors"),
-              aes(x=BY, ymin=lower_10_pc, ymax=upper_90_pc, fill=ocean_region_lab), alpha=0.2) +
-  geom_line(data=filter(sock.rw, varnam=="Competitors"), aes(x=BY, y=mu_pc, col=ocean_region_lab)) +
-  #geom_boxplot(aes(x=BY, y=pc, group=era, fill=ocean_region_lab), outliers=F) +
-  geom_violin(aes(x=BY, y=pc, group=era, fill=ocean_region_lab, col=ocean_region_lab), alpha=0.75) +
-  scale_y_continuous(breaks=c(-50,0,50)) +
-  scale_x_continuous(limits=c(1960,2022), breaks=c(1970,1990,2010)) +
-  facet_grid(rows=vars(ocean_region_lab)) +
-  scale_fill_manual(values=col.region, guide=NULL) +
-  scale_colour_manual(values=col.dk) +
-  labs(x = "", y = "% Change in R/S (per 155 million competitors)", title="Sockeye") +
-  theme_sleek() +
-  theme(legend.position="none",
-        strip.text.y.right = element_blank(),
-        plot.title = element_text(hjust=0.5))
-png(here('figures/spp-explore', paste0("violin_rw_sockeye_comp.png")))
-print(sock.box.rw)
-dev.off()
-
-# Chum
-chum.box.rw <- chum.df.avg |>
-  filter(varnam == "Competitors") |>
-  mutate(BY = case_when(era=="Early" ~ 1975,
-                        era=="Middle" ~ 2000,
-                        era=="Late" ~ 2015)) |>
-  bind_rows(c(par=NA, ocean_region_lab="Southeast Alaska")) |> # add empty row for SEAK
-  ggplot() +
-  geom_vline(xintercept = c(1989,2010), lty="dashed", col="gray65", alpha=0.5) +
-  geom_ribbon(data=filter(chum.rw, varnam=="Competitors"),
-              aes(x=BY, ymin=lower_10_pc, ymax=upper_90_pc, fill=ocean_region_lab),
-              alpha=0.2) +
-  geom_line(data=filter(chum.rw, varnam=="Competitors"), aes(x=BY, y=mu_pc, col=ocean_region_lab)) +
-  #geom_boxplot(aes(x=BY, y=pc, group=era, fill=ocean_region_lab), outliers=F) +
-  geom_violin(aes(x=BY, y=pc, group=era, fill=ocean_region_lab, col=ocean_region_lab), alpha=0.75, width = 10) +
-  scale_y_continuous(n.breaks=4) +
-  scale_x_continuous(limits=c(1960,2022), breaks=c(1970,1990,2010)) +
-  facet_grid(rows=vars(ocean_region_lab)) +
-  scale_fill_manual(values=col.region, guide=NULL) +
-  scale_colour_manual(values=col.dk) +
-  labs(x = "Brood Year", y = "", title="Chum") +
-  theme_sleek() +
-  theme(legend.position="none",
-        strip.text.y.right = element_blank(),
-        plot.title = element_text(hjust=0.5))
-
-png(here('figures/spp-explore', paste0("violin_rw_chum_comp.png")))
-print(chum.box.rw)
-dev.off()
-
-
-# Pink
-pink.box.rw <- pink.df.avg |>
-  filter(varnam == "Competitors") |>
-  mutate(BY = case_when(era=="Early" ~ 1975,
-                        era=="Middle" ~ 2000,
-                        era=="Late" ~ 2015)) |>
-  ggplot() +
-  geom_vline(xintercept = c(1989,2010), lty="dashed", col="gray65", alpha=0.5) +
-  geom_ribbon(data=filter(pink.rw, varnam=="Competitors"),
-              aes(x=BY, ymin=lower_10_pc, ymax=upper_90_pc, fill=ocean_region_lab),
-              alpha=0.2) +
-  geom_line(data=filter(pink.rw, varnam=="Competitors"), aes(x=BY, y=mu_pc, col=ocean_region_lab)) +
-  #geom_boxplot(aes(x=BY, y=pc, group=era, fill=ocean_region_lab), outliers=F) +
-  geom_violin(aes(x=BY, y=pc, group=era, fill=ocean_region_lab, col=ocean_region_lab), alpha=0.75) +
-  scale_y_continuous(n.breaks=4) +
-  scale_x_continuous(limits=c(1960,2022), breaks=c(1970,1990,2010)) +
-  facet_grid(rows=vars(ocean_region_lab), scales="free_y") +
-  scale_fill_manual(values=col.region, guide=NULL) +
-  scale_colour_manual(values=col.dk) +
-  labs(x = "", y = "", col="Region", title="Pink") +
-  theme_sleek() +
-  theme(legend.position="none",
-        plot.title = element_text(hjust=0.5))
-
-png(here('figures/spp-explore', paste0("violin_rw_pink_comp.png")))
-print(pink.box.rw)
-dev.off()
-
-full.violin.comp <- cowplot::plot_grid(sock.box.rw, chum.box.rw + theme(axis.title.y.left = element_blank()), pink.box.rw + theme(axis.title.y.left = element_blank()), ncol=3, rel_widths=c(1,1,1.1)) +
-  cowplot::draw_grob(
-    grid::rectGrob(
-      x = 0.48, y = 0.405, width = 0.32, height = 0.22,
-      gp = grid::gpar(fill = "white", col = NA)))
-
-
-png(here('figures/spp-explore/violin_full_comp.png'), width=900*3, height=600*3, res=72*5)
-print(full.violin.comp)
-dev.off()
+# # Sockeye
+# sock.box.rw <- sock.df.avg |>
+#   filter(varnam == "Competitors") |>
+#   mutate(BY = case_when(era=="Early" ~ 1975,
+#                         era=="Middle" ~ 2000,
+#                         era=="Late" ~ 2015)) |>
+#   ggplot() +
+#   geom_vline(xintercept = c(1989,2010), lty="dashed", col="gray65", alpha=0.5) +
+#   geom_ribbon(data=filter(sock.rw, varnam=="Competitors"),
+#               aes(x=BY, ymin=lower_10_pc, ymax=upper_90_pc, fill=ocean_region_lab), alpha=0.2) +
+#   geom_line(data=filter(sock.rw, varnam=="Competitors"), aes(x=BY, y=mu_pc, col=ocean_region_lab)) +
+#   #geom_boxplot(aes(x=BY, y=pc, group=era, fill=ocean_region_lab), outliers=F) +
+#   geom_violin(aes(x=BY, y=pc, group=era, fill=ocean_region_lab, col=ocean_region_lab), alpha=0.75) +
+#   scale_y_continuous(breaks=c(-50,0,50)) +
+#   scale_x_continuous(limits=c(1960,2022), breaks=c(1970,1990,2010)) +
+#   facet_grid(rows=vars(ocean_region_lab)) +
+#   scale_fill_manual(values=col.region, guide=NULL) +
+#   scale_colour_manual(values=col.dk) +
+#   labs(x = "", y = "% Change in R/S (per 155 million competitors)", title="Sockeye") +
+#   theme_sleek() +
+#   theme(legend.position="none",
+#         strip.text.y.right = element_blank(),
+#         plot.title = element_text(hjust=0.5))
+# png(here('figures/spp-explore', paste0("violin_rw_sockeye_comp.png")))
+# print(sock.box.rw)
+# dev.off()
+#
+# # Chum
+# chum.box.rw <- chum.df.avg |>
+#   filter(varnam == "Competitors") |>
+#   mutate(BY = case_when(era=="Early" ~ 1975,
+#                         era=="Middle" ~ 2000,
+#                         era=="Late" ~ 2015)) |>
+#   bind_rows(c(par=NA, ocean_region_lab="Southeast Alaska")) |> # add empty row for SEAK
+#   ggplot() +
+#   geom_vline(xintercept = c(1989,2010), lty="dashed", col="gray65", alpha=0.5) +
+#   geom_ribbon(data=filter(chum.rw, varnam=="Competitors"),
+#               aes(x=BY, ymin=lower_10_pc, ymax=upper_90_pc, fill=ocean_region_lab),
+#               alpha=0.2) +
+#   geom_line(data=filter(chum.rw, varnam=="Competitors"), aes(x=BY, y=mu_pc, col=ocean_region_lab)) +
+#   #geom_boxplot(aes(x=BY, y=pc, group=era, fill=ocean_region_lab), outliers=F) +
+#   geom_violin(aes(x=BY, y=pc, group=era, fill=ocean_region_lab, col=ocean_region_lab), alpha=0.75, width = 10) +
+#   scale_y_continuous(n.breaks=4) +
+#   scale_x_continuous(limits=c(1960,2022), breaks=c(1970,1990,2010)) +
+#   facet_grid(rows=vars(ocean_region_lab)) +
+#   scale_fill_manual(values=col.region, guide=NULL) +
+#   scale_colour_manual(values=col.dk) +
+#   labs(x = "Brood Year", y = "", title="Chum") +
+#   theme_sleek() +
+#   theme(legend.position="none",
+#         strip.text.y.right = element_blank(),
+#         plot.title = element_text(hjust=0.5))
+#
+# png(here('figures/spp-explore', paste0("violin_rw_chum_comp.png")))
+# print(chum.box.rw)
+# dev.off()
+#
+#
+# # Pink
+# pink.box.rw <- pink.df.avg |>
+#   filter(varnam == "Competitors") |>
+#   mutate(BY = case_when(era=="Early" ~ 1975,
+#                         era=="Middle" ~ 2000,
+#                         era=="Late" ~ 2015)) |>
+#   ggplot() +
+#   geom_vline(xintercept = c(1989,2010), lty="dashed", col="gray65", alpha=0.5) +
+#   geom_ribbon(data=filter(pink.rw, varnam=="Competitors"),
+#               aes(x=BY, ymin=lower_10_pc, ymax=upper_90_pc, fill=ocean_region_lab),
+#               alpha=0.2) +
+#   geom_line(data=filter(pink.rw, varnam=="Competitors"), aes(x=BY, y=mu_pc, col=ocean_region_lab)) +
+#   #geom_boxplot(aes(x=BY, y=pc, group=era, fill=ocean_region_lab), outliers=F) +
+#   geom_violin(aes(x=BY, y=pc, group=era, fill=ocean_region_lab, col=ocean_region_lab), alpha=0.75) +
+#   scale_y_continuous(n.breaks=4) +
+#   scale_x_continuous(limits=c(1960,2022), breaks=c(1970,1990,2010)) +
+#   facet_grid(rows=vars(ocean_region_lab), scales="free_y") +
+#   scale_fill_manual(values=col.region, guide=NULL) +
+#   scale_colour_manual(values=col.dk) +
+#   labs(x = "", y = "", col="Region", title="Pink") +
+#   theme_sleek() +
+#   theme(legend.position="none",
+#         plot.title = element_text(hjust=0.5))
+#
+# png(here('figures/spp-explore', paste0("violin_rw_pink_comp.png")))
+# print(pink.box.rw)
+# dev.off()
+#
+# full.violin.comp <- cowplot::plot_grid(sock.box.rw, chum.box.rw + theme(axis.title.y.left = element_blank()), pink.box.rw + theme(axis.title.y.left = element_blank()), ncol=3, rel_widths=c(1,1,1.1)) +
+#   cowplot::draw_grob(
+#     grid::rectGrob(
+#       x = 0.48, y = 0.405, width = 0.32, height = 0.22,
+#       gp = grid::gpar(fill = "white", col = NA)))
+#
+#
+# png(here('figures/spp-explore/violin_full_comp.png'), width=900*3, height=600*3, res=72*5)
+# print(full.violin.comp)
+# dev.off()
