@@ -17,7 +17,10 @@ if(speciesFlag=="pink") {
 
 # Specify output directories
 sens.fig.dir <- here("sensitivity-analyses", "pdo-npgo", speciesFlag)
+if(!dir.exists(sens.fig.dir))  dir.create(sens.fig.dir, recursive = T)
 sens.fit.dir <- here("sensitivity-analyses", "fits", speciesFlag)
+if(!dir.exists(sens.fit.dir))  dir.create(sens.fit.dir, recursive = T)
+
 
 # Set up
 brood <- if(speciesFlag=="sockeye"){
