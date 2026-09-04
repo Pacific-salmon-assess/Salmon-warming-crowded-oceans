@@ -29,7 +29,7 @@ b <- ggplot() +
 
 
 
-png(here('figures/manuscript/SI/detrend-comp.png'), width=800*3, height=500*3, res=72*5)
+png(here('figures/manuscript/SI/detrend-comp.png'), width=800*3, height=400*3, res=72*5)
 plot_grid(a, b, labels = "auto", nrow=1)
 dev.off()
 
