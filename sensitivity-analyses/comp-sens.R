@@ -14,10 +14,10 @@ if(speciesFlag=="pink") {
           info_master <- sock.info }
 
 # Load competitor data
-raw.comp <- read.csv(file="data-downloaded/competitor_indices_2024.csv", header = TRUE)
+raw.comp <- read.csv(file="data-downloaded/competitor_indices_2026.csv", header = TRUE)
 # Choose alt. competitor indices to run
 comp.sec <- data.frame(BY=NA, Stock.ID=NA)
-comp.cols <- names(raw.comp)[c(4,8,9)]#names(raw.comp)[-1]
+comp.cols <- names(raw.comp)[c(4,5,6,11)]#names(raw.comp)[-1]
 comp.cols.stnd <- paste0(comp.cols, "_stnd")
 
 # Load correct brood table
@@ -161,27 +161,27 @@ names(era_fit_list) <- names(stat_fit_list) <- comp.cols
 
 for(i in 1:length(comp.cols.stnd)){ # Loop to run stan models:
 
-  # era model
-  era.fit <- rstan::stan(file = "./stan/hbm_era_2c.stan",
-                               data = era_data_list[[i]],
-                               pars = c(pars_era_2c, pars.gen.quant),
-                               warmup = 1000,
-                               iter = 3000,
-                               cores = 4,
-                               chains = 4,
-                               seed = 123,
-                               control = list(adapt_delta = 0.999,
-                                              max_treedepth = 20))
-
-    save(era.fit, file=here('sensitivity-analyses', 'fits', speciesFlag, paste0("era_comp_", comp.cols[i], ".RData")))
-
-
-  era_summary_list[[i]] <- rstan::summary(era.fit, pars=c("alpha", "beta", "sigma",
-                                                  "mu_gamma1", "mu_gamma2", "mu_gamma3",
-                                                  "mu_kappa1", "mu_kappa2", "mu_kappa3",
-                                                  "log_lik"),
-                                          probs=c(0.025, 0.1, 0.5, 0.9, 0.975))$summary
-
+  # # era model
+  # era.fit <- rstan::stan(file = "./stan/hbm_era_2c.stan",
+  #                              data = era_data_list[[i]],
+  #                              pars = c(pars_era_2c, pars.gen.quant),
+  #                              warmup = 1000,
+  #                              iter = 3000,
+  #                              cores = 4,
+  #                              chains = 4,
+  #                              seed = 123,
+  #                              control = list(adapt_delta = 0.999,
+  #                                             max_treedepth = 20))
+  #
+  #   save(era.fit, file=here('sensitivity-analyses', 'fits', speciesFlag, paste0("era_comp_", comp.cols[i], ".RData")))
+  #
+  #
+  # era_summary_list[[i]] <- rstan::summary(era.fit, pars=c("alpha", "beta", "sigma",
+  #                                                 "mu_gamma1", "mu_gamma2", "mu_gamma3",
+  #                                                 "mu_kappa1", "mu_kappa2", "mu_kappa3",
+  #                                                 "log_lik"),
+  #                                         probs=c(0.025, 0.1, 0.5, 0.9, 0.975))$summary
+  #
 
   stat.fit <- rstan::stan(file = "./stan/hbm_stat_inter.stan",
                          data = stat_data_list[[i]],
@@ -250,11 +250,11 @@ comp_tbl_list_stat <- lapply(stat_summary_list, function(x){
 }
 )
 
-names(comp_tbl_list_era) <- names(comp_tbl_list_stat) <- comp.cols
-comp_tbl_era <- bind_rows(comp_tbl_list_era, .id="Competitor index")
+#names(comp_tbl_list_era) <- names(comp_tbl_list_stat) <- comp.cols
+#comp_tbl_era <- bind_rows(comp_tbl_list_era, .id="Competitor index")
 comp_tbl_stat <- bind_rows(comp_tbl_list_stat, .id="Competitor index")
 
-comp_tbl <- bind_rows(comp_tbl_era, comp_tbl_stat, .id="Model")
+comp_tbl <- bind_rows(comp_tbl_stat, .id="Model")
 
 write.csv(comp_tbl, file=here('sensitivity-analyses', 'alt-comp', paste0(speciesFlag, '-comp-index-fit-compare.csv')))
 
@@ -265,8 +265,8 @@ write.csv(comp_tbl, file=here('sensitivity-analyses', 'alt-comp', paste0(species
 #Reload results
 comp_tbl <- read.csv(here('sensitivity-analyses', 'alt-comp', paste0(speciesFlag, '-comp-index-fit-compare.csv'))) # load saved results from comp sensitivity analyses
 comp_tbl <- comp_tbl |> mutate(varnam = gsub("Competitor", "Competitors", stringr::str_remove(Parameter, " effect")))
-load(here('output', 'models', 'dyn', speciesFlag, 'hbm_era_2c.RData'), verbose=T)# load era'base model'
-df.era <- era_hb_param_df(era.2c, par=c("gamma", "kappa"), mu=T, lower_CI=2.5, upper_CI=97.5, info=info_master)
+#load(here('output', 'models', 'dyn', speciesFlag, 'hbm_era_2c.RData'), verbose=T)# load era'base model'
+#df.era <- era_hb_param_df(era.2c, par=c("gamma", "kappa"), mu=T, lower_CI=2.5, upper_CI=97.5, info=info_master)
 # Load stationary base model
 load(here('output', 'models', 'stat', speciesFlag, 'stat_inter.RData'), verbose=T)
 summ <- rstan::summary(stat_inter, pars=c("mu_gamma", "mu_kappa", "mu_chi"), probs=c(0.025, 0.5, 0.975))$summary
@@ -278,40 +278,50 @@ stat.df <- data.frame(Ocean.Region2 = unique(data_master$Ocean.Region2),
                        upper = summ[,"97.5%"],
                        era= "All")
 # Bind base model era + stat fits
-base_tbl <- bind_rows(df.era, stat.df, .id="Model")
+base_tbl <- bind_rows(stat.df, .id="Model")
 base_tbl$Region <- ocean_region_lab(base_tbl)$ocean_region_lab
 
 comp_tbl$varnam <- gsub("SST x Competitors", "SST x \nComp.", comp_tbl$varnam) # Have to change this label to fit on plot
 base_tbl$varnam <- gsub("SST x Competitors", "SST x \nComp.", base_tbl$varnam) # Have to change this label to fit on plot
 
+alt_comp <- comp_tbl |>
+  mutate(Competitor.index =
+           stringr::str_to_title(stringr::str_remove(gsub("_"," ", Competitor.index), "np"))) |>
+  rename(Med = Posterior_Median,
+         Lwr = Lower_2.5_CI,
+         Upr = Upper_97.5_CI) |>
+  select(Region, Era, Med, Lwr, Upr, varnam,Competitor.index)
+
+base_comp <- base_tbl |>
+  rename(Era = era,
+         Med = reg_mean,
+         Lwr = lower,
+         Upr = upper) |>
+  mutate(Competitor.index = "All Spp Numbers") |>
+  select(Region, Era, Med, Lwr, Upr, varnam,Competitor.index)
+
+comp_sens <- rbind(alt_comp,base_comp)
 
 
 # Plot
-g <- comp_tbl |>
-  mutate(Competitor.index =
-        stringr::str_to_title(stringr::str_remove(gsub("_"," ", Competitor.index), "np"))) |>
+g <- comp_sens |>
   ggplot() +
   geom_hline(yintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
-  geom_point(aes(x=factor(Era, levels=c("Early", "Middle", "Late", "All")),
-                 y=Posterior_Median, shape=Competitor.index, col=Region),
-              position=position_dodge(0.4)) +
-  geom_segment(aes(x=factor(Era, levels=c("Early", "Middle", "Late", "All")),
-                   y=Lower_2.5_CI, yend=Upper_97.5_CI, group=Competitor.index, col=Region),
+  geom_point(aes(x=factor(Era),
+                 y=Med, shape=Competitor.index, col=Region),
+             position=position_dodge(0.4)) +
+  geom_segment(aes(x=factor(Era),
+                   y=Lwr, yend=Upr, group=Competitor.index, col=Region),
                position=position_dodge(0.4)) +
-  geom_point(data=base_tbl, aes(x=factor(era, levels=c("Early", "Middle", "Late", "All")),
-                                y=reg_mean, col=Region), shape=18,
-             position=position_nudge(0.3)) +
-  geom_segment(data=base_tbl, aes(x=factor(era, levels=c("Early", "Middle", "Late", "All")),
-                                  y=lower, yend=upper, col=Region),
-               position=position_nudge(0.3)) +
   facet_grid(rows=vars(Region), cols=vars(factor(varnam, levels=c("SST", "Competitors", "SST x \nComp."))), scales="free", space="free_x") +
   scale_y_continuous(n.breaks=4) +
   scale_colour_manual(values=col.region, guide="none") +
-  labs(x="Time Period", y="Covariate effect", shape="Alternative \nCompetitor Index") +
-  theme_sleek()
+  labs(x= NULL, y="Covariate effect", shape="Competitor Index") +
+  theme_sleek() +
+  theme(axis.text.x = element_blank())
 
 png(filename=here("sensitivity-analyses/alt-comp", paste0(speciesFlag, "_alt_comp_fig.png")),
-    width=950*2, height=550*2, res=72*4)
+    width=950*2, height=750*2, res=72*4)
 print(g)
 dev.off()
 

@@ -5,6 +5,7 @@
 # Set paths to output locations - dependent on species
 fit.dir <- here("output", "models", "dyn", speciesFlag) # where model fits are stored
 fig.dir <- here("figures", "dyn", speciesFlag, "hbm_inf") # place to store figures generated in this script
+tab.dir <- here("Rmd", "figures") # place to store figures generated in this script
 
 # Create destination folder if it doesn't exist
 if(!dir.exists(fig.dir))
@@ -36,7 +37,7 @@ df.stk.out <- df.stk.out |> mutate(Species = speciesFlag) |> ocean_region_lab() 
          Mean = mu, Median = med, 'Upper 95% CI' = upper) |>
   select(Species, Stock, Ecosystem, Coefficient, Era, 'Lower 95% CI', Mean, Median, 'Upper 95% CI')
 
-write.csv(df.stk.out, file = here(fig.dir, paste0("stk_coefficients_era_", speciesFlag, ".csv")), row.names = FALSE)
+write.csv(df.stk.out, file = here(tab.dir, paste0("stk_coefficients_era_", speciesFlag, ".csv")), row.names = FALSE)
 
 # Summarized dataframe (regional-level)
 df.reg.out <- era_hb_param_df(era.2c, par=c("gamma", "kappa"), mu = TRUE, lower_CI=2.5, upper_CI=97.5)
@@ -45,7 +46,7 @@ df.reg.out <- df.reg.out |> mutate(Species = speciesFlag) |> ocean_region_lab() 
          Mean = reg_mean, Median = med, 'Upper 95% CI' = upper) |>
   select(Species, Ecosystem, Coefficient, Era, 'Lower 95% CI', Mean, Median, 'Upper 95% CI')
 
-write.csv(df.reg.out, file = here(fig.dir, paste0("reg_coefficients_era_", speciesFlag, ".csv")), row.names = FALSE)
+write.csv(df.reg.out, file = here(tab.dir, paste0("reg_coefficients_era_", speciesFlag, ".csv")), row.names = FALSE)
 
 
 ## Figures ------------------------------------------------------------

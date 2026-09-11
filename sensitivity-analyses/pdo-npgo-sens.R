@@ -147,31 +147,31 @@ era_npgo <- rstan::stan(file = "./stan/hbm_era_3c.stan",
 save(era_npgo, file = here(sens.fit.dir, "era_npgo.RData"))
 
 
-## Diagnostic plots -- NPGO
-pdf(here(sens.fig.dir, "stat_npgo_diag.pdf"), width = 7, height = 5)
-coda_neff(get_neff(stat_npgo, pars = pars.stat), total_draws(stat_npgo))
-coda_rhat(get_rhat(stat_npgo, pars = pars.stat))
-coda_diag(As.mcmc.list(stat_npgo, pars = pars.stat))
-dev.off()
-
-plot_post_pc(stat_npgo, stan.dat.npgo$y, data = data_master,
-             pdf.path = here(sens.fig.dir, "stat_npgo_yrep.pdf"))
-
-loo.stat_npgo <- rstan::loo(stat_npgo, cores = 4)
-save(loo.stat_npgo, file = here(sens.fig.dir, "loo_stat_npgo.RData"))
-waic.stat_npgo <- loo::waic(loo::extract_log_lik(stat_npgo, "log_lik"))
-save(waic.stat_npgo, file = here(sens.fig.dir, "waic_stat_npgo.RData"))
-
-pdf(here(sens.fig.dir, "stat_npgo_loo.pdf"), width = 7, height = 5)
-plot(loo.stat_npgo, label_points = TRUE)
-dev.off()
-
-#r2.stat_npgo <- bayes_R2(data_master$lnRS, as.matrix(stat_npgo, pars = "yhat"))
-#save(r2.stat_npgo, file = here(sens.fig.dir, "r2_stat_npgo.RData"))
-
-pdf(here(sens.fig.dir, "stat_npgo_resid.pdf"), width = 8, height = 8)
-plot_hbm_resids(stat_npgo, data_master)
-dev.off()
+# ## Diagnostic plots -- NPGO
+# pdf(here(sens.fig.dir, "stat_npgo_diag.pdf"), width = 7, height = 5)
+# coda_neff(get_neff(stat_npgo, pars = pars.stat), total_draws(stat_npgo))
+# coda_rhat(get_rhat(stat_npgo, pars = pars.stat))
+# coda_diag(As.mcmc.list(stat_npgo, pars = pars.stat))
+# dev.off()
+#
+# plot_post_pc(stat_npgo, stan.dat.npgo$y, data = data_master,
+#              pdf.path = here(sens.fig.dir, "stat_npgo_yrep.pdf"))
+#
+# loo.stat_npgo <- rstan::loo(stat_npgo, cores = 4)
+# save(loo.stat_npgo, file = here(sens.fig.dir, "loo_stat_npgo.RData"))
+# waic.stat_npgo <- loo::waic(loo::extract_log_lik(stat_npgo, "log_lik"))
+# save(waic.stat_npgo, file = here(sens.fig.dir, "waic_stat_npgo.RData"))
+#
+# pdf(here(sens.fig.dir, "stat_npgo_loo.pdf"), width = 7, height = 5)
+# plot(loo.stat_npgo, label_points = TRUE)
+# dev.off()
+#
+# #r2.stat_npgo <- bayes_R2(data_master$lnRS, as.matrix(stat_npgo, pars = "yhat"))
+# #save(r2.stat_npgo, file = here(sens.fig.dir, "r2_stat_npgo.RData"))
+#
+# pdf(here(sens.fig.dir, "stat_npgo_resid.pdf"), width = 8, height = 8)
+# plot_hbm_resids(stat_npgo, data_master)
+# dev.off()
 
 ## Table: coefficients ----
 
@@ -265,33 +265,33 @@ era_pdo <- rstan::stan(file = "./stan/hbm_era_3c.stan",
 save(era_pdo, file = here(sens.fit.dir, "era_pdo.RData"))
 
 
-#### -- Visualize fits -- ####
-
-## Diagnostic plots -- PDO
-pdf(here(sens.fig.dir, "stat_pdo_diag.pdf"), width = 7, height = 5)
-coda_neff(get_neff(stat_pdo, pars = pars.stat), total_draws(stat_pdo))
-coda_rhat(get_rhat(stat_pdo, pars = pars.stat))
-coda_diag(As.mcmc.list(stat_pdo, pars = pars.stat))
-dev.off()
-
-plot_post_pc(stat_pdo, stan.dat.pdo$y, data = data_master,
-             pdf.path = here(sens.fig.dir, "stat_pdo_yrep.pdf"))
-
-loo.stat_pdo <- rstan::loo(stat_pdo, cores = 4)
-save(loo.stat_pdo, file = here(sens.fig.dir, "loo_stat_pdo.RData"))
-waic.stat_pdo <- loo::waic(loo::extract_log_lik(stat_pdo, "log_lik"))
-save(waic.stat_pdo, file = here(sens.fig.dir, "waic_stat_pdo.RData"))
-
-pdf(here(sens.fig.dir, "stat_pdo_loo.pdf"), width = 7, height = 5)
-plot(loo.stat_pdo, label_points = TRUE)
-dev.off()
-
-#r2.stat_pdo <- bayes_R2(data_master$lnRS, as.matrix(stat_pdo, pars = "yhat"))
-#save(r2.stat_pdo, file = here(sens.fig.dir, "r2_stat_pdo.RData"))
-
-pdf(here(sens.fig.dir, "stat_pdo_resid.pdf"), width = 8, height = 8)
-plot_hbm_resids(stat_pdo, data_master)
-dev.off()
+# #### -- Visualize fits -- ####
+#
+# ## Diagnostic plots -- PDO
+# pdf(here(sens.fig.dir, "stat_pdo_diag.pdf"), width = 7, height = 5)
+# coda_neff(get_neff(stat_pdo, pars = pars.stat), total_draws(stat_pdo))
+# coda_rhat(get_rhat(stat_pdo, pars = pars.stat))
+# coda_diag(As.mcmc.list(stat_pdo, pars = pars.stat))
+# dev.off()
+#
+# plot_post_pc(stat_pdo, stan.dat.pdo$y, data = data_master,
+#              pdf.path = here(sens.fig.dir, "stat_pdo_yrep.pdf"))
+#
+# loo.stat_pdo <- rstan::loo(stat_pdo, cores = 4)
+# save(loo.stat_pdo, file = here(sens.fig.dir, "loo_stat_pdo.RData"))
+# waic.stat_pdo <- loo::waic(loo::extract_log_lik(stat_pdo, "log_lik"))
+# save(waic.stat_pdo, file = here(sens.fig.dir, "waic_stat_pdo.RData"))
+#
+# pdf(here(sens.fig.dir, "stat_pdo_loo.pdf"), width = 7, height = 5)
+# plot(loo.stat_pdo, label_points = TRUE)
+# dev.off()
+#
+# #r2.stat_pdo <- bayes_R2(data_master$lnRS, as.matrix(stat_pdo, pars = "yhat"))
+# #save(r2.stat_pdo, file = here(sens.fig.dir, "r2_stat_pdo.RData"))
+#
+# pdf(here(sens.fig.dir, "stat_pdo_resid.pdf"), width = 8, height = 8)
+# plot_hbm_resids(stat_pdo, data_master)
+# dev.off()
 
 
 ## Table: coefficients ----
