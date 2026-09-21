@@ -131,7 +131,7 @@ g <- ggplot(prod_dat) +
         legend.position = "none") +
   labs(y="Stock", x="Brood Year")
 
-png(here(fig.dir, paste0(speciesFlag, "_ts_length.png")))
+png(here(fig.dir, paste0(speciesFlag, "_ts_length.png")), res = 72*4)
 print(g)
 dev.off()
 
@@ -176,7 +176,7 @@ if(exists("ss.all.yrs")) {
           legend.text = element_text(size = 8),
           panel.spacing.x = unit(-0.5, "pt"))
 
-  png(here(fig.dir, paste0(speciesFlag, "_coef_catepillar_heir_indv.png")))
+  png(here(fig.dir, paste0(speciesFlag, "_coef_catepillar_heir_indv.png")), res = 72*4)
   print(g)
   dev.off()
 

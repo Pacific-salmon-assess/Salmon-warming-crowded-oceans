@@ -208,27 +208,27 @@ for(i in 1:length(comp.cols.stnd)){ # Loop to run stan models:
 
 # Make master comparison table
 
-comp_tbl_list_era <- list()
-comp_tbl_list_era <- lapply(era_summary_list, function(x){
-        summ <- x[c(grepl("^mu_", rownames(x))),
-                          c("mean", "2.5%", "10%", "50%", "90%", "97.5%")]
-        df <- data.frame(
-                   Parameter = case_when(grepl("^mu_gamma", rownames(summ)) ~ "SST effect",
-                                         grepl("^mu_kappa", rownames(summ)) ~ "Competitor effect"),
-                   Era = case_when(str_sub(rownames(summ), start=-4, end=-4) == "1" ~ "Early",
-                                   str_sub(rownames(summ), start=-4, end=-4) == "2" ~ "Middle",
-                                   str_sub(rownames(summ), start=-4, end=-4) == "3" ~ "Late"),
-                   Region = rep(unique(info_master$ocean_region_lab), 6),
-                   Posterior_Mean = summ[,"mean"],
-                   Lower_2.5_CI = summ[,"2.5%"],
-                   Lower_10_CI = summ[,"10%"],
-                   Posterior_Median = summ[,"50%"],
-                   Upper_90_CI = summ[,"90%"],
-                   Upper_97.5_CI = summ[,"97.5%"],
-                   row.names=NULL)
-        return(df)
-      }
-    )
+#comp_tbl_list_era <- list()
+#comp_tbl_list_era <- lapply(era_summary_list, function(x){
+    #     summ <- x[c(grepl("^mu_", rownames(x))),
+    #                       c("mean", "2.5%", "10%", "50%", "90%", "97.5%")]
+    #     df <- data.frame(
+    #                Parameter = case_when(grepl("^mu_gamma", rownames(summ)) ~ "SST effect",
+    #                                      grepl("^mu_kappa", rownames(summ)) ~ "Competitor effect"),
+    #                Era = case_when(str_sub(rownames(summ), start=-4, end=-4) == "1" ~ "Early",
+    #                                str_sub(rownames(summ), start=-4, end=-4) == "2" ~ "Middle",
+    #                                str_sub(rownames(summ), start=-4, end=-4) == "3" ~ "Late"),
+    #                Region = rep(unique(info_master$ocean_region_lab), 6),
+    #                Posterior_Mean = summ[,"mean"],
+    #                Lower_2.5_CI = summ[,"2.5%"],
+    #                Lower_10_CI = summ[,"10%"],
+    #                Posterior_Median = summ[,"50%"],
+    #                Upper_90_CI = summ[,"90%"],
+    #                Upper_97.5_CI = summ[,"97.5%"],
+    #                row.names=NULL)
+    #     return(df)
+    #   }
+    # )
 
 comp_tbl_list_stat <- lapply(stat_summary_list, function(x){
   summ <- x[c(grepl("^mu_", rownames(x))),
@@ -320,7 +320,7 @@ g <- comp_sens |>
   theme_sleek() +
   theme(axis.text.x = element_blank())
 
-png(filename=here("sensitivity-analyses/alt-comp", paste0(speciesFlag, "_alt_comp_fig.png")),
+png(filename=here("Rmd/figures/", paste0(speciesFlag, "_alt_comp_fig.png")),
     width=950*2, height=750*2, res=72*4)
 print(g)
 dev.off()

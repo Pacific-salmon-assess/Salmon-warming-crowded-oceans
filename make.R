@@ -37,7 +37,7 @@ for(sp in species) {
   speciesFlag = sp # set species
 
   # 3. Exploratory plots and models
-  source("data_explore.R")
+  #source("data_explore.R")
   source("stat_single_stock_fit.R")
 
   # 4. Stationary Hierarchical Bayesian Models & figures
@@ -56,7 +56,7 @@ for(sp in species) {
 }
 
 # 7. All species figures
-source("map-covar.R") # Make map and covariate figure
+source("map-covars.R") # Make map and covariate figure
 source("interaction-plots.R") # Make sst x comp interaction figures
 source("era_rw_fig.R") # Make main era + RW results figures
 source("sensitivity-analyses/pdo-npgo-figs.R")
