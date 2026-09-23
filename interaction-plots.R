@@ -218,39 +218,61 @@ dev.off()
 wc_hatch_effect <- summ.pred.all.df |>
   filter(region == "West Coast",
          sst == "warm",
-         comp %in% c(2,3)) |>
-  mutate(rawRS = exp(med.pred))
+         comp %in% c(0,3)) |>
+  mutate(rawRS = exp(med.pred),
+         rawRSLwr = exp(lwr.pred),
+         rawRSUpr = exp(upr.pred))
 (1-(wc_hatch_effect[2,7]/wc_hatch_effect[1,7]))*100
+(1-(wc_hatch_effect[2,8]/wc_hatch_effect[1,9]))*100
+(1-(wc_hatch_effect[2,9]/wc_hatch_effect[1,8]))*100
 
 wc_hatch_effect <- summ.pred.all.df |>
   filter(region == "West Coast",
          sst == "cool",
-         comp %in% c(2,3)) |>
-  mutate(rawRS = exp(med.pred))
+         comp %in% c(0,3)) |>
+  mutate(rawRS = exp(med.pred),
+         rawRSLwr = exp(lwr.pred),
+         rawRSUpr = exp(upr.pred))
 (1-(wc_hatch_effect[2,7]/wc_hatch_effect[1,7]))*100
+(1-(wc_hatch_effect[2,8]/wc_hatch_effect[1,9]))*100
+(1-(wc_hatch_effect[2,9]/wc_hatch_effect[1,8]))*100
 
 # SEAK
-SEAK_hatch_effect <- summ.pred.all.df |>
+seak_hatch_effect <- summ.pred.all.df |>
   filter(region == "SEAK",
          sst == "warm",
-         comp %in% c(2,3))|>
-  mutate(rawRS = exp(med.pred))
-(1-(SEAK_hatch_effect[2,7]/SEAK_hatch_effect[1,7]))*100
+         comp %in% c(0,3)) |>
+  mutate(rawRS = exp(med.pred),
+         rawRSLwr = exp(lwr.pred),
+         rawRSUpr = exp(upr.pred))
+(1-(seak_hatch_effect[2,7]/seak_hatch_effect[1,7]))*100
+(1-(seak_hatch_effect[2,8]/seak_hatch_effect[1,9]))*100
+(1-(seak_hatch_effect[2,9]/seak_hatch_effect[1,8]))*100
 
-SEAK_hatch_effect <- summ.pred.all.df |>
+seak_hatch_effect <- summ.pred.all.df |>
   filter(region == "SEAK",
          sst == "cool",
-         comp %in% c(2,3))|>
-  mutate(rawRS = exp(med.pred))
-(1-(SEAK_hatch_effect[2,7]/SEAK_hatch_effect[1,7]))*100
+         comp %in% c(0,3)) |>
+  mutate(rawRS = exp(med.pred),
+         rawRSLwr = exp(lwr.pred),
+         rawRSUpr = exp(upr.pred))
+(1-(seak_hatch_effect[2,7]/seak_hatch_effect[1,7]))*100
+(1-(seak_hatch_effect[2,8]/seak_hatch_effect[1,9]))*100
+(1-(seak_hatch_effect[2,9]/seak_hatch_effect[1,8]))*100
+
 
 # GoA
 GoA_hatch_effect <- summ.pred.all.df |>
   filter(region == "GoA",
          sst == "warm",
-         comp %in% c(2,3)) |>
-  mutate(rawRS = exp(med.pred))
+         comp %in% c(0,3)) |>
+  mutate(rawRS = exp(med.pred),
+         rawRSLwr = exp(lwr.pred),
+         rawRSUpr = exp(upr.pred))
 (1-(GoA_hatch_effect[2,7]/GoA_hatch_effect[1,7]))*100
+(1-(GoA_hatch_effect[2,8]/GoA_hatch_effect[1,9]))*100
+(1-(GoA_hatch_effect[2,9]/GoA_hatch_effect[1,8]))*100
+
 
 GoA_hatch_effect <- summ.pred.all.df |>
   filter(region == "GoA",
@@ -526,7 +548,7 @@ pred.all.df <- data.frame(
 
 for (i in 1:1000){ # west coast
   samp <- sample(4000,1)
-  alpha <- sockeye_post$`mu_alpha[1]`[samp]
+  alpha <- sockeye_post$`mu_alpha[2]`[samp]
   sst <- sockeye_post$`mu_gamma[1]`[samp] # SST effect
   comp <- sockeye_post$`mu_kappa[1]`[samp] # comp effect
   sstXcomp <- sockeye_post$`mu_chi[1]`[samp] # interaction
@@ -842,7 +864,7 @@ c <- ggplot(data=chum.box, aes(x = comp, y = exp(med.pred), col=sst)) +
   geom_ribbon(aes(ymin=exp(lwr.pred), ymax=exp(upr.pred), col=sst, fill=sst), alpha=0.125) +
   geom_line(aes(col=sst),lwd=1) +
   theme_sleek() +
-  xlab("North Pacific competitor abundance (m)") +
+  xlab("NP salmon abundance (M)") +
   ylab("Recruits-per-spawner") +
   scale_color_manual(values = custom_colors)+
   scale_fill_manual(values = custom_colors) +

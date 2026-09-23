@@ -1,7 +1,7 @@
 ---
-title: "Supporting Information for"
+title: "Supporting Information"
 subtitle: "Geography and life history mediate Pacific salmon responses to ocean warming and competition at sea"
-author: "Hannah Hunter, Brendan Connors, ..."
+author: "Hunter et al."
 output:
   html_document:
     fig_caption: false
@@ -13,10 +13,6 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 library(knitr)
 library(here)
 ```
-
-
-**Supporting Information Text**
-
 **Salmon data**
 
 We compiled data for pink, chum and sockeye salmon from a large public database of Pacific salmon spawner and recruitment time series (Greenberg et al. 2026). These populations spanned 46.37 to 66.46 degrees in latitude and from 1948 to 2024. We discarded observations prior to 1950 due to concerns about data quality, and did not include time series that did not span at least brood years 1984-2014 and with minimal missing observation (i.e., > 80% of all years) (Figures S1-S3). We further excluded time series with known substantial hatchery influence to restrict our analysis to wild salmon populations. The resulting dataset included 66 sockeye populations, 28 chum salmon populations, and 33 pink salmon populations, grouped into three (chum) or four (sockeye and pink) large marine ecosystems/regions (Table S1). The most populations in a single region were West Coast sockeye (n=26) and the fewest were in the Bering Sea for pink salmon (n=4).
