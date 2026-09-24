@@ -104,7 +104,7 @@ sst.fig <-
 
 # total salmon timeseries
 comp.fig <- ggplot(raw.comp) +
-  geom_line(aes(x=Year, y=all_spp_numbers_np), col="grey20") +
+  geom_line(aes(x=Year, y=all_spp_numbers_np), col="grey35") +
   geom_vline(xintercept=c(1989,2011), color = "grey60", linetype = 2, linewidth = 0.5, alpha=0.8) +
   labs(x="Year", y="Salmon (M)") +
   scale_y_continuous(limits=c(0,1000), breaks = seq(0,900,300),
@@ -195,8 +195,11 @@ lgnd2 <- lgnd.dat |> ggplot() +
 blank <- ggplot() + theme(panel.background = element_rect(fill="white")) # blank grob to put legend on
 legend <- cowplot::ggdraw(blank) + cowplot::draw_plot(lgnd2)
 
-right <- cowplot::plot_grid(sst.fig, sst_raw_dot, rel_heights=c(2.5,1), nrow=2, labels=c("b", "d"), hjust=-1.5) # horizonal justification doesn't work either as
-left <- cowplot::plot_grid(map_albers, (comp.fig + theme_sleek()), ncol=1, rel_heights = c(2.5, 1), labels=c("a", "c"), hjust=-1.7, vjust=c(1.5, .7))
+right <- cowplot::plot_grid(sst.fig, sst_raw_dot, rel_heights=c(2.5,1), nrow=2, labels=c("b", "d"), hjust=-1.5) +
+  theme(plot.margin = margin(0, 0, 0.25, 0, "cm"))
+left <- cowplot::plot_grid(map_albers, (comp.fig + theme_sleek()), ncol=1, rel_heights = c(2, 1), labels=c("a", "c"), hjust=-1.7, vjust=c(1.25, .7)) +
+  theme(plot.margin = margin(0, 0, 0, 0, "cm"))
+
 intro.plot.2025 <- cowplot::plot_grid(left, right, ncol=2, rel_widths = c(1.7, 1))
 png(here("figures", "manuscript/main-text", "map-covariates.png"), height=721*1.5, width=1000*1.5, res=72*3)
 print(intro.plot.2025)

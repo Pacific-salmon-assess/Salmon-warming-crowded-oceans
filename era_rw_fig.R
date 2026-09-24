@@ -158,7 +158,7 @@ sock.box.rw <- sock.df.avg |>
       geom_violin(aes(x=BY, y=pc, group=era, fill=ocean_region_lab, col=ocean_region_lab), alpha=0.75) +
       scale_y_continuous(breaks=c(-50,0,50)) +
       scale_x_continuous(limits=c(1960,2022), breaks=c(1970,1990,2010)) +
-      facet_grid(rows=vars(ocean_region_lab)) +
+      facet_grid(rows=vars(ocean_region_lab), scales="free_y") +
       scale_fill_manual(values=col.region, guide=NULL) +
       scale_colour_manual(values=col.dk) +
       geom_hline(yintercept = 0, lty="dashed", col="gray65", alpha=0.5) +
