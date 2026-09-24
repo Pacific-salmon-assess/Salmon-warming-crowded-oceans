@@ -5,7 +5,7 @@
 load(here('output', 'models', 'dyn', 'pink', 'hbm_era_2c.RData'), verbose=T) # eras
 
 # Region-lvl dataframe
-summ_avg <- rstan::extract(era.2c, pars = c(paste0("mu_gamma", 1:3), paste0("mu_kappa", 1:3)))
+summ_avg <- rstan::extract(era.2c, pars = c(paste0("mu_gamma", 1:3), "mu_kappa"))
 summ_avg <- lapply(summ_avg, as.data.frame)
 summ_avg <- bind_rows(summ_avg, .id="par")
 names(summ_avg) <- c("par", "West Coast", "Southeast Alaska", "Gulf of Alaska", "Bering Sea")
@@ -25,7 +25,7 @@ pink.df.avg <- summ_avg |> tidyr::pivot_longer(cols=-c("par"), names_to="ocean_r
 load(here('output', 'models', 'dyn', 'chum', 'hbm_era_2c.RData'), verbose=T) # eras
 
 # Region-lvl dataframe
-summ_avg <- rstan::extract(era.2c, pars = c(paste0("mu_gamma", 1:3), paste0("mu_kappa", 1:3)))
+summ_avg <- rstan::extract(era.2c, pars = c(paste0("mu_gamma", 1:3), "mu_kappa"))
 summ_avg <- lapply(summ_avg, as.data.frame)
 summ_avg <- bind_rows(summ_avg, .id="par")
 names(summ_avg) <- c("par", "West Coast", "Gulf of Alaska", "Bering Sea")
@@ -205,7 +205,9 @@ dev.off()
 
 
 # Pink
-pink.box.rw <- pink.df.avg |>
+pink.df.avg.trunc <- pink.df.avg |>
+  filter(pc<200)
+pink.box.rw <- pink.df.avg.trunc |>
   filter(varnam == "SST") |>
   mutate(BY = case_when(era=="Early" ~ 1975,
                         era=="Middle" ~ 2000,
