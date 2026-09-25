@@ -286,7 +286,10 @@ base_tbl$varnam <- gsub("SST x Competitors", "SST x \nComp.", base_tbl$varnam) #
 
 alt_comp <- comp_tbl |>
   mutate(Competitor.index =
-           stringr::str_to_title(stringr::str_remove(gsub("_"," ", Competitor.index), "np"))) |>
+           case_when(Competitor.index == 1 ~"Pink Abundance",
+                     Competitor.index == 2 ~"Sockeye Abundance",
+                     Competitor.index == 3 ~"Chum Abundance",
+                     Competitor.index == 4 ~"All Spp Biomass")) |>
   rename(Med = Posterior_Median,
          Lwr = Lower_2.5_CI,
          Upr = Upper_97.5_CI) |>
@@ -297,7 +300,7 @@ base_comp <- base_tbl |>
          Med = reg_mean,
          Lwr = lower,
          Upr = upper) |>
-  mutate(Competitor.index = "All Spp Numbers") |>
+  mutate(Competitor.index = "All Spp Abundance") |>
   select(Region, Era, Med, Lwr, Upr, varnam,Competitor.index)
 
 comp_sens <- rbind(alt_comp,base_comp)
