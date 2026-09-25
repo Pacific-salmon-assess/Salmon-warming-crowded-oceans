@@ -321,10 +321,12 @@ g <- comp_sens |>
   scale_colour_manual(values=col.region, guide="none") +
   labs(x= NULL, y="Covariate effect", shape="Competitor Index") +
   theme_sleek() +
-  theme(axis.text.x = element_blank())
+  theme(axis.text.x = element_blank(),
+        legend.position = "bottom",
+        legend.key.spacing.x = unit(0, "cm"))
 
 png(filename=here("Rmd/figures/", paste0(speciesFlag, "_alt_comp_fig.png")),
-    width=950*2, height=750*2, res=72*4)
+    width=1000*2, height=800*2, res=72*4)
 print(g)
 dev.off()
 

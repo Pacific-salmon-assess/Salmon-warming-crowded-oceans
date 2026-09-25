@@ -121,6 +121,7 @@ g <- ggplot(prod_dat) +
   geom_line(aes(x=BY, y=lnRS, col=ocean_region_lab)) +
   facet_grid(rows=vars(Stock), switch ="y", scales="free_y", as.table=F) +
   scale_colour_manual(values=col.region) +
+  xlim(1960,2020) +
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
         strip.text.y.left = element_text(angle=0, hjust=0, margin=margin(l=0, r=0)),
@@ -129,15 +130,74 @@ g <- ggplot(prod_dat) +
         panel.spacing.y = unit(0, unit="cm"),
         panel.background = element_rect(fill="white"),
         legend.position = "none") +
-  labs(y="Stock", x="Brood Year")
+  labs(y="Population", x="Brood Year")
 
-png(here(fig.dir, paste0(speciesFlag, "_ts_length.png")), res = 72*4)
+
+if(speciesFlag=="chum") {
+  png(here(fig.dir, paste0(speciesFlag, "_ts_length.png")), height = 5.5, width = 6,  units = "in", res = 72*4) }
+if(speciesFlag=="pink") {
+  png(here(fig.dir, paste0(speciesFlag, "_ts_length.png")), height = 6, width = 6,  units = "in", res = 72*4) }
+
 print(g)
 dev.off()
 
+if(speciesFlag=="sockeye") {
+  prod_dat1 <- prod_dat |>
+      group_by(Stock) %>%
+      mutate(group_id = cur_group_id()) %>%
+      ungroup()|>
+    filter(group_id %in% c(1:33))
 
+  prod_dat2 <- prod_dat |>
+    group_by(Stock) %>%
+    mutate(group_id = cur_group_id()) %>%
+    ungroup()|>
+    filter(group_id %in% c(34:66))
 
-if(exists("ss.all.yrs")) {
+  g1 <- ggplot(prod_dat1) +
+    geom_vline(xintercept=c(1988,2011), color = "grey50", linetype = 2, linewidth = 0.25) +
+    geom_line(data=na.omit(prod_dat1), aes(x=BY, y=lnRS), col="grey75") +
+    geom_line(aes(x=BY, y=lnRS, col=ocean_region_lab)) +
+    facet_grid(rows=vars(Stock), switch ="y", scales="free_y", as.table=F) +
+    scale_colour_manual(values=col.region) +
+    xlim(1960,2020) +
+    theme(axis.text.y = element_blank(),
+          axis.ticks.y = element_blank(),
+          strip.text.y.left = element_text(angle=0, hjust=0, margin=margin(l=0, r=0)),
+          strip.background = element_rect(fill="transparent", colour="transparent"),
+          strip.text = element_text(size=7, ),
+          panel.spacing.y = unit(0, unit="cm"),
+          panel.background = element_rect(fill="white"),
+          legend.position = "none") +
+    labs(y="Population", x="Brood Year")
+
+  g2 <- ggplot(prod_dat2) +
+    geom_vline(xintercept=c(1988,2011), color = "grey50", linetype = 2, linewidth = 0.25) +
+    geom_line(data=na.omit(prod_dat2), aes(x=BY, y=lnRS), col="grey75") +
+    geom_line(aes(x=BY, y=lnRS, col=ocean_region_lab)) +
+    facet_grid(rows=vars(Stock), switch ="y", scales="free_y", as.table=F) +
+    scale_colour_manual(values=col.region) +
+    xlim(1960,2020) +
+    theme(axis.text.y = element_blank(),
+          axis.ticks.y = element_blank(),
+          strip.text.y.left = element_text(angle=0, hjust=0, margin=margin(l=0, r=0)),
+          strip.background = element_rect(fill="transparent", colour="transparent"),
+          strip.text = element_text(size=7, ),
+          panel.spacing.y = unit(0, unit="cm"),
+          panel.background = element_rect(fill="white"),
+          legend.position = "none") +
+    labs(y="Population", x="Brood Year")
+
+  png(here(fig.dir, paste0(speciesFlag, "2_ts_length.png")), height = 6, width = 6,  units = "in", res = 72*4)
+  print(g1)
+  dev.off()
+
+  png(here(fig.dir, paste0(speciesFlag, "1_ts_length.png")), height = 6, width = 6,  units = "in", res = 72*4)
+  print(g2)
+  dev.off()
+}
+
+if(exists("ss.all.yrs") & speciesFlag == "sockeye") {
 
   ## Fig: Dot + density main with single stock estimates overlaid
   ss.dat <- ss.all.yrs$coef$model4a %>%
@@ -162,9 +222,10 @@ if(exists("ss.all.yrs")) {
     scale_shape_manual(values = rev(c(23, 21, 24, 22)), guide = "legend") +
     scale_fill_manual(values = col.region, guide="none") +
     labs(x = "Coefficient",
-         y = "Stock",
+         y = "Population",
          color = "",
          shape = "") +
+    guides(shape = "none") +
     facet_wrap( ~ var) +
     scale_x_continuous(breaks=c(-0.5,0,0.5)) +
     coord_cartesian(xlim=c(-1,1), clip="off") +
@@ -176,12 +237,102 @@ if(exists("ss.all.yrs")) {
           legend.text = element_text(size = 8),
           panel.spacing.x = unit(-0.5, "pt"))
 
-  png(here(fig.dir, paste0(speciesFlag, "_coef_catepillar_heir_indv.png")), res = 72*4)
+  png(here(fig.dir, paste0(speciesFlag, "_coef_catepillar_heir_indv.png")), height = 9, width = 7,  units = "in", res = 72*4)
   print(g)
   dev.off()
 
 }
 
+if(exists("ss.all.yrs") & speciesFlag == "chum") {
 
+  ## Fig: Dot + density main with single stock estimates overlaid
+  ss.dat <- ss.all.yrs$coef$model4a %>%
+    dplyr::filter(variable %in% c("early_sst_stnd", "np_all_spp_sec_stnd")) %>%
+    dplyr::mutate(var = ifelse(variable == "early_sst_stnd", "SST", "Comp"))
+  ss.dat$Stock <- factor(ss.dat$Stock, levels=levels(data_master$Stock))
+  ss.dat$var <- factor(ss.dat$var, levels=c("SST", "Comp"))
+  df.dot.ss <- dplyr::left_join(df.dot, ss.dat, by=c("Stock", "var"))
+
+  g <- ggplot(df.dot.ss) +
+    geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
+    geom_point(aes(x = mean, y = Stock, color = ocean_region_lab, shape = ocean_region_lab, fill=ocean_region_lab)) +
+    geom_segment(aes(y = Stock, yend = Stock, x = `2.5%`, xend = `97.5%`,
+                     color = ocean_region_lab), linewidth = 0.25) +
+    geom_segment(data = df.mu, aes(y = ystart, yend = yend, x = mu_mean, xend = mu_mean,
+                                   color = ocean_region_lab), linewidth = 0.25) +
+    geom_rect(data = df.mu, aes(xmin = mu_2.5, xmax = mu_97.5, ymin = ystart,
+                                ymax = yend, fill = ocean_region_lab),
+              alpha = 0.2) +
+    geom_point(aes(x=value, y=Stock, colour=ocean_region_lab, shape=ocean_region_lab), fill="transparent") +
+    col.scale.reg +
+    scale_shape_manual(values = rev(c(23, 21, 24, 22)), guide = "legend") +
+    scale_fill_manual(values = col.region, guide="none") +
+    labs(x = "Coefficient",
+         y = "Population",
+         color = "",
+         shape = "") +
+    guides(shape = "none") +
+    facet_wrap( ~ var) +
+    scale_x_continuous(breaks=c(-0.5,0,0.5)) +
+    coord_cartesian(xlim=c(-1,1), clip="off") +
+    theme_sleek(base_size = 10) +
+    theme(legend.justification = c(0, 0),
+          legend.position = c(0.01, 0.8),
+          legend.key.size = unit(10, "pt"),
+          legend.background = element_blank(),
+          legend.text = element_text(size = 8),
+          panel.spacing.x = unit(-0.5, "pt"))
+
+  png(here(fig.dir, paste0(speciesFlag, "_coef_catepillar_heir_indv.png")), height = 4.5, width = 7,  units = "in", res = 72*4)
+  print(g)
+  dev.off()
+
+}
+
+if(exists("ss.all.yrs") & speciesFlag == "pink") {
+
+  ## Fig: Dot + density main with single stock estimates overlaid
+  ss.dat <- ss.all.yrs$coef$model4a %>%
+    dplyr::filter(variable %in% c("early_sst_stnd", "np_all_spp_sec_stnd")) %>%
+    dplyr::mutate(var = ifelse(variable == "early_sst_stnd", "SST", "Comp"))
+  ss.dat$Stock <- factor(ss.dat$Stock, levels=levels(data_master$Stock))
+  ss.dat$var <- factor(ss.dat$var, levels=c("SST", "Comp"))
+  df.dot.ss <- dplyr::left_join(df.dot, ss.dat, by=c("Stock", "var"))
+
+  g <- ggplot(df.dot.ss) +
+    geom_vline(xintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
+    geom_point(aes(x = mean, y = Stock, color = ocean_region_lab, shape = ocean_region_lab, fill=ocean_region_lab)) +
+    geom_segment(aes(y = Stock, yend = Stock, x = `2.5%`, xend = `97.5%`,
+                     color = ocean_region_lab), linewidth = 0.25) +
+    geom_segment(data = df.mu, aes(y = ystart, yend = yend, x = mu_mean, xend = mu_mean,
+                                   color = ocean_region_lab), linewidth = 0.25) +
+    geom_rect(data = df.mu, aes(xmin = mu_2.5, xmax = mu_97.5, ymin = ystart,
+                                ymax = yend, fill = ocean_region_lab),
+              alpha = 0.2) +
+    geom_point(aes(x=value, y=Stock, colour=ocean_region_lab, shape=ocean_region_lab), fill="transparent") +
+    col.scale.reg +
+    scale_shape_manual(values = rev(c(23, 21, 24, 22)), guide = "legend") +
+    scale_fill_manual(values = col.region, guide="none") +
+    labs(x = "Coefficient",
+         y = "Population",
+         color = "",
+         shape = "") +
+    guides(shape = "none") +
+    facet_wrap( ~ var) +
+    scale_x_continuous(breaks=c(-0.5,0,0.5)) +
+    coord_cartesian(xlim=c(-1,1), clip="off") +
+    theme_sleek(base_size = 10) +
+    theme(legend.justification = c(0, 0),
+          legend.position = c(0.01, 0.77),
+          legend.key.size = unit(10, "pt"),
+          legend.background = element_blank(),
+          legend.text = element_text(size = 8),
+          panel.spacing.x = unit(-0.5, "pt"))
+
+  png(here(fig.dir, paste0(speciesFlag, "_coef_catepillar_heir_indv.png")), height = 4.8, width = 7,  units = "in", res = 72*4)
+  print(g)
+  dev.off()
+
+}
 ## --- Remove large model fits (saved in stat_hbm_fit)
 rm(list = c("stat_a"))

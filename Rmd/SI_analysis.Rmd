@@ -16,6 +16,7 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 library(knitr)
 library(here)
 library(kableExtra)
+library(dplyr)
 ```
 # Supplementary methods and results
 
@@ -57,7 +58,14 @@ Consistent with previous analyses that have fit models of salmon productivity to
 
 ```{r fig-s1, out.width="80%", fig.align="center", fig.cap="(ref:fig-s1)"}
 
-knitr::include_graphics("figures/sockeye_ts_length.png")
+knitr::include_graphics("figures/sockeye1_ts_length.png")
+```
+
+(ref:fig-s1cont) Sockeye salmon recruits-per-spawner timeseries used in the analysis continued.
+
+```{r fig-s1cont, out.width="80%", fig.align="center", fig.cap="(ref:fig-s1cont)"}
+
+knitr::include_graphics("figures/sockeye2_ts_length.png")
 ```
 
 (ref:fig-s2) Chum salmon recruits-per-spawner timeseries used in the analysis. Missing brood years are in grey, regions are color coded (Table S1), and the temporal break point denoting the three "eras" considered are illustrated with vertical dashed lines.
@@ -73,39 +81,39 @@ knitr::include_graphics("figures/chum_ts_length.png")
 knitr::include_graphics("figures/pink_ts_length.png")
 ```
 
-(ref:fig-s4) Sockeye posterior distribution summaries for SST and competition coefficients from the model described in the main text (equation 1). Filled points are posterior medians (points) and 95% credible intervals (horizontal lines) for the stock-specific effects of SST, and pink salmon competition, and open points are estimates from a simplified model that is fit individually and independently for each stock. Solid vertical lines give the posterior median for the ocean ecosystem level effects, which represent the mean effect across all stocks in an ocean ecosystem. Shaded box give the 95% credibility interval for the ecosystem-level effect with dashed lines indicating zero effect.
+(ref:fig-s4) Sockeye posterior distribution summaries for SST and competition coefficients from the model described in the main text (equation 1). Filled points are posterior medians (points) and 95% credible intervals (horizontal lines) for the population-specific effects of SST, and pink salmon competition, and open points are estimates from a simplified model that is fit individually and independently for each population. Solid vertical lines give the posterior median for the ocean ecosystem level effects, which represent the mean effect across all populations in an ocean ecosystem. Shaded box give the 95% credibility interval for the ecosystem-level effect with dashed lines indicating zero effect.
 
-```{r fig-s4, out.width="80%", fig.align="center", fig.cap="(ref:fig-s4)"}
+```{r fig-s4, out.width="90%", fig.align="center", fig.cap="(ref:fig-s4)"}
 knitr::include_graphics("figures/sockeye_coef_catepillar_heir_indv.png")
 ```
 
-(ref:fig-s5) Same as Figure S4 but for chum salmon stocks.
+(ref:fig-s5) Same as Figure S4 but for chum salmon popultions.
 
-```{r fig-s5, out.width="80%", fig.align="center", fig.cap="(ref:fig-s5)"}
+```{r fig-s5, out.width="90%", fig.align="center", fig.cap="(ref:fig-s5)"}
 knitr::include_graphics("figures/chum_coef_catepillar_heir_indv.png")
 ```
 
-(ref:fig-s6) Same as Figure S4 but for pink salmon stocks.
+(ref:fig-s6) Same as Figure S4 but for pink salmon popultions.
 
-```{r fig-s6, out.width="80%", fig.align="center", fig.cap="(ref:fig-s6)"}
+```{r fig-s6, out.width="90%", fig.align="center", fig.cap="(ref:fig-s6)"}
 knitr::include_graphics("figures/pink_coef_catepillar_heir_indv.png")
 ```
 
 (ref:fig-s7) Posterior distribution summaries for covariate effects on sockeye salmon productivity when including the NPGO as an additional covariate in models (coloured points and lines) compared to original models with only SST, salmon competitors, and their interaction (grey points and lines). Points are medians of posterior distributions, lines are 95% credible intervals. Effect sizes estimated from time-varying models (pre-defined break points) are indicated with diamond-shaped points and labeled by time period: "Early" (1960-1988), "Middle" (1989-2010), or "Late" (2011-2016). Estimates from stationary models considering all years are indicated with square points and labeled "All".
 
-```{r fig-s7, out.width="80%", fig.align="center", fig.cap="(ref:fig-s7)"}
+```{r fig-s7, out.width="90%", fig.align="center", fig.cap="(ref:fig-s7)"}
 knitr::include_graphics("figures/sockeye-npgo-era-dot.png")
 ```
 
-(ref:fig-s8) Same as Figure S7 but for chum salmon stocks.
+(ref:fig-s8) Same as Figure S7 but for chum salmon popultions.
 
-```{r fig-s8, out.width="80%", fig.align="center", fig.cap="(ref:fig-s8)"}
+```{r fig-s8, out.width="90%", fig.align="center", fig.cap="(ref:fig-s8)"}
 knitr::include_graphics("figures/chum-npgo-era-dot.png")
 ```
 
-(ref:fig-s9) Same as Figure S7 but for pink salmon stocks.
+(ref:fig-s9) Same as Figure S7 but for pink salmon popultions.
 
-```{r fig-s9, out.width="80%", fig.align="center", fig.cap="(ref:fig-s9)"}
+```{r fig-s9, out.width="90%", fig.align="center", fig.cap="(ref:fig-s9)"}
 knitr::include_graphics("figures/pink-npgo-era-dot.png")
 ```
 
@@ -129,27 +137,43 @@ knitr::include_graphics("figures/pink_alt_comp_fig.png")
 
 (ref:fig-s13) (a) North Pacific pink, chum, and sockeye salmon abundance over time (light grey) and GAM model fit to time series (blue) with resulting detrended competitor index (i.e., residuals of GAM model fit) show in (b).
 
-```{r fig-s13, out.width="60%", fig.align="center", fig.cap="(ref:fig-s13)"}
+```{r fig-s13, out.width="90%", fig.align="center", fig.cap="(ref:fig-s13)"}
 knitr::include_graphics("figures/detrend-comp.png")
 ```
 
 (ref:fig-s14) Effect of detrending salmon competitor index on estimates of impact of ocean warming and competition at sea. Posterior probability distributions of the predicted effect of SST and detrended competitors (Figure S13b) on sockeye, chum and pink salmon productivity (percentage change in adult recruits per spawner) by ocean ecosystem (same as Figure 2 in Main Text).
 
-```{r fig-s14, out.width="80%", fig.align="center", fig.cap="(ref:fig-s14)"}
+```{r fig-s14, out.width="90%", fig.align="center", fig.cap="(ref:fig-s14)"}
 knitr::include_graphics("figures/detrend-posterior-percent-change.png")
 ```
 
 
 \newpage
 
+
 # Tables
+
 
 (ref:tab-1) Population considered in our analyses, ocean region, first and last brood year (BY), and approximate ocean entry point.
 
+
 ```{r tab-1, tab.cap = "(ref:tab-1)"}
-tbl <- read.csv("tables/all_species_info_pub.csv")
-names(tbl) <-c("Species", "Stock", "Ocean Region", "First BY", "Last BY", "Lat.", "Lon.")
-knitr::kable(tbl,
+
+sk_tbl <- read.csv(here("data/sockeye/master_sockeye_stock_info.csv"))
+sk_tbl$Species = "Sockeye"
+
+ch_tbl <- read.csv(here("data/chum/master_chum_stock_info.csv"))
+ch_tbl$Species = "Chum"
+
+pk_tbl <- read.csv(here("data/pink/master_pink_stock_info.csv"))
+pk_tbl$Species = "Pink"
+
+tbl <- rbind(sk_tbl, ch_tbl, pk_tbl)
+
+tbl_order <- tbl[,c(11,1,10,8,9,4,5)]
+
+names(tbl_order) <-c("Species", "Population", "Ocean Region", "First BY", "Last BY", "Lat.", "Lon.")
+knitr::kable(tbl_order,
              row.names = FALSE,
              align = "lrrcccc",
              booktabs = T,
@@ -161,46 +185,57 @@ knitr::kable(tbl,
 
 (ref:tab-2) Estimated mean effect sizes by region for SST and Competitor covariates, and interaction term, from stationary models.
 
+
 ```{r tab-2, tab.cap = "(ref:tab-2)"}
 regional_stat_coeffs <- rbind(read.csv(here("Rmd/figures/reg_coefficients_stat_inter_sockeye.csv")),
                               read.csv(here("Rmd/figures/reg_coefficients_stat_inter_chum.csv")),
-                              read.csv(here("Rmd/figures/reg_coefficients_stat_inter_pink.csv")))[,-1]
+                              read.csv(here("Rmd/figures/reg_coefficients_stat_inter_pink.csv")))[,-1] |>
+  mutate(Coefficient  = replace_when(Coefficient , Coefficient  == "Comp" ~ "Competitors"))
+
 knitr::kable(regional_stat_coeffs,
              col.names = c("Species", "Ocean Region", "Coefficient", "Lower CI", "Mean", "Upper CI", "Mean % change in R/S"),
              row.names = FALSE,
              align = "lrrcccc",
              booktabs = T,
              longtable=T,
-             digits = c(0,0,0,2,2,2,2)) |>
-  column_spec(7, width = "3cm")|>
+             digits = c(0,0,0,2,2,2,0)) |>
+  column_spec(7, width = "2cm")|>
   kable_styling(latex_options = c("repeat_header"))
 ```
 
-(ref:tab-3) Estimated stock-specific mean effect sizes for SST and Competitor covariates, and interaction term, from stationary models.
+
+(ref:tab-3) Estimated population-specific mean effect sizes for SST and Competitor covariates, and interaction term, from stationary models.
+
 
 ```{r tab-3, tab.cap = "(ref:tab-3)"}
 stk_stat_coeffs <- rbind(read.csv(here("Rmd/figures/stk_coefficients_stat_inter_sockeye.csv")),
                               read.csv(here("Rmd/figures/stk_coefficients_stat_inter_chum.csv")),
-                              read.csv(here("Rmd/figures/stk_coefficients_stat_inter_pink.csv")))[,-1]
+                              read.csv(here("Rmd/figures/stk_coefficients_stat_inter_pink.csv")))[,-1]|>
+  mutate(Coefficient  = replace_when(Coefficient , Coefficient  == "Comp" ~ "Competitors"))
 knitr::kable(stk_stat_coeffs,
-             col.names = c("Species", "Stock","Ocean Region", "Coefficient", "Lower CI", "Mean", "Upper CI", "Mean % change in R/S"),
+             col.names = c("Species", "Population","Ocean Region", "Coefficient", "Lower CI", "Mean", "Upper CI", "Mean % change in R/S"),
              row.names = FALSE,
              align = "lrrcccc",
              booktabs = T,
              longtable=T,
-             digits = c(0,0,0,0,2,2,2,2)) |>
+             digits = c(0,0,0,0,2,2,2,0)) |>
   column_spec(2, width = "3cm") |>
   column_spec(8, width = "2cm")|>
   kable_styling(latex_options = c("repeat_header"))
 ```
 
-(ref:tab-4) Estimated stock-specific mean effect sizes for SST and Competitor covariates, from time-varying 'era' models.
+
+(ref:tab-4) Estimated mean effect sizes by ocean region for SST and Competitor covariates, from time-varying 'era' models.
+
 
 ```{r tab-4, tab.cap = "(ref:tab-4)"}
 
 regional_era_coeffs <- rbind(read.csv(here("Rmd/figures/reg_coefficients_era_sockeye.csv")),
                               read.csv(here("Rmd/figures/reg_coefficients_era_chum.csv")),
-                              read.csv(here("Rmd/figures/reg_coefficients_era_pink.csv")))[,-7]
+                              read.csv(here("Rmd/figures/reg_coefficients_era_pink.csv")))[,-7]|>
+  mutate(Coefficient  = replace_when(Coefficient , Coefficient  == "Comp" ~ "Competitors")) |>
+  filter(!Era == "Stationary" )
+
 knitr::kable(regional_era_coeffs,
              col.names = c("Species", "Ocean Region", "Coefficient", "Era","Lower CI", "Mean", "Upper CI"),
              row.names = FALSE,
@@ -212,17 +247,31 @@ knitr::kable(regional_era_coeffs,
   kable_styling(latex_options = c("repeat_header"))
 ```
 
-**Table S5.** Estimated stock-specific mean effect sizes for SST and Competitor covariates, from time-varying 'era' models.
 
-- need to figure out what to present, not worth doing all years is it? 
-
-**Table S6.** Estimated regional mean effect sizes for SST and Competitor covariates, from annually time-varying (random walk) models.
-- need to figure out what to present, not worth doing all years is it? 
+(ref:tab-5) Estimated population-specific mean effect sizes for SST and Competitor covariates, from time-varying 'era' models.
 
 
-**Table S8.** Priors on all directly estimated parameters for each model type.
+```{r tab-5, tab.cap = "(ref:tab-5)"}
 
-*See: Output/Model_priors.xlsx*
+stk_era_coeffs <- rbind(read.csv(here("Rmd/figures/stk_coefficients_era_sockeye.csv")),
+                              read.csv(here("Rmd/figures/stk_coefficients_era_chum.csv")),
+                              read.csv(here("Rmd/figures/stk_coefficients_era_pink.csv")))[,-7]|>
+  filter(!Era == "Stationary" )
+
+knitr::kable(stk_era_coeffs,
+             col.names = c("Species", "Population", "Ocean Region", "Coefficient", "Era","Lower CI", "Mean", "Upper CI"),
+             row.names = FALSE,
+             align = "lrrrccc",
+             booktabs = T,
+             longtable=T,
+             digits = c(0,0,0,0,0,2,2,2))|>
+  column_spec(2, width = "3cm") |>
+  kable_styling(latex_options = c("repeat_header"))
+```
+
+
+\newpage
+
 
 # Literature cited
 
