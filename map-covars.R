@@ -1,6 +1,7 @@
 # Create NEW map /covars figure
 library(sf)
 library(cowplot)
+library(patchwork)
 
 # Downlad map and convert to sp
 na_map <- rnaturalearth::ne_countries(country = c("United States of America", "Canada"), scale='medium', returnclass="sf")
@@ -69,6 +70,48 @@ map_albers <-
                                              colour="transparent"),
         aspect.ratio = 0.7)
 
+# Inset map of North America with box
+# Get the extent the main map actually draws (in the Albers CRS).
+pp <- ggplot_build(map_albers)$layout$panel_params[[1]]
+xr <- pp$x_range
+yr <- pp$y_range
+
+# Build the box as a polygon with many vertices along each edge (so it curves
+# correctly when projected), then transform to the inset's CRS.
+n <- 50
+box_mat <- rbind(cbind(seq(xr[1], xr[2], length.out=n), yr[1]),
+                 cbind(xr[2], seq(yr[1], yr[2], length.out=n)),
+                 cbind(seq(xr[2], xr[1], length.out=n), yr[2]),
+                 cbind(xr[1], seq(yr[2], yr[1], length.out=n)))
+box_mat <- rbind(box_mat, box_mat[1, ])   # close the polygon
+inset_crs <- "+proj=laea +lat_0=50 +lon_0=-105 +datum=WGS84 +units=m"  # North America equal-area
+extent_box <- sf::st_sfc(sf::st_polygon(list(box_mat)), crs=3579) |>
+  sf::st_transform(inset_crs)
+
+# North America basemap for the inset
+na_continent <- rnaturalearth::ne_countries(continent = "North America",
+                                            scale = "small", returnclass = "sf") |>
+  sf::st_transform(inset_crs)
+
+# Inset plot
+inset_map <-
+  ggplot() +
+  geom_sf(data = na_continent, fill = "grey85", colour = "grey60", linewidth = 0.15) +
+  geom_sf(data = extent_box, fill = NA, colour = "grey15", linewidth = 0.5, alpha=0.2) +
+  coord_sf(xlim = c(-170, -50), ylim = c(14, 84), default_crs = sf::st_crs(4326),
+           expand = FALSE) +
+  theme_void() +
+  theme(panel.background = element_rect(fill = "grey95", colour = "grey25",
+                                        linewidth = 0.4),
+        panel.border = element_rect(colour = "grey25"))
+
+# Place inset in the top-right corner of the map panel (a)
+map_albers <- map_albers +
+  patchwork::inset_element(inset_map,
+                           left = 0.70, bottom = 0.66, right = 0.98, top = 0.95,
+                           align_to = "panel") # keeps it in the corner regardless of aspect ratio
+
+
 # SST anomalies - multipanel
 # Load data
 unique.oc.entry <- distinct(map.info, lat, lon, .keep_all=TRUE)
@@ -93,7 +136,7 @@ sst.fig <-
                              "Gulf of Alaska" = "GoA",
                              "Bering Sea" = "BS"))) +
   scale_colour_manual(values=col.region) +
-  labs(x="Year", y="SST anomalies") +
+  labs(x="Year", y="SST anomalies (°C)") +
   coord_cartesian(xlim=c(1950,2020)) +
   scale_y_continuous(breaks=seq(-4,4,1), labels=c("-4", "", "-2", "", " 0", " ", " 2", "", " 4"), position="left") +
   theme_sleek() +
@@ -161,7 +204,7 @@ sst_raw_dot <- sst_full |>
   scale_x_continuous(breaks=seq(6, 12, 2)) +
   scale_y_discrete(labels=c("WC", "SEAK", "GoA", "BS"), position = "right") +
   scale_colour_manual(values=col.region) +
-  theme_sleek() + labs(x="SST (°C)", y="") +
+  theme_sleek() + labs(x="Mean SST (°C)", y="") +
   theme(legend.position = "none",
         plot.margin = margin(l=30, t=10, r=-5, unit="pt"),
         axis.text.y.right = element_text(margin = margin(l=4, r=-7, unit="pt")),
@@ -195,10 +238,9 @@ lgnd2 <- lgnd.dat |> ggplot() +
 blank <- ggplot() + theme(panel.background = element_rect(fill="white")) # blank grob to put legend on
 legend <- cowplot::ggdraw(blank) + cowplot::draw_plot(lgnd2)
 
-right <- cowplot::plot_grid(sst.fig, sst_raw_dot, rel_heights=c(2.5,1), nrow=2, labels=c("c", "d"), hjust=-1.5) # horizonal justification doesn't work either as
-left <- cowplot::plot_grid(map_albers, (comp.fig + theme_sleek()), ncol=1, rel_heights = c(2.5, 1), labels="auto", hjust=-1.7, vjust=c(1.5, .7))
+right <- cowplot::plot_grid(sst.fig, sst_raw_dot, rel_heights=c(2.5,1), nrow=2, labels=c("b", "d"), hjust=-1.5) # horizonal justification doesn't work either as
+left <- cowplot::plot_grid(map_albers, (comp.fig + theme_sleek()), ncol=1, rel_heights = c(2.5, 1), labels=c("a", "c"), hjust=-1.7, vjust=c(1.5, .7))
 intro.plot.2025 <- cowplot::plot_grid(left, right, ncol=2, rel_widths = c(1.7, 1))
 png(here("figures", "manuscript/main-text", "map-covariates.png"), height=721*1.5, width=1000*1.5, res=72*3)
 print(intro.plot.2025)
 dev.off()
-
