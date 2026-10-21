@@ -54,7 +54,7 @@ stat_a <- rstan::stan(file = "./stan/hbm_stat_2c.stan",
                      chains = 4,
                      seed = 123,
                      control = list(adapt_delta = 0.99,
-                                    max_treedepth = 20)) # increased treedepth
+                                    max_treedepth = 10))
 save(stat_a, file = here(fit.dir, "stat_a.RData"))
 
 ## Diagnostic plots ----
@@ -81,8 +81,8 @@ pdf( here(fig.dir, "stat_a_resid.pdf"), width = 8, height = 8)
     plot_hbm_resids(stat_a, data_master)
 dev.off()
 
-## Check pathology -----------------------------------------
-rstan::check_hmc_diagnostics(stat_a) # not outputting anything
+## Check pathology
+rstan::check_hmc_diagnostics(stat_a)
 
 rstan::get_elapsed_time(stat_a)
 
@@ -94,7 +94,8 @@ rhat_highest(stat_a, pars = pars.stat)
 
 pairs_lowest(stat_a, pars = pars.stat) # can ignore 'warning: not a graphical parameter'
 
-## Fit de-trended comp time series ----
+
+## Fit de-trended comp time series
 
 ## Run MCMC ----
 stan.dat.all.detp <- stan_data_stat(data_master,
@@ -112,5 +113,18 @@ stat_a.detp <- rstan::stan(file = "./stan/hbm_stat_2c.stan",
                       chains = 4,
                       seed = 123,
                       control = list(adapt_delta = 0.99,
-                                     max_treedepth = 20)) # increased treedepth
+                                     max_treedepth = 10))
 save(stat_a.detp, file = here(fit.dir, "stat_a_detp.RData"))
+
+## Check pathology
+rstan::check_hmc_diagnostics(stat_a.detp)
+
+rstan::get_elapsed_time(stat_a.detp)
+
+summary(stat_a.detp, pars = pars.stat)$summary
+
+neff_lowest(stat_a.detp, pars = pars.stat)
+
+rhat_highest(stat_a.detp, pars = pars.stat)
+
+pairs_lowest(stat_a.detp, pars = pars.stat) # can ignore 'warning: not a graphical parameter'
