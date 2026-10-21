@@ -16,15 +16,12 @@ load(here(fit.dir, "hbm_era_2c.Rdata"))
 
 
 # Set colours for era plots
-# CHANGED: added a 4th ("Stationary") colour block, one per region, since
-# kappa is now stationary and its rows carry era = "Stationary" instead of
-# Early/Middle/Late. Without these, points/segments for kappa would have no
-# matching colour in the combined caterpillar plot below.
+# Added a 4th ("Stationary") colour block for *stationary* kappa
 col.eras <- c("#00b39e", "#b3a100", "#ff80d7", "#4db8ff",
               "#008070", "#6D6200FF", "#BC007FFF",  "#0070BDFF",
               "#00332d", "#4d4500", "#4d0034", "#002e4d",
-              "#595959", "#8c8c8c", "#404040", "#bfbfbf")   # CHANGED: colours for the "Stationary" era
-names(col.eras) <- paste0(rep(names(col.region), 4), ".", rep(c("Early", "Middle", "Late", "Stationary"), each=4)) # CHANGED: 4 eras now, not 3
+              "#595959", "#8c8c8c", "#404040", "#bfbfbf")
+names(col.eras) <- paste0(rep(names(col.region), 4), ".", rep(c("Early", "Middle", "Late", "Stationary"), each=4))
 
 
 ## Save coefficients in tables ------------------------------------------------
@@ -120,11 +117,13 @@ g <- ggplot(df.era.st.2c) +
         legend.justification = c(0, 0),
         legend.key.size = unit(10, "pt"),
         legend.background = element_blank(),
-        legend.text = element_text(size = 8)
+        legend.text = element_text(size = 8),
+        axis.text.y = element_text(size=6)
   )
-pdf(here(fig.dir, "eras_coef_dot_2c_panel.pdf"), width=8, height=8)
+pdf(here(fig.dir, "eras_coef_dot_2c_panel.pdf"), width=8, height=15)
 print(g)
 dev.off()
+
 
 # Posterior density plot - 2-covar
 g <- ggplot(dens.df.st.2c) +
