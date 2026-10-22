@@ -132,9 +132,9 @@ dev.off()
 # Could repeat with PDO, but the above shows it is highly correlated with SST.
 
 # Load stationary NPGO model coefficient summaries and combine them
-sock.npgo.coefs <- read.csv(here(sens.fig.dir, "model_coefficients_stat_npgo_sockeye.csv"))
-chum.npgo.coefs <- read.csv(here(sens.fig.dir, "model_coefficients_stat_npgo_chum.csv"))
-pink.npgo.coefs <- read.csv(here(sens.fig.dir, "model_coefficients_stat_npgo_pink.csv"))
+sock.npgo.coefs <- read.csv(here(sens.fig.dir, "sockeye/model_coefficients_stat_npgo_sockeye.csv"))
+chum.npgo.coefs <- read.csv(here(sens.fig.dir, "chum/model_coefficients_stat_npgo_chum.csv"))
+pink.npgo.coefs <- read.csv(here(sens.fig.dir, "pink/model_coefficients_stat_npgo_pink.csv"))
 
 # bind them
 npgo.coefs <- bind_rows(sock.npgo.coefs, chum.npgo.coefs, pink.npgo.coefs, .id="Species")
@@ -234,7 +234,10 @@ npgo.coefs <- npgo.coefs |> rename(ocean_region_lab=Ocean.Region, varnam=Coeffic
 all.coefs.npgo <- bind_rows(df.era.npgo, npgo.coefs, .id="Model") # bind together
 all.coefs.npgo[is.na(all.coefs.npgo$Era),"Era"] <- "All"
 all.coefs.npgo$varnam <- gsub("SST x Competitors", "SST x \nComp.", all.coefs.npgo$varnam) # Have to change this back to fit on plot
-
+all.coefs.npgo.simple <- all.coefs.npgo |>
+  filter(!(varnam == "Competitors" & Era == "Early"),
+         !(varnam == "Competitors" & Era == "Middle"),
+         !(varnam == "Competitors" & Era == "Late"))
 
 
 # Combine era and stationary model coefficients -- base model
@@ -248,20 +251,23 @@ all.coefs.base[is.na(all.coefs.base$Era), "Era"] <- "All"
 names(all.coefs.base)[names(all.coefs.base)=="var"] <- "varnam"
 all.coefs.base <- ocean_region_lab(all.coefs.base, var="region")
 all.coefs.base$varnam <- gsub("SST x Competitors", "SST x \nComp.", all.coefs.base$varnam) # Have to change this label to fit on plot
+all.coefs.base.simple <- all.coefs.base |>
+  filter(!(varnam == "Competitors" & Era == "Early"),
+         !(varnam == "Competitors" & Era == "Middle"),
+         !(varnam == "Competitors" & Era == "Late"))
 
 # Make stat coefs labelled as "All" era
 
 # Make master plots, one per species:
-pdf(file=here(sens.fig.dir, "npgo-era-dot.pdf"), onefile = T)
-
-for(spp in c("Sockeye", "Pink", "Chum")) {
-  g <- all.coefs.npgo |> filter(Species==spp) |>
+spp = "Sockeye"
+png(file=here(sens.fig.dir, "sockeye-npgo-era-dot.png"),width=975*2, height=750*2, res=72*4)
+  g <- all.coefs.npgo.simple |> filter(Species=="Sockeye") |>
     ggplot() +
     geom_hline(yintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
-    geom_point(data=filter(all.coefs.base, Species==spp),
+    geom_point(data=filter(all.coefs.base.simple, Species==spp),
                aes(y=mean, x=Era, shape=Model), col="grey50", size=3, position=position_nudge(x=.1),
                alpha=0.9) +
-    geom_segment(data=filter(all.coefs.base, Species==spp),
+    geom_segment(data=filter(all.coefs.base.simple, Species==spp),
                  aes(y=lower_2.5, yend=upper_97.5, x=Era, xend=Era),
                  col="grey50", linewidth=.8, position=position_nudge(x=.1), alpha=0.9) + # base models
     geom_point(aes(y=Mean, x=Era, col=ocean_region_lab, shape=Model), size=3, alpha=0.9) +
@@ -270,12 +276,53 @@ for(spp in c("Sockeye", "Pink", "Chum")) {
     facet_grid(cols=vars(factor(varnam, levels=c("SST", "Competitors", "SST x \nComp.", "NPGO"))), rows=vars(ocean_region_lab), scales="free", space="free_x") +
     scale_shape_manual(values=c(18,15), guide="none") +
     scale_colour_manual(values=col.region, guide="none") +
-    labs(x="Time Period", y="Covariate effect", title=spp) +  theme_sleek()
+    labs(x="Time Period", y="Covariate effect") +  theme_sleek()
 
   print(g)
-}
 dev.off()
 
 
+spp = "Chum"
+png(file=here(sens.fig.dir, "chum-npgo-era-dot.png"),width=975*2, height=750*2, res=72*4)
+g <- all.coefs.npgo.simple |> filter(Species=="Chum") |>
+  ggplot() +
+  geom_hline(yintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
+  geom_point(data=filter(all.coefs.base.simple, Species==spp),
+             aes(y=mean, x=Era, shape=Model), col="grey50", size=3, position=position_nudge(x=.1),
+             alpha=0.9) +
+  geom_segment(data=filter(all.coefs.base.simple, Species==spp),
+               aes(y=lower_2.5, yend=upper_97.5, x=Era, xend=Era),
+               col="grey50", linewidth=.8, position=position_nudge(x=.1), alpha=0.9) + # base models
+  geom_point(aes(y=Mean, x=Era, col=ocean_region_lab, shape=Model), size=3, alpha=0.9) +
+  geom_segment(aes(y=Lower_95_CI, yend=Upper_95_CI, x=Era, xend=Era, col=ocean_region_lab),
+               linewidth=.8, alpha=0.9) + # npgo models
+  facet_grid(cols=vars(factor(varnam, levels=c("SST", "Competitors", "SST x \nComp.", "NPGO"))), rows=vars(ocean_region_lab), scales="free", space="free_x") +
+  scale_shape_manual(values=c(18,15), guide="none") +
+  scale_colour_manual(values=col.region, guide="none") +
+  labs(x="Time Period", y="Covariate effect") +  theme_sleek()
+
+print(g)
+dev.off()
 
 
+spp = "Pink"
+png(file=here(sens.fig.dir, "pink-npgo-era-dot.png"),width=975*2, height=750*2, res=72*4)
+g <- all.coefs.npgo.simple |> filter(Species=="Pink") |>
+  ggplot() +
+  geom_hline(yintercept = 0, color = "grey50", linetype = 2, linewidth = 0.25) +
+  geom_point(data=filter(all.coefs.base.simple, Species==spp),
+             aes(y=mean, x=Era, shape=Model), col="grey50", size=3, position=position_nudge(x=.1),
+             alpha=0.9) +
+  geom_segment(data=filter(all.coefs.base.simple, Species==spp),
+               aes(y=lower_2.5, yend=upper_97.5, x=Era, xend=Era),
+               col="grey50", linewidth=.8, position=position_nudge(x=.1), alpha=0.9) + # base models
+  geom_point(aes(y=Mean, x=Era, col=ocean_region_lab, shape=Model), size=3, alpha=0.9) +
+  geom_segment(aes(y=Lower_95_CI, yend=Upper_95_CI, x=Era, xend=Era, col=ocean_region_lab),
+               linewidth=.8, alpha=0.9) + # npgo models
+  facet_grid(cols=vars(factor(varnam, levels=c("SST", "Competitors", "SST x \nComp.", "NPGO"))), rows=vars(ocean_region_lab), scales="free", space="free_x") +
+  scale_shape_manual(values=c(18,15), guide="none") +
+  scale_colour_manual(values=col.region, guide="none") +
+  labs(x="Time Period", y="Covariate effect") +  theme_sleek()
+
+print(g)
+dev.off()

@@ -16,7 +16,9 @@ if(speciesFlag=="pink") {
 
 
 # Set paths to output locations - dependent on species
-fig.dir <- here("figures", "stat", speciesFlag, "hbm_inf") # place to store figures generated in this script
+fig.dir <- here("Rmd", "figures") # place to store figures generated in this script
+
+
 diag.fig.dir <- here("figures", "stat", speciesFlag, "hbm_fit") # place to store figures generated in this script
 fit.dir <- here("output", "models", "stat", speciesFlag) # place to store model fits
 diag.dir <- here("output", "diagnostics", "stat", speciesFlag) # place to store diagnostics

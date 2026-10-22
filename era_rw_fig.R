@@ -5,7 +5,7 @@
 load(here('output', 'models', 'dyn', 'pink', 'hbm_era_2c.RData'), verbose=T) # eras
 
 # Region-lvl dataframe
-summ_avg <- rstan::extract(era.2c, pars = c(paste0("mu_gamma", 1:3), paste0("mu_kappa", 1:3)))
+summ_avg <- rstan::extract(era.2c, pars = c(paste0("mu_gamma", 1:3), "mu_kappa"))
 summ_avg <- lapply(summ_avg, as.data.frame)
 summ_avg <- bind_rows(summ_avg, .id="par")
 names(summ_avg) <- c("par", "West Coast", "Southeast Alaska", "Gulf of Alaska", "Bering Sea")
@@ -25,7 +25,7 @@ pink.df.avg <- summ_avg |> tidyr::pivot_longer(cols=-c("par"), names_to="ocean_r
 load(here('output', 'models', 'dyn', 'chum', 'hbm_era_2c.RData'), verbose=T) # eras
 
 # Region-lvl dataframe
-summ_avg <- rstan::extract(era.2c, pars = c(paste0("mu_gamma", 1:3), paste0("mu_kappa", 1:3)))
+summ_avg <- rstan::extract(era.2c, pars = c(paste0("mu_gamma", 1:3), "mu_kappa"))
 summ_avg <- lapply(summ_avg, as.data.frame)
 summ_avg <- bind_rows(summ_avg, .id="par")
 names(summ_avg) <- c("par", "West Coast", "Gulf of Alaska", "Bering Sea")
@@ -158,7 +158,7 @@ sock.box.rw <- sock.df.avg |>
       geom_violin(aes(x=BY, y=pc, group=era, fill=ocean_region_lab, col=ocean_region_lab), alpha=0.75) +
       scale_y_continuous(breaks=c(-50,0,50)) +
       scale_x_continuous(limits=c(1960,2022), breaks=c(1970,1990,2010)) +
-      facet_grid(rows=vars(ocean_region_lab)) +
+      facet_grid(rows=vars(ocean_region_lab), scales="free_y") +
       scale_fill_manual(values=col.region, guide=NULL) +
       scale_colour_manual(values=col.dk) +
       geom_hline(yintercept = 0, lty="dashed", col="gray65", alpha=0.5) +
@@ -205,7 +205,9 @@ dev.off()
 
 
 # Pink
-pink.box.rw <- pink.df.avg |>
+pink.df.avg.trunc <- pink.df.avg |>
+  filter(pc<200)
+pink.box.rw <- pink.df.avg.trunc |>
   filter(varnam == "SST") |>
   mutate(BY = case_when(era=="Early" ~ 1975,
                         era=="Middle" ~ 2000,

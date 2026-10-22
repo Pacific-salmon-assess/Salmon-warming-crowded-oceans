@@ -35,7 +35,7 @@ for(sp in species) {
   speciesFlag = sp # set species
 
   # 3. Exploratory plots and models
-  source("data_explore.R")
+  #source("data_explore.R")
   source("stat_single_stock_fit.R")
 
   # 4. Stationary Hierarchical Bayesian Models & figures
