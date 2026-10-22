@@ -9,8 +9,6 @@ rm(list = ls())
 #unlink("./figures", recursive = TRUE)
 #unlink("./output", recursive = TRUE)
 
-time.start <- proc.time()
-
 # 1. Precursors
 source ("functions.R")
 suppressWarnings(source("load.R"))
@@ -48,7 +46,7 @@ for(sp in species) {
   # 5. Dynamic (time-varying) Hierarchical Bayesian Models & figures
   source("era_hbm_fit.R")
   source("era_hbm_inf.R")
-  source("rw_model_fit.R") # run NEW random walk models (have done for all spp, but not below)
+  source("rw_model_fit.R") # run random walk models
 
   # 6. Sensitivity analyses
   source("sensitivity-analyses/comp-sens.R") # Alternative competitor indices; long run time
@@ -56,12 +54,9 @@ for(sp in species) {
 }
 
 # 7. All species figures
-source("map-covar.R") # Make map and covariate figure
+source("map-covars.R") # Make map and covariate figure
 source("interaction-plots.R") # Make sst x comp interaction figures
 source("era_rw_fig.R") # Make main era + RW results figures
 source("sensitivity-analyses/pdo-npgo-figs.R")
 source("sensitivity-analyses/detrend-figs.R")
 
-
-time.run <- proc.time() - time.start
-round(time.run[3] / 60, 4)
