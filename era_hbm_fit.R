@@ -49,8 +49,8 @@ stan.dat.2c <- stan_data_dyn(data_master,
 pars_era_2c <- c("alpha", "beta", "sigma", "phi", "mu_alpha", "sigma_alpha",
                  "gamma1", "gamma2", "gamma3",
                  "mu_gamma1", "mu_gamma2", "mu_gamma3", "sigma_gamma",
-                 "kappa",                                # CHANGED: kappa is now stationary -> single parameter, no era suffix
-                 "mu_kappa", "sigma_kappa" )              # CHANGED: single mu_kappa, no era suffix
+                 "kappa",                                # kappa is stationary -> single parameter, no era suffix
+                 "mu_kappa", "sigma_kappa" )              # single mu_kappa, no era suffix
 
 
 pars.gen.quant <- c("log_lik", "yrep", "yhat") ## Generated quantities to monitor
@@ -72,7 +72,7 @@ era.2c <- rstan::stan(file = "./stan/hbm_era_gamma_stat_kappa_2c.stan",
                        chains = 4,
                        seed = 123,
                        control = list(adapt_delta = 0.99,
-                                      max_treedepth = 20))
+                                      max_treedepth = 10))
 save(era.2c, file = here(fit.dir, "hbm_era_2c.RData"))
 
 
@@ -86,7 +86,7 @@ neff_lowest(era.2c, pars = pars_era_2c)
 
 rhat_highest(era.2c, pars = pars_era_2c)
 
-# pairs_lowest(era.2c, pars = pars_era_2c)
+pairs_lowest(era.2c, pars = pars_era_2c)
 
 rstan::get_elapsed_time(era.2c)
 
@@ -97,8 +97,6 @@ coda_neff(get_neff(era.2c, pars = pars_era_2c), total_draws(era.2c))
 coda_rhat(get_rhat(era.2c, pars = pars_era_2c))
 coda_diag(As.mcmc.list(era.2c, pars = pars_era_2c))
 dev.off()
-
-
 
 
 ## Posterior predictive checks

@@ -40,7 +40,7 @@ save(pars.stat, file = "./output/pars_inter_stat.RData")
 pars.gen.quant <- c("log_lik", "yhat", "yrep", "yresid") ## Generated quantities to monitor
 
 
-## Run MCMC for trended competitor covariate
+## Run MCMC for interaction model
 stan.dat.inter <- stan_data_stat(data_master,
                                scale.x1 = TRUE,
                                var.x2 = "early_sst_stnd",
@@ -51,12 +51,12 @@ stat_inter <- rstan::stan(file = "./stan/hbm_stat_inter.stan",
                       data = stan.dat.inter,
                       pars = c(pars.stat, pars.gen.quant),
                       warmup = 1000,
-                      iter = 3000,
+                      iter = 2000,
                       cores = 4,
                       chains = 4,
                       seed = 123,
                       control = list(adapt_delta = 0.99,
-                                     max_treedepth = 20)) # increased treedepth
+                                     max_treedepth = 10)) # increased treedepth
 save(stat_inter, file = here(fit.dir, "stat_inter.RData"))
 
 
@@ -68,7 +68,7 @@ coda_rhat(get_rhat(stat_inter, pars = pars.stat))
 coda_diag(As.mcmc.list(stat_inter, pars = pars.stat))
 dev.off()
 
-plot_post_pc(stat_inter, stan.dat.inter$y, pdf.path = here(diag.fig.dir, "stat_inter_yrep.pdf")) # Working again?
+plot_post_pc(stat_inter, stan.dat.inter$y, pdf.path = here(diag.fig.dir, "stat_inter_yrep.pdf"))
 
 loo.stat_inter <- rstan::loo(stat_inter, cores = 4)
 save(loo.stat_inter, file = here(diag.dir, "loo_stat_inter.RData"))
@@ -85,6 +85,19 @@ pdf( here(diag.fig.dir, "stat_inter_resid.pdf"), width = 8, height = 8)
 plot_hbm_resids(stat_inter, data_master)
 dev.off()
 
+
+## Check pathology
+rstan::check_hmc_diagnostics(stat_inter)
+
+rstan::get_elapsed_time(stat_inter)
+
+summary(stat_inter, pars = pars.stat)$summary
+
+neff_lowest(stat_inter, pars = pars.stat)
+
+rhat_highest(stat_inter, pars = pars.stat)
+
+pairs_lowest(stat_inter, pars = pars.stat) # can ignore 'warning: not a graphical parameter'
 
 
 
@@ -206,7 +219,7 @@ g <- ggplot(m.df) +
   facet_wrap( ~ var, ncol = 1) +
   theme_sleek(base_size = 9) +
   theme(legend.justification = c(0, 0),
-        legend.position = c(0.7, 0.91),
+        legend.position = c(0.7, 0.85),
         legend.key.size = unit(10, "pt"),
         legend.background = element_blank(),
         legend.text = element_text(size = 8),
@@ -221,7 +234,9 @@ pdf(here(fig.dir, "dens_stat_inter.pdf"), width = 4, height = 6)
 print(g)
 dev.off()
 
-## Run MCMC for trended competitor covariate
+
+
+## Run MCMC for detrended competitor covariate
 stan.dat.inter.detp <- stan_data_stat(data_master,
                                       scale.x1 = TRUE,
                                       var.x2 = "early_sst_stnd",
@@ -232,10 +247,10 @@ stat_inter.detp <- rstan::stan(file = "./stan/hbm_stat_inter.stan",
                                data = stan.dat.inter.detp,
                                pars = c(pars.stat, pars.gen.quant),
                                warmup = 1000,
-                               iter = 3000,
+                               iter = 2000,
                                cores = 4,
                                chains = 4,
                                seed = 123,
                                control = list(adapt_delta = 0.99,
-                                              max_treedepth = 20)) # increased treedepth
+                                              max_treedepth = 10))
 save(stat_inter.detp, file = here(fit.dir, "stat_inter_detr.RData"))
