@@ -224,4 +224,6 @@ pdf(file=here(fig.dir, paste0("rw_stk_trajectories_", speciesFlag, ".pdf")), hei
 print(g)
 dev.off()
 
-
+png(file=here("Rmd/figures", paste0(speciesFlag, "_rw_stk_trajectories.png")), height=600*2, width=400*2, units="px", res=72*3)
+print(g)
+dev.off()
