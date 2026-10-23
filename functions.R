@@ -76,19 +76,22 @@ get_ocean_entry_prop <- function(data=s.brood, r.cols=r.cols){
 
   data.out <- ddply(data, .(Stock), function(x){
 
-    if(all(x$detailFlag==0)) { # if the whole timeseries is missing age data (Skeena)
+    if(all(x$detailFlag==0)) { # if the whole timeseries is missing age data
 
-      if(unique(x$Stock) %in% skeena_lh$hh_stock_names){ # if there is estimate for it
+      if(unique(x$Stock) %in% skeena_lh$hh_stock_names){ # if there is estimate for it from Price et al (2021)
         p1 <- skeena_lh$prop_age1[skeena_lh$hh_stock_names == unique(x$Stock)]
         p2 <- skeena_lh$prop_age2[skeena_lh$hh_stock_names == unique(x$Stock)]
         out <- mutate(x, ocean_1 = p1,
                       ocean_2 = p2)
-      } else {
+      } else if(unique(x$Stock) %in% c("Swan-Stephens", "Morice")) { # These other skeena systems can use the average
         skeena_lh_norep <- unique(skeena_lh[,1:3])
         mu_p1 <- mean(skeena_lh_norep$prop_age1)
         mu_p2 <- mean(skeena_lh_norep$prop_age2)
         out <- mutate(x, ocean_1 = mu_p1,
                       ocean_2 = mu_p2)
+      } else { # Flag to REMOVE these cases (no age information)
+        out <- mutate(x, ocean_1 = 9999,
+                      ocean_2 = 9999)
       }
 
     } else if(length(unique(x$detailFlag))==2) { ## if only PART of the timeseries is missing age data
