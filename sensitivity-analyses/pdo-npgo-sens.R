@@ -146,6 +146,8 @@ era_npgo <- rstan::stan(file = "./stan/hbm_era_3c.stan",
                        control = list(adapt_delta = 0.9))
 save(era_npgo, file = here(sens.fit.dir, "era_npgo.RData"))
 
+## Check pathology
+rstan::check_hmc_diagnostics(era_npgo)
 
 # ## Diagnostic plots -- NPGO
 # pdf(here(sens.fig.dir, "stat_npgo_diag.pdf"), width = 7, height = 5)
@@ -211,119 +213,4 @@ names(tab.coef) <- c("Ocean Region", "Coefficient", "Lower_95_CI", "Mean",
                      "Upper_95_CI", "perc_change_RS")
 
 write.csv(tab.coef, file = here(sens.fig.dir, paste0("model_coefficients_stat_npgo_", speciesFlag, ".csv")))
-
-
-
-
-
-
-#### MCMC - PDO -- ####
-
-## Run MCMC, stationary model
-stan.dat.pdo <- stan_data_stat(data_master,
-                                scale.x1 = TRUE,
-                                var.x2 = "early_sst_stnd",
-                                var.x3 = "np_all_spp_sec_stnd",
-                                var.region = "Ocean.Region2",
-                                alpha.group = ifelse(speciesFlag=="sockeye", TRUE, FALSE))
-stan.dat.pdo$x4 <- br.pdo$pdo_stnd
-
-stat_pdo <- rstan::stan(file = "./stan/hbm_stat_3c_inter.stan",
-                         data = stan.dat.pdo,
-                         #pars = c(pars.stat, pars.gen.quant),
-                         warmup = 1000,
-                         iter = ifelse(speciesFlag=="pink", 3000, 2000),
-                         cores = 4,
-                         chains = 4,
-                         seed = 123,
-                         control = list(adapt_delta = ifelse(speciesFlag=="pink", 0.999, 0.99),
-                                        max_treedepth = 20)) # increased treedepth
-save(stat_pdo, file = here(sens.fit.dir, "stat_pdo.RData"))
-
-
-## Run MCMC, Eras model
-
-stan.dat.era.pdo <- stan_data_dyn(data_master,
-                                   var.x2 = "early_sst_stnd",
-                                   var.x3 = "np_all_spp_sec_stnd",
-                                   breakpoint1 = 1989,
-                                   breakpoint2 = 2011,
-                                   var.region="Ocean.Region2",
-                                   scale.x1 = TRUE,
-                                   alpha.group = ifelse(speciesFlag=="sockeye", TRUE, FALSE))
-stan.dat.era.pdo$x4 <- br.pdo$pdo_stnd
-
-
-era_pdo <- rstan::stan(file = "./stan/hbm_era_3c.stan",
-                        data = stan.dat.era.pdo,
-                        warmup = 1000,
-                        iter = 2000,
-                        cores = 4,
-                        chains = 4,
-                        seed = 123,
-                        control = list(adapt_delta = 0.9))
-save(era_pdo, file = here(sens.fit.dir, "era_pdo.RData"))
-
-
-# #### -- Visualize fits -- ####
-#
-# ## Diagnostic plots -- PDO
-# pdf(here(sens.fig.dir, "stat_pdo_diag.pdf"), width = 7, height = 5)
-# coda_neff(get_neff(stat_pdo, pars = pars.stat), total_draws(stat_pdo))
-# coda_rhat(get_rhat(stat_pdo, pars = pars.stat))
-# coda_diag(As.mcmc.list(stat_pdo, pars = pars.stat))
-# dev.off()
-#
-# plot_post_pc(stat_pdo, stan.dat.pdo$y, data = data_master,
-#              pdf.path = here(sens.fig.dir, "stat_pdo_yrep.pdf"))
-#
-# loo.stat_pdo <- rstan::loo(stat_pdo, cores = 4)
-# save(loo.stat_pdo, file = here(sens.fig.dir, "loo_stat_pdo.RData"))
-# waic.stat_pdo <- loo::waic(loo::extract_log_lik(stat_pdo, "log_lik"))
-# save(waic.stat_pdo, file = here(sens.fig.dir, "waic_stat_pdo.RData"))
-#
-# pdf(here(sens.fig.dir, "stat_pdo_loo.pdf"), width = 7, height = 5)
-# plot(loo.stat_pdo, label_points = TRUE)
-# dev.off()
-#
-# #r2.stat_pdo <- bayes_R2(data_master$lnRS, as.matrix(stat_pdo, pars = "yhat"))
-# #save(r2.stat_pdo, file = here(sens.fig.dir, "r2_stat_pdo.RData"))
-#
-# pdf(here(sens.fig.dir, "stat_pdo_resid.pdf"), width = 8, height = 8)
-# plot_hbm_resids(stat_pdo, data_master)
-# dev.off()
-
-
-## Table: coefficients ----
-
-# PDO
-gamma <- rstan::summary(stat_pdo, pars = "mu_gamma")$summary
-kappa <- rstan::summary(stat_pdo, pars = "mu_kappa")$summary
-lambda <- rstan::summary(stat_pdo, pars = "mu_lambda")$summary
-
-reg   <- unique(info_master$ocean_region_lab)
-
-tab.g <- data.frame(reg = reg,
-                    coef = "SST",
-                    lower = gamma[ , "2.5%"],
-                    mean = gamma[ , "mean"],
-                    upper = gamma[ , "97.5%"])
-tab.k <- data.frame(reg = reg,
-                    coef = "Comp",
-                    lower = kappa[ , "2.5%"],
-                    mean = kappa[ , "mean"],
-                    upper = kappa[ , "97.5%"])
-tab.l <- data.frame(reg = reg,
-                    coef = "PDO",
-                    lower = lambda[ , "2.5%"],
-                    mean = lambda[ , "mean"],
-                    upper = lambda[ , "97.5%"])
-
-tab.coef <- rbind(tab.g, tab.k, tab.l) # add tab.c if exists
-tab.coef$perc <- (exp(tab.coef$mean) - 1) * 100
-row.names(tab.coef) <- NULL
-names(tab.coef) <- c("Ecosystem", "Coefficient", "Lower 95% CI", "Mean",
-                     "Upper 95% CI", "Mean % change in R/S")
-
-write.csv(tab.coef, file = here(sens.fig.dir, paste0("model_coefficients_stat_pdo_", speciesFlag, ".csv")))
 

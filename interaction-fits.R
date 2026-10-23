@@ -256,3 +256,6 @@ stat_inter.detp <- rstan::stan(file = "./stan/hbm_stat_inter.stan",
                                control = list(adapt_delta = 0.99,
                                               max_treedepth = 10))
 save(stat_inter.detp, file = here(fit.dir, "stat_inter_detr.RData"))
+
+## Check pathology
+rstan::check_hmc_diagnostics(stat_inter)

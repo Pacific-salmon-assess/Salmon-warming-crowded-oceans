@@ -118,14 +118,10 @@ pars.gen.quant <- c("log_lik", "yrep", "yhat", "yresid") ## Generated quantities
 # Get model data in a list
 
   ## INDEX:
-  #  1. North American Pinks (pink_numbers_na_stnd)
-  # 2. North American Pink, Chum, Sockeye (all_spp_numbers_na_stnd)
-  # 3. North Pacific Pink, Chum, Sockeye (all_spp_numbers_np_stnd)
-  # 4. North American Pink Biomass (pink_biomass_na_stnd)
-  # 5. North American Pink, Chum, Sockeye Biomass (all_spp_biomass_na_stnd)
-  # 6. North Pacific Pink Biomass (pink_biomass_np_stnd)
-  # 7. (BASE) North Pacific Pinks (pink_numbers_np_stnd)
-  # 8. North Pacific Pink, Chum, Sockeye Biomass (all_spp_biomass_np_stnd)
+  # 1. North Pacific Pinks (pink_numbers_np)
+  # 2. North Pacific Sockeye (sockeye_numbers_np)
+  # 3. North Pacific Chum (chum_numbers_np)
+  # 4. North Pacific Pink, Chum, Sockeye Biomass (all_spp_biomass_np_stnd)
 
 era_data_list <- vector("list", length=length(comp.cols))
 stat_data_list <- vector("list", length=length(comp.cols))
@@ -161,7 +157,7 @@ names(era_fit_list) <- names(stat_fit_list) <- comp.cols
 
 for(i in 1:length(comp.cols.stnd)){ # Loop to run stan models:
 
-  # # era model
+  # # era model # Don't fit
   # era.fit <- rstan::stan(file = "./stan/hbm_era_2c.stan",
   #                              data = era_data_list[[i]],
   #                              pars = c(pars_era_2c, pars.gen.quant),
@@ -208,6 +204,7 @@ for(i in 1:length(comp.cols.stnd)){ # Loop to run stan models:
 
 # Make master comparison table
 
+# Era models not fitted
 #comp_tbl_list_era <- list()
 #comp_tbl_list_era <- lapply(era_summary_list, function(x){
     #     summ <- x[c(grepl("^mu_", rownames(x))),
