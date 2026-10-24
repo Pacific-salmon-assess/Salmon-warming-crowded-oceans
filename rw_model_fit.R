@@ -77,6 +77,9 @@ rstan::check_hmc_diagnostics(rw.fit)
 
 # Extract
 
+# Load model if you did not just run it
+#load(file=here("output/models/dyn", speciesFlag, "dyn_new_2025_stat_kappa.RData"))
+
 # Stock-specific dataframe
 
 probs <- c(0.025, 0.05, 0.10, 0.50, 0.90, 0.95, 0.975)
