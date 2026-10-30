@@ -53,7 +53,7 @@ stat_a <- rstan::stan(file = "./stan/hbm_stat_2c.stan",
                      cores = 4,
                      chains = 4,
                      seed = 123,
-                     control = list(adapt_delta = 0.99,
+                     control = list(adapt_delta = ifelse(speciesFlag=="pink", 0.999, 0.99),
                                     max_treedepth = 10))
 save(stat_a, file = here(fit.dir, "stat_a.RData"))
 
@@ -112,7 +112,7 @@ stat_a.detp <- rstan::stan(file = "./stan/hbm_stat_2c.stan",
                       cores = 4,
                       chains = 4,
                       seed = 123,
-                      control = list(adapt_delta = 0.99,
+                      control = list(adapt_delta = ifelse(speciesFlag=="pink", 0.999, 0.99),
                                      max_treedepth = 10))
 save(stat_a.detp, file = here(fit.dir, "stat_a_detp.RData"))
 

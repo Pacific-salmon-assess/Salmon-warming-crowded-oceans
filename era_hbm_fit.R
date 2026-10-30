@@ -71,7 +71,7 @@ era.2c <- rstan::stan(file = "./stan/hbm_era_gamma_stat_kappa_2c.stan",
                        cores = 4,
                        chains = 4,
                        seed = 123,
-                       control = list(adapt_delta = 0.99,
+                       control = list(adapt_delta = ifelse(speciesFlag=="pink", 0.999, 0.99),
                                       max_treedepth = 10))
 save(era.2c, file = here(fit.dir, "hbm_era_2c.RData"))
 

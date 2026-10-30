@@ -57,7 +57,7 @@ stat_inter <- rstan::stan(file = "./stan/hbm_stat_inter.stan",
                       cores = 4,
                       chains = 4,
                       seed = 123,
-                      control = list(adapt_delta = 0.99,
+                      control = list(adapt_delta = ifelse(speciesFlag=="pink", 0.999, 0.99),
                                      max_treedepth = 10)) # increased treedepth
 save(stat_inter, file = here(fit.dir, "stat_inter.RData"))
 
