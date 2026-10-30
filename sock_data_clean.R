@@ -75,9 +75,7 @@ summary(s.brood$R - s.brood.2$R)
 # Call function to calculate proportion entering ocean at age 0, 1, ...4
 # These are calculated differently for stocks with recruitment detail (detailFlag==1) and without.
 bt <- get_ocean_entry_prop(s.brood.2, r.cols=r.cols) # Note: Skeena populations use estimates from Price et al. (2021)
-# Some skeena names are hard-coded!
-# Remove systems flagged for not having any information on ocean entry
-bt <- bt %>% filter(ocean_1 != 9999, ocean_2 != 9999)
+# Some systems treated with static assumption of 85% age 1, 15% age 2. CHECK which pops! --> Should all be NC pops.
 
 # Make all "R" columns proportions
 bt[,r.cols] <- lapply(bt[,r.cols], function(x) x/bt$R)

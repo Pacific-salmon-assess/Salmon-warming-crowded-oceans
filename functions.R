@@ -67,8 +67,8 @@ get_ocean_entry_prop <- function(data=s.brood, r.cols=r.cols){
   # It returns the dataframe with cols 'ocean_X' , proportion of recruits entering ocean at year X for a given brood yr
   # It also makes the 'Recruits' column the sum of all age classes if available, or does not change Recruits if RX.X cols are empty
 
-  # load skeena age proportions
-  skeena_lh <- read.csv("./data-downloaded/skeena_sockeye_lifehistory_prop.csv")
+  # load inferred age proportions
+  sock_lh <- read.csv("./data-downloaded/sockeye_lifehistory_prop.csv")
 
   # create Ocean_X columns
   ocean.cols <- paste("ocean", 0:4, sep="_")
@@ -78,20 +78,17 @@ get_ocean_entry_prop <- function(data=s.brood, r.cols=r.cols){
 
     if(all(x$detailFlag==0)) { # if the whole timeseries is missing age data
 
-      if(unique(x$Stock) %in% skeena_lh$hh_stock_names){ # if there is estimate for it from Price et al (2021)
-        p1 <- skeena_lh$prop_age1[skeena_lh$hh_stock_names == unique(x$Stock)]
-        p2 <- skeena_lh$prop_age2[skeena_lh$hh_stock_names == unique(x$Stock)]
-        out <- mutate(x, ocean_1 = p1,
+      if(unique(x$Stock) %in% sock_lh$stock_name){ # if there is estimate for it from Price et al (2021)
+        p0 <- sock_lh$prop_age0[sock_lh$stock_name == unique(x$Stock)]
+        p1 <- sock_lh$prop_age1[sock_lh$stock_name == unique(x$Stock)]
+        p2 <- sock_lh$prop_age2[sock_lh$stock_name == unique(x$Stock)]
+        out <- mutate(x, ocean_0 = p0,
+                      ocean_1 = p1,
                       ocean_2 = p2)
-      } else if(unique(x$Stock) %in% c("Swan-Stephens", "Morice")) { # These other skeena systems can use the average
-        skeena_lh_norep <- unique(skeena_lh[,1:3])
-        mu_p1 <- mean(skeena_lh_norep$prop_age1)
-        mu_p2 <- mean(skeena_lh_norep$prop_age2)
-        out <- mutate(x, ocean_1 = mu_p1,
-                      ocean_2 = mu_p2)
-      } else { # Flag to REMOVE these cases (no age information)
-        out <- mutate(x, ocean_1 = 9999,
-                      ocean_2 = 9999)
+      } else { # All other cases (mostly Nass, Haida Gwaii) - Assumed fixed props
+        out <- mutate(x, ocean_0 = 0,
+                      ocean_1 = 0.85,
+                      ocean_2 = 0.15)
       }
 
     } else if(length(unique(x$detailFlag))==2) { ## if only PART of the timeseries is missing age data
