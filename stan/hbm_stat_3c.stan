@@ -60,7 +60,7 @@ transformed parameters {
     for(i in 1:n_series) {
         alpha[i] = mu_alpha[a_group[i]] + sigma_alpha[a_group[i]] * d_alpha[i];
         gamma[i] = mu_gamma[g_group[i]] + sigma_gamma[g_group[i]] * d_gamma[i];
-        kappa[i] = mu_kappa[g_group[i]] + sigma_kappa[g_group[i]] * d_gamma[i];
+        kappa[i] = mu_kappa[g_group[i]] + sigma_kappa[g_group[i]] * d_kappa[i];
         lambda[i] = mu_lambda[g_group[i]] + sigma_lambda[g_group[i]] * d_lambda[i];
 
         // first data point in series
