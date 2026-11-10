@@ -9,10 +9,15 @@ output:
   bookdown::pdf_document2:
     includes:
       in_header: preamble.tex
+
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
 library(knitr)
 library(here)
 library(kableExtra)
@@ -27,7 +32,7 @@ We compiled data for pink, chum and sockeye salmon from a large public database 
 
 Unlike for other systems and species, estimates of spawner abundance for Fraser River sockeye salmon were "effective female spawners" instead of total spawners, which accounts for the at times substantial pre-spawn mortality (i.e., mortality after arrival on the spawning grounds, but before spawning) and variable egg retention in this system. Additionally, return abundance estimates for Fraser River sockeye salmon account for en route mortality (i.e., mortality after freshwater entry, but before arrival on the spawning grounds), which can be considerable in certain years. While there is likely pre-spawn and en route mortality in other systems and species it is only systematically accounted for in the Fraser. Because of this, for modeling sockeye dynamics only, we allowed regional intrinsic productivity to arise from a common normal distribution that was allowed to differ from populations in other regions. In addition, for Fraser sockeye any confounding of freshwater temperature effects during return migration on estimates of marine temperature effects (e.g., in instances where they are correlated) in our analyses are accounted for by having adult recruitment explicitly account for freshwater migration mortality.
 
-Sockeye can rear in freshwater for a variable length of time before migrating to sea, and both sockeye and chum can mature and return to spawn at variable ages. Where possible we used brood year specific estimates of age at ocean entry and return; when this data was not available we used estimates from adjacent years, or the mean across all years if only a few years had brood year specific estimates. For Skeena Sockeye, we applied estimates of outmigration age from @price2021portfolio . In some instances for chum, there were no age data available, and so we assumed a fixed four-year life cycle, following @malick2017effects who summarize research that found that assuming a fixed four-year life cycle for chum introduced minimal bias into reconstructions of their population dynamics.
+Sockeye can rear in freshwater for a variable length of time before migrating to sea, and both sockeye and chum can mature and return to spawn at variable ages. Where possible we used brood year specific estimates of age at ocean entry and return; when this data was not available we used estimates from adjacent years, or the mean across all years if only a few years had brood year specific estimates. For Skeena sockeye, we applied estimates of outmigration age from @price2021portfolio, and for some sockeye systems we used estimates from adjacent populations is system specific information was unavailable. In some instances for chum, there were no age data available, and so we assumed a fixed four-year life cycle, following @malick2017effects who summarize research that found that assuming a fixed four-year life cycle for chum introduced minimal bias into reconstructions of their population dynamics.
 
 ## Sensitivity Analyses
 
@@ -50,6 +55,10 @@ We quantified the sensitivity of our results to these alternative assumptions by
 The pink, chum, and sockeye salmon abundance time series we considered as an index of competition among salmon at sea exhibits an increasing time trend, in addition to high frequency year-to-year variation (Figure 1b in main text; Figure \@ref(fig:fig-s13)a). As a result it is possible that other unaccounted for processes that exhibit strong positive trends over the same period (e.g., marine mammal populations, ocean heat content) may confound our interpretation of a salmon competition "effect". While the weight of evidence for the effect of competition, with especially pink salmon, on other salmon species is much stronger [@ruggerone2023diatoms] than for these other potential ecosystem changes, as a sensitivity analysis we also conducted an analysis with the temporal signal in the salmon time series removed. To do this we fit a General Additive Model to the North Pacific pink, chum, and sockeye salmon time series (Figure \@ref(fig:fig-s13)b) and used the resulting residuals of the model fit as an alternative, time trend removed, competitor index (Figure \@ref(fig:fig-s14)b). We then refit the stationary model (equation 1 in Main Text) with this alternative index to each of the sockeye, chum, and pink salmon spawner-recruitment datasets.
 
 Consistent with previous analyses that have fit models of salmon productivity to detrended salmon competitor indices [e.g., @ruggerone2015productivity; @connors2020climate], statistical evidence of an inverse relationship between sockeye productivity and pink, chum and sockeye salmon abundance remained, though as expected since long term low frequency variation in the competitor time series was removed, the magnitude of predicted percentage change in recruits-per-spawner was smaller (Figure \@ref(fig:fig-s14)).
+
+### Random walk SST covariates estimates
+
+Illustrations of population specific estimates of predicted effects of SST on sockeye, chum, and pink salmon productivity over time are show in Figures \@ref(fig:fig-s15)-\@ref(fig:fig-s17) relative to group-level (i.e. regionally within a species) trajectories. 
 
 \newpage
 
@@ -141,6 +150,7 @@ knitr::include_graphics("figures/pink_alt_comp_fig.png")
 knitr::include_graphics("figures/detrend-comp.png")
 ```
 
+
 (ref:fig-s14) Effect of detrending salmon competitor index on estimates of impact of ocean warming and competition at sea. Posterior probability distributions of the predicted effect of SST and detrended competitors (Figure S13b) on sockeye, chum and pink salmon productivity (percentage change in adult recruits per spawner) by ocean ecosystem (same as Figure 2 in Main Text).
 
 ```{r fig-s14, out.width="90%", fig.align="center", fig.cap="(ref:fig-s14)"}
@@ -148,23 +158,30 @@ knitr::include_graphics("figures/detrend-posterior-percent-change.png")
 ```
 
 
+\clearpage
+
 (ref:fig-s15) Sockeye salmon population-level annual estimates of time-varying $gamma$ models (Equation 5 in main text) with mean (region-level) summaries and 95% CI overlaid with bold lines and shaded areas. Population-level estimates span unobserved time periods (largely at beginning of time series), but region-level averages begin at the average time series start year within each region. 
 
-```{r fig-s15, out.width="90%", fig.align="center", fig.cap="(ref:fig-s14)"}
+```{r fig-s15, out.width="60%", fig.align="center", fig.cap="(ref:fig-s15)", fig.pos="H"}
 knitr::include_graphics("figures/sockeye_rw_stk_trajectories.png")
 ```
 
+\newpage
+
 (ref:fig-s16) Chum salmon population-level annual estimates of time-varying $gamma$ models (Equation 5 in main text) with mean (region-level) summaries and 95% CI overlaid with bold lines and shaded areas. Population-level estimates span unobserved time periods (largely at beginning of time series), but region-level averages begin at the average time series start year within each region.
 
-```{r fig-s16, out.width="90%", fig.align="center", fig.cap="(ref:fig-s14)"}
+```{r fig-s16, out.width="60%", fig.align="center", fig.cap="(ref:fig-s16)", fig.pos="H"}
 knitr::include_graphics("figures/chum_rw_stk_trajectories.png")
 ```
 
+\clearpage
+
 (ref:fig-s17) Pink salmon population-level annual estimates of time-varying $gamma$ models (Equation 5 in main text) with mean (region-level) summaries and 95% CI overlaid with bold lines and shaded areas. Population-level estimates span unobserved time periods (largely at beginning of time series), but region-level averages begin at the average time series start year within each region.
 
-```{r fig-s17, out.width="90%", fig.align="center", fig.cap="(ref:fig-s14)"}
+```{r fig-s17, out.width="60%", fig.align="center", fig.cap="(ref:fig-s17)", fig.pos="H"}
 knitr::include_graphics("figures/pink_rw_stk_trajectories.png")
 ```
+
 
 \newpage
 
