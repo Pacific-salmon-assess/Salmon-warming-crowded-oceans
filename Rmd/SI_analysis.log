@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.11.2)  2 NOV 2026 15:28
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.11.2)  16 NOV 2026 18:37
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -708,83 +708,83 @@ File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 LaTeX Warning: Reference `fig:fig-9' on page 2 undefined on input line 163.
 
 [2] [3]
-<figures/sockeye1_ts_length.png, id=95, 433.62pt x 433.62pt>
+<figures/sockeye1_ts_length.png, id=98, 433.62pt x 433.62pt>
 File: figures/sockeye1_ts_length.png Graphic file (type png)
 <use figures/sockeye1_ts_length.png>
 Package pdftex.def Info: figures/sockeye1_ts_length.png  used on input line 189.
 (pdftex.def)             Requested size: 375.80544pt x 375.8238pt.
-<figures/sockeye2_ts_length.png, id=96, 433.62pt x 433.62pt>
+<figures/sockeye2_ts_length.png, id=99, 433.62pt x 433.62pt>
 File: figures/sockeye2_ts_length.png Graphic file (type png)
 <use figures/sockeye2_ts_length.png>
 Package pdftex.def Info: figures/sockeye2_ts_length.png  used on input line 200.
 (pdftex.def)             Requested size: 375.80544pt x 375.8238pt.
-<figures/chum_ts_length.png, id=97, 433.62pt x 397.485pt>
+<figures/chum_ts_length.png, id=100, 433.62pt x 397.485pt>
 File: figures/chum_ts_length.png Graphic file (type png)
 <use figures/chum_ts_length.png>
 Package pdftex.def Info: figures/chum_ts_length.png  used on input line 211.
 (pdftex.def)             Requested size: 375.80544pt x 344.50516pt.
-<figures/pink_ts_length.png, id=98, 433.62pt x 433.62pt>
+<figures/pink_ts_length.png, id=101, 433.62pt x 433.62pt>
 File: figures/pink_ts_length.png Graphic file (type png)
 <use figures/pink_ts_length.png>
 Package pdftex.def Info: figures/pink_ts_length.png  used on input line 222.
 (pdftex.def)             Requested size: 375.80544pt x 375.8238pt.
-<figures/sockeye_coef_catepillar_heir_indv.png, id=99, 505.89pt x 650.43pt>
+<figures/sockeye_coef_catepillar_heir_indv.png, id=102, 505.89pt x 650.43pt>
 File: figures/sockeye_coef_catepillar_heir_indv.png Graphic file (type png)
 <use figures/sockeye_coef_catepillar_heir_indv.png>
 Package pdftex.def Info: figures/sockeye_coef_catepillar_heir_indv.png  used on input line 233.
 (pdftex.def)             Requested size: 422.77664pt x 543.57854pt.
-<figures/chum_coef_catepillar_heir_indv.png, id=100, 505.89pt x 325.215pt>
+<figures/chum_coef_catepillar_heir_indv.png, id=103, 505.89pt x 325.215pt>
 File: figures/chum_coef_catepillar_heir_indv.png Graphic file (type png)
 <use figures/chum_coef_catepillar_heir_indv.png>
 Package pdftex.def Info: figures/chum_coef_catepillar_heir_indv.png  used on input line 244.
 (pdftex.def)             Requested size: 422.77664pt x 271.78926pt.
-<figures/pink_coef_catepillar_heir_indv.png, id=101, 505.89pt x 346.79562pt>
+<figures/pink_coef_catepillar_heir_indv.png, id=104, 505.89pt x 346.79562pt>
 File: figures/pink_coef_catepillar_heir_indv.png Graphic file (type png)
 <use figures/pink_coef_catepillar_heir_indv.png>
 Package pdftex.def Info: figures/pink_coef_catepillar_heir_indv.png  used on input line 255.
 (pdftex.def)             Requested size: 422.77664pt x 289.82466pt.
-<figures/sockeye-npgo-era-dot.png, id=102, 489.32813pt x 376.40625pt>
+<figures/sockeye-npgo-era-dot.png, id=105, 489.32813pt x 376.40625pt>
 File: figures/sockeye-npgo-era-dot.png Graphic file (type png)
 <use figures/sockeye-npgo-era-dot.png>
 Package pdftex.def Info: figures/sockeye-npgo-era-dot.png  used on input line 266.
 (pdftex.def)             Requested size: 422.77664pt x 325.21933pt.
-<figures/chum-npgo-era-dot.png, id=103, 489.32813pt x 376.40625pt>
+<figures/chum-npgo-era-dot.png, id=106, 489.32813pt x 376.40625pt>
 File: figures/chum-npgo-era-dot.png Graphic file (type png)
 <use figures/chum-npgo-era-dot.png>
 Package pdftex.def Info: figures/chum-npgo-era-dot.png  used on input line 277.
 (pdftex.def)             Requested size: 422.77664pt x 325.21933pt.
-<figures/pink-npgo-era-dot.png, id=104, 489.32813pt x 376.40625pt>
+<figures/pink-npgo-era-dot.png, id=107, 489.32813pt x 376.40625pt>
 File: figures/pink-npgo-era-dot.png Graphic file (type png)
 <use figures/pink-npgo-era-dot.png>
 Package pdftex.def Info: figures/pink-npgo-era-dot.png  used on input line 288.
 (pdftex.def)             Requested size: 422.77664pt x 325.21933pt.
-<figures/sockeye_alt_comp_fig.png, id=105, 501.875pt x 401.5pt>
+<figures/sockeye_alt_comp_fig.png, id=108, 501.875pt x 401.5pt>
 File: figures/sockeye_alt_comp_fig.png Graphic file (type png)
 <use figures/sockeye_alt_comp_fig.png>
 Package pdftex.def Info: figures/sockeye_alt_comp_fig.png  used on input line 299.
 (pdftex.def)             Requested size: 375.80544pt x 300.65865pt.
-<figures/chum_alt_comp_fig.png, id=106, 501.875pt x 401.5pt>
+<figures/chum_alt_comp_fig.png, id=109, 501.875pt x 401.5pt>
 File: figures/chum_alt_comp_fig.png Graphic file (type png)
 <use figures/chum_alt_comp_fig.png>
 Package pdftex.def Info: figures/chum_alt_comp_fig.png  used on input line 310.
 (pdftex.def)             Requested size: 375.80544pt x 300.65865pt.
-<figures/pink_alt_comp_fig.png, id=107, 501.875pt x 401.5pt>
+<figures/pink_alt_comp_fig.png, id=110, 501.875pt x 401.5pt>
 File: figures/pink_alt_comp_fig.png Graphic file (type png)
 <use figures/pink_alt_comp_fig.png>
 Package pdftex.def Info: figures/pink_alt_comp_fig.png  used on input line 321.
 (pdftex.def)             Requested size: 375.80544pt x 300.65865pt.
-<figures/detrend-comp.png, id=108, 481.8pt x 240.9pt>
+<figures/detrend-comp.png, id=111, 481.8pt x 240.9pt>
 File: figures/detrend-comp.png Graphic file (type png)
 <use figures/detrend-comp.png>
 Package pdftex.def Info: figures/detrend-comp.png  used on input line 332.
 (pdftex.def)             Requested size: 422.77664pt x 211.39348pt.
-<figures/detrend-posterior-percent-change.png, id=109, 401.5pt x 250.9375pt>
+<figures/detrend-posterior-percent-change.png, id=112, 401.5pt x 250.9375pt>
 File: figures/detrend-posterior-percent-change.png Graphic file (type png)
 <use figures/detrend-posterior-percent-change.png>
 Package pdftex.def Info: figures/detrend-posterior-percent-change.png  used on input line 343.
 (pdftex.def)             Requested size: 422.77664pt x 264.2541pt.
 [4 <./figures/sockeye1_ts_length.png>] [5 <./figures/sockeye2_ts_length.png>] [6 <./figures/chum_ts_length.png>] [7 <./figures/pink_ts_length.png>] [8 <./figures/sockeye_coef_catepillar_heir_indv.png>] [9 <./figures/chum_coef_catepillar_heir_indv.png>] [10 <./figures/pink_coef_catepillar_heir_indv.png>] [11 <./figures/sockeye-npgo-era-dot.png>] [12 <./figures/chum-npgo-era-dot.png>] [13 <./figures/pink-npgo-era-dot.png>] [14 <./figures/sockeye_alt_comp_fig.png>] [15 <./figures/chum_alt_comp_fig.png>] [16 <./figures/pink_alt_comp_fig.png> <./figures/detrend-comp.png>] [17 <./figures/detrend-posterior-percent-change.png (PNG copy)>]
-<figures/sockeye_rw_stk_trajectories.png, id=189, 267.66667pt x 401.5pt>
+<figures/sockeye_rw_stk_trajectories.png, id=192, 267.66667pt x 401.5pt>
 File: figures/sockeye_rw_stk_trajectories.png Graphic file (type png)
 <use figures/sockeye_rw_stk_trajectories.png>
 Package pdftex.def Info: figures/sockeye_rw_stk_trajectories.png  used on input line 356.
@@ -792,13 +792,13 @@ Package pdftex.def Info: figures/sockeye_rw_stk_trajectories.png  used on input 
 [18
 
 {c:/Users/CONNORSB/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc} <./figures/sockeye_rw_stk_trajectories.png>]
-<figures/chum_rw_stk_trajectories.png, id=196, 267.66667pt x 401.5pt>
+<figures/chum_rw_stk_trajectories.png, id=199, 267.66667pt x 401.5pt>
 File: figures/chum_rw_stk_trajectories.png Graphic file (type png)
 <use figures/chum_rw_stk_trajectories.png>
 Package pdftex.def Info: figures/chum_rw_stk_trajectories.png  used on input line 369.
 (pdftex.def)             Requested size: 281.85587pt x 422.79433pt.
 [19 <./figures/chum_rw_stk_trajectories.png>]
-<figures/pink_rw_stk_trajectories.png, id=204, 267.66667pt x 401.5pt>
+<figures/pink_rw_stk_trajectories.png, id=207, 267.66667pt x 401.5pt>
 File: figures/pink_rw_stk_trajectories.png Graphic file (type png)
 <use figures/pink_rw_stk_trajectories.png>
 Package pdftex.def Info: figures/pink_rw_stk_trajectories.png  used on input line 382.
@@ -911,10 +911,10 @@ Here is how much of TeX's memory you used:
  36 hyphenation exceptions out of 8191
  83i,10n,93p,1973b,627s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/Users/CONNORSB/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb><c:/Users/CONNORSB/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb><c:/Users/CONNORSB/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi10.pfb><c:/Users/CONNORSB/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb><c:/Users/CONNORSB/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb><c:/Users/CONNORSB/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb><c:/Users/CONNORSB/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmri10.pfb>
-Output written on SI_analysis.pdf (46 pages, 1190275 bytes).
+Output written on SI_analysis.pdf (46 pages, 1189476 bytes).
 PDF statistics:
- 403 PDF objects out of 1000 (max. 8388607)
- 302 compressed objects within 4 object streams
+ 406 PDF objects out of 1000 (max. 8388607)
+ 305 compressed objects within 4 object streams
  92 named destinations out of 1000 (max. 500000)
  22667 words of extra memory for PDF output out of 24883 (max. 10000000)
 
