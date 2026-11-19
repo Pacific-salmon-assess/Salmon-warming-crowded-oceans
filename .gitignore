@@ -6,7 +6,12 @@
 data-downloaded/climate-data
 data-downloaded/sst_raw
 #figures and outputs
-figures
+figures/dyn
+figures/hmm
+figures/sock-explore
+figures/spp-explore
+figures/sst-explore
+figures/stat
 output
 pub
 sensitivity-analyses/fits
